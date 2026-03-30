@@ -1,8 +1,11 @@
 from playwright.sync_api import sync_playwright
 from urllib.parse import quote
+from pathlib import Path
 import json
 import re
 import time
+
+SCRIPT_DIR = Path(__file__).parent
 
 BASE_URL = "https://bigquant.com/data/categories/"
 
@@ -24,7 +27,7 @@ CATEGORIES = {
     # "海外数据": ["行情数据", "信息数据", "基本信息"],
     # "大模型": [],
     # "宏观数据": ["国民经济", "对外经贸"],
-    "量化因子": ["股票因子"],
+    "股票数据": ["股票行情"],
 }
 
 
@@ -47,8 +50,8 @@ def crawl_page(page, url, label):
         return []
     time.sleep(1)
     
-    if not SAVED_HTML:
-        with open("/home/chuyin/work/bq/tmp/py/page.html", "w") as f:
+    if True:
+        with open(SCRIPT_DIR / "page.html", "w") as f:
             f.write(page.content())
         SAVED_HTML = True
         print("    [已保存 page.html，请先分析结构]")
@@ -97,7 +100,7 @@ def crawl_page(page, url, label):
     return tables
 
 
-output_file = "/home/chuyin/work/bq/tmp/py/database_crawler.json"
+output_file = SCRIPT_DIR / "database_crawler.json"
 
 def save(data):
     with open(output_file, "w", encoding="utf-8") as f:
