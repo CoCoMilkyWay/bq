@@ -1872,7 +1872,168 @@
     ]
   },
   "量化因子": {
-    "股票因子": [],
+    "股票因子": [
+      {
+        "name": "cn_stock_prefactors",
+        "cn_name": "预计算因子",
+        "desc": "该表融合了多种类型的因子：量价、基本信息、估值、指数、技术指标、资金流、财务因子等。该表是个view，注意带时间窗口因子的使用，详见文档。同时，为了方便筛选和展示，前端页面不展示数量过多的技术指标和财务因子等，相关字段查询见文档。",
+        "update_time": "2026-03-30 18:01:09",
+        "tag": "注册免费试用",
+        "badge": ""
+      },
+      {
+        "name": "cn_stock_valuation",
+        "cn_name": "估值指标",
+        "desc": "该表收录了中国A股股票的估值数据，包括总市值、流通市值、市盈率、市净率、市销率、市现率和企业价值等。",
+        "update_time": "2026-03-30 17:25:27",
+        "tag": "注册免费使用",
+        "badge": "Beta"
+      },
+      {
+        "name": "cn_stock_moneyflow",
+        "cn_name": "资金流因子",
+        "desc": "根据挂单额计算的资金流数据，共计288个指标，具体算法见“文档”",
+        "update_time": "2026-03-30 17:49:36",
+        "tag": "注册免费试用",
+        "badge": "Beta"
+      },
+      {
+        "name": "cn_stock_factors_ta",
+        "cn_name": "技术指标",
+        "desc": "该表提供了A股股票的重要技术分析指标，包括与各种日均线的差距、均线交叉情况、K线模式、EMA、KDJ指标、RSI指标、布林线以及其他一些技术指标。这些指标可以帮助投资者识别市场趋势、寻找买卖点。",
+        "update_time": "2026-03-30 17:05:42",
+        "tag": "注册免费使用",
+        "badge": ""
+      },
+      {
+        "name": "cn_stock_factors_alpha_101",
+        "cn_name": "Alpha101因子",
+        "desc": "复现WorldQuant的Alpha101因子，共101个因子字段，聚焦刻画交易行为的量价因子，因子公式详见文档。",
+        "update_time": "2026-03-30 17:43:11",
+        "tag": "注册免费试用",
+        "badge": "Alpha"
+      },
+      {
+        "name": "cn_stock_factors_financial_items",
+        "cn_name": "财务科目",
+        "desc": "该表提供了A股市场上市公司的财务科目因子（日频），这些数据反映了公司的财务状况和经营成果。包括但不限于资产、负债、所有者权益、收入、成本、利润、现金流量以及部分指标的增长情况等多个维度的最新一期、最新年报、单季度和滚动十二期数据。",
+        "update_time": "2026-03-30 17:23:32",
+        "tag": "注册免费试用",
+        "badge": "Beta"
+      },
+      {
+        "name": "cn_stock_factors_financial_indicators",
+        "cn_name": "财务指标",
+        "desc": "该表提供了A股市场上市公司的核心财务指标（日频），包括毛利润、经营活动净收益、价值变动净收益、利息费用、扣非净利润、基本每股收益，以及部分指标的复合增长率等关键指标的最新一期、单季度、滚动十二期数据。这些财务指标能够用于评估公司的成长能力、资本结构、偿债能力、盈利能力和收益质量等。",
+        "update_time": "2026-03-30 17:25:14",
+        "tag": "注册免费试用",
+        "badge": "Beta"
+      },
+      {
+        "name": "cn_stock_factors_hf",
+        "cn_name": "高频因子",
+        "desc": "该表收录了A股股票的一些高频因子。",
+        "update_time": "2026-03-30 17:24:04",
+        "tag": "注册免费试用",
+        "badge": "Alpha"
+      },
+      {
+        "name": "cn_stock_factors_auction",
+        "cn_name": "集合竞价因子",
+        "desc": "",
+        "update_time": "2026-03-30 17:02:18",
+        "tag": "注册免费试用",
+        "badge": "Alpha"
+      },
+      {
+        "name": "cn_stock_factors_style_bq",
+        "cn_name": "风格因子",
+        "desc": "宽邦自建的风格因子库，包括：波动因子、红利因子、贝塔因子、基本面因子、质量因子、动量因子、估值因子、成长因子。每个因子的计算是以中证相关指数为基础进行调整，详细见文档。",
+        "update_time": "2026-03-28 01:14:56",
+        "tag": "注册免费试用",
+        "badge": "Alpha"
+      },
+      {
+        "name": "cn_stock_factors_shareholder",
+        "cn_name": "股东因子",
+        "desc": "",
+        "update_time": "2026-03-30 17:02:50",
+        "tag": "注册免费试用",
+        "badge": "Alpha"
+      },
+      {
+        "name": "cn_stock_factors_base",
+        "cn_name": "基础因子",
+        "desc": "该表收录了A股股票的基础因子，包含但不限于成交量、成交金额、OHLC（开高低收，均为后复权值）、涨跌停状态、ST状态、市值、股本、上市天数、行业代码、停牌标记、是否属于特定指数等。此外，还包括了与融资融券相关的数据，以及股票各大指数的成交情况。",
+        "update_time": "2026-03-30 17:25:47",
+        "tag": "注册免费使用",
+        "badge": "Beta"
+      },
+      {
+        "name": "cn_stock_factors_industry",
+        "cn_name": "行业因子",
+        "desc": "",
+        "update_time": "2026-03-30 18:01:09",
+        "tag": "注册免费使用",
+        "badge": ""
+      },
+      {
+        "name": "cn_stock_money_flow",
+        "cn_name": "个股资金流",
+        "desc": "该表收录了上市公司股票的资金流数据，记录了不同规模的交易单据（超大单、大单、中单、小单）的资金流向，包括各类单据的流出、净流入量及其占比，以及主力资金的净流入量和占比。建议使用新版资金流因子：[资金流因子链接](https://bigquant.com/data/datasources/cn_stock_moneyflow)",
+        "update_time": "2026-03-30 17:08:42",
+        "tag": "注册免费试用",
+        "badge": ""
+      },
+      {
+        "name": "cn_stock_money_flow_old",
+        "cn_name": "旧版资金流数据",
+        "desc": "该表是个股资金流的旧版记录，提供了上市股票资金流的数据，包括不同规模交易单据的资金流入流出情况及其占比，以及主力资金的净流入量和占比。建议使用新版资金流因子：[资金流因子链接](https://bigquant.com/data/datasources/cn_stock_moneyflow)",
+        "update_time": "2026-03-30 17:45:16",
+        "tag": "注册免费试用",
+        "badge": ""
+      },
+      {
+        "name": "cn_stock_factors",
+        "cn_name": "旧版预计算因子",
+        "desc": "该表未来会弃用，不建议使用，请大家使用：https://bigquant.com/data/datasources/cn_stock_prefactors",
+        "update_time": "2026-03-30 17:25:47",
+        "tag": "注册免费试用",
+        "badge": ""
+      },
+      {
+        "name": "cn_stock_prefactors_community",
+        "cn_name": "预计算因子（社区版）",
+        "desc": "该表是预计算因子表（cn_stock_prefactors）的社区版本，包含：量价、基本信息、估值、指数、技术指标等。该表是个view，注意带时间窗口因子的使用，详见文档。为了方便筛选和展示，该表前端页面不展示数量过多的技术指标因子，相关字段查询可去以下页面查看：[技术指标因子](https://bigquant.com/data/datasources/cn_stock_factors_ta \"点击访问\")",
+        "update_time": "2026-03-30 17:25:46",
+        "tag": "注册免费使用",
+        "badge": ""
+      },
+      {
+        "name": "cn_stock_valuation_community",
+        "cn_name": "估值指标（社区版）",
+        "desc": "",
+        "update_time": "2026-03-30 17:25:46",
+        "tag": "注册免费使用",
+        "badge": "Beta"
+      },
+      {
+        "name": "cn_stock_factors_ai",
+        "cn_name": "AI因子",
+        "desc": "",
+        "update_time": "2026-03-30 17:07:28",
+        "tag": "注册免费试用",
+        "badge": ""
+      },
+      {
+        "name": "cn_stock_factors_financial_extend",
+        "cn_name": "财务因子（社区版）",
+        "desc": "",
+        "update_time": "2026-03-30 17:25:39",
+        "tag": "注册免费使用",
+        "badge": ""
+      }
+    ],
     "研报因子": [
       {
         "name": "hf_alpha_fzzq",
