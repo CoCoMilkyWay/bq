@@ -1,0 +1,214 @@
+module: pdm
+display_name: "PDM Decimation Filter"
+condition:
+  any_of:
+    - "pdm.A.imp"
+    - "pdm.B.imp"
+
+overview: |
+  The PDM (Pulse Density Modulation) Decimation Filter is a multi-stage digital filter that converts
+  high-speed 1-bit PDM streams from digital MEMS microphones into standard multi-bit PCM samples.
+  It implements a complete signal processing chain including CIC decimation, programmable FIR filtering,
+  and DC offset removal (HPF).
+
+  Each PDM instance supports up to `{chan_num}` channels, enabling microphone arrays for beamforming,
+  noise cancellation, and spatial audio capture. The filter architecture is optimized for low-power
+  always-on voice detection and high-quality audio recording.
+
+features: |
+  - Supports up to `{chan_num}` parallel PDM channels per instance.
+  - Configurable CIC (Cascaded Integrator-Comb) filter: 3-9 stages with programmable decimation ratio.
+  - Three programmable low-pass FIR filter stages (F1/F2/F3) with shared coefficient RAM (336×24 bits).
+  - High-pass filter (HPF) for DC offset removal (microphone bias drift compensation).
+  - Programmable OSR (Oversampling Ratio): 64, 128, 192, 256 (PDM_CLK = fs × OSR).
+  - Per-channel sample phase adjustment for microphone array alignment.
+  - Configurable output format: 24-bit or 32-bit PCM.
+  - Per-channel mute control.
+  - Bypass mode for raw PDM passthrough (debug/test).
+  - Training mode for microphone functional verification.
+  - Comprehensive clock gating for power optimization.
+  - AFIFO for clock domain crossing (PDM_CLK → sysclk).
+
+block_diagram:
+  images:
+    - pdm_0.png
+    - pdm_1.png
+  description: "PDM Decimation Filter Architecture and Channel Structure"
+
+function_description: |
+  **PDM Microphone Sigma-Delta Modulation:**
+
+  PDM microphones use Sigma-Delta (Σ-Δ) modulation internally:
+  - Input: Analog voltage from MEMS membrane
+  - Output: 1-bit PDM stream at 1~3.25 MHz (typical 2.4 MHz)
+  - Noise shaping pushes quantization noise to high frequencies
+
+  First-order Σ-Δ transfer function:
+  ```
+  Y(z) = X(z) + (1 - z⁻¹)·E(z)
+         ─────   ─────────────
+          STF        NTF
+  
+  STF(z) = 1              (signal: direct passthrough)
+  NTF(z) = 1 - z⁻¹        (noise: high-pass shaped)
+  ```
+
+  **PDM Left/Right Channel Timing (TDM):**
+
+  PDM mics share one data line via time-division:
+  ```
+  pdm_dclk: ┌─────┐       ┌─────┐       ┌─────┐
+          ──┘     └───────┘     └───────┘     └──
+            │  R  │   L   │  R  │   L   │
+  pdm_din:  ══R0══╪══L0═══╪══R1═╪══L1═══╪
+  
+  CLK=1 (rising edge): R channel valid
+  CLK=0 (falling edge): L channel valid
+  ```
+
+  Channel mapping (4 PDM lines → 8 channels):
+
+  | pdm_din | Even ch (rise) | Odd ch (fall) |
+  |---------|----------------|---------------|
+  | din[0] | ch0 (R) | ch1 (L) |
+  | din[1] | ch2 (R) | ch3 (L) |
+  | din[2] | ch4 (R) | ch5 (L) |
+  | din[3] | ch6 (R) | ch7 (L) |
+
+  **Signal Processing Chain:**
+
+  ```
+  PDM Bitstream → HCIC (CIC) → F1 (FIR) → F2 (FIR) → F3 (FIR) → HPF → AFIFO → PCM
+                    ↓            ↓          ↓          ↓
+                 Decimation   Decimation  Decimation  DC Remove
+  ```
+
+  **1. HCIC (Cascaded Integrator-Comb) Filter:**
+
+  N-stage CIC transfer function:
+  ```
+  H_CIC(z) = [(1 - z^{-R}) / (1 - z^{-1})]^N
+  
+  DC gain: R^N (requires normalization via hcic_gain_shift)
+  ```
+
+  Register configuration:
+  - `hcic_stage` (3-9): Number of integrator/comb stages
+  - `hcic_ds_rate`: Decimation ratio R
+  - `hcic_gain_mult`, `hcic_gain_shift`: Output scaling to compensate R^N gain
+
+  **2. Low-Pass FIR Filters (F1/F2/F3):**
+
+  Three cascaded FIR stages:
+  - Shared coefficient memory: 336×24 bits via `PDM_COEFF_ADDR/DATA`
+  - Per-stage: enable, decimation ratio, tap count, rounding mode
+
+  | Stage | Register | Typical Use |
+  |-------|----------|-------------|
+  | F1 | `PDM_F1_CTRL` | Main anti-alias, 2-4× decimation |
+  | F2 | `PDM_F2_CTRL` | Transition shaping, 2× decimation |
+  | F3 | `PDM_F3_CTRL` | Final passband, 1× (optional) |
+
+  **3. High-Pass Filter (HPF):**
+
+  Single-pole IIR HPF for DC removal:
+  ```
+  y[n] = x[n] - x[n-1] + α·y[n-1]
+  α = 1 - 2^(-hpf_shift)    (hpf_shift: 6~19)
+  ```
+
+  Typical cutoff: 20-100 Hz (higher shift = lower cutoff)
+
+  **4. Training Mode:**
+
+  Microphone presence detection via signal variation:
+  - `train_en = 1`: Enable training
+  - Hardware XORs consecutive samples: `sinc_in_xor = sample[n] ^ sample[n-1]`
+  - `train_result[7:0]`: bit=1 means signal varies (mic OK), bit=0 means stuck
+
+  **5. Channel Phase Alignment:**
+
+  Per-channel sample pointer (`chan0_ptr` ~ `chan7_ptr`):
+  - Adjusts sample timing relative to PDM_DCLK edge
+  - Compensates physical mic placement for beamforming
+  - `filter_start_ptr`: When to start filter after clock edge
+
+  **Key Registers:**
+
+  | Register | Function |
+  |----------|----------|
+  | `PDM_CTRL` | pdm_en, dclk_inv, out_mode, bypass, mute_mask, train_en/clr, chan_en |
+  | `PDM_HCIC_CTRL1` | hcic_en, hcic_stage, hcic_ds_rate, hcic_gain_mult/shift |
+  | `PDM_F1/F2/F3_CTRL` | f1/f2/f3_en, ds_rate, stage, round_mode |
+  | `PDM_HPF_CTRL` | hpf_en, hpf_shift, hpf_out_factor |
+  | `PDM_CHAN_CTRL/1/2` | chan0~7_ptr, filter_start_ptr |
+  | `PDM_CLKG_CTRL` | Per-module clock gating for power savings |
+  | `PDM_STS` | afifo_cnt, train_result, hpf_overflow, hcic_overflow |
+
+  **SNR Estimation:**
+
+  For N-order Σ-Δ with OSR = fs_pdm/(2·B):
+  ```
+  SNR ≈ 6.02·(N+0.5)·log₂(OSR) + constant
+  
+  Each 2× OSR: +9 dB SNR (for 1st order)
+  ```
+
+  Typical: OSR=64, 1st-order mic → ~50 dB raw, CIC+FIR → 60-80 dB final
+
+  **Decimation Example (48kHz Output):**
+
+  | Parameter | Value | Description |
+  |-----------|-------|-------------|
+  | PDM_CLK | 3.072 MHz | Input bitstream rate |
+  | OSR | 64 | Oversampling ratio |
+  | Output Fs | 48 kHz | 3.072M / 64 = 48k |
+  | HCIC stages | 5 | CIC filter order |
+  | HCIC ds_rate | 8 | CIC decimation 8× |
+  | F1 ds_rate | 4 | FIR1 decimation 4× |
+  | F2 ds_rate | 2 | FIR2 decimation 2× |
+  | Total | 64× | 8 × 4 × 2 = 64 |
+
+application_notes:
+  - title: "Single Digital Microphone (48kHz, 24-bit)"
+    steps: |
+      - Set PDM_CLK = 3.072 MHz (48k × 64 OSR).
+      - Configure `chan_en = 0x01` for channel 0 only.
+      - Set `hcic_stage = 5`, `hcic_ds_rate = 8`.
+      - Load FIR coefficients via APB (typical PDM filter set).
+      - Configure F1/F2 for remaining 8× decimation.
+      - Enable `hpf_en = 1`, `hpf_shift = 12` (~40Hz cutoff).
+      - Set `out_mode = 1` for 24-bit output.
+      - Route to TODDR for capture.
+
+  - title: "Dual Microphone Array (16kHz Voice)"
+    steps: |
+      - Set PDM_CLK = 1.024 MHz (16k × 64 OSR).
+      - Enable `chan_en = 0x03` for channels 0 and 1.
+      - Adjust `chan0_ptr` and `chan1_ptr` for inter-mic delay.
+      - Configure decimation for 64× total reduction.
+      - HPF cutoff can be higher (~100Hz) for voice.
+
+  - title: "8-Channel Microphone Array (Beamforming)"
+    steps: |
+      - Use PDM_A with `chan_num = 8`.
+      - Set PDM_CLK for desired sample rate.
+      - Calibrate `chan0_ptr` ~ `chan7_ptr` for physical mic positions.
+      - All channels share same filter configuration.
+      - Route 8-ch output to TODDR for DSP processing.
+
+  - title: "FIR Coefficient Loading"
+    steps: |
+      - Compute coefficients using filter design tool (Parks-McClellan, etc.).
+      - Write coefficient count to F1/F2/F3 `stage` registers.
+      - For each coefficient: write index to `PDM_COEFF_ADDR`, write value to `PDM_COEFF_DATA`.
+      - Verify by reading back via same address port.
+
+  - title: "Training Mode (Microphone Verification)"
+    steps: |
+      - Set `train_en = 1` to enable training.
+      - Training monitors PDM input for valid toggling.
+      - Read `train_result` in PDM_STS after settling.
+      - Bit = 0: mic ok (signal varies), Bit = 1: mic stuck (no toggle).
+      - Clear with `train_clr = 1` before next test.
+
