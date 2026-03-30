@@ -23,27 +23,7 @@ DATA_FREQ_OVERRIDES = {
         "cn_stock_bar60m", "cn_stock_bar60m_c", "cn_stock_bar60m_derived",
         "cn_stock_moneyflow_ns",
         "cn_stock_index_bar1m",
-    ],
-    "季频": [
-        "cn_stock_shareholder", "cn_stock_shareholder_change", "cn_stock_shareholder_top10", "cn_stock_top10_float_shareholder",
-        "cn_stock_financial_balance_general_pit", "cn_stock_financial_cashflow_general_pit", "cn_stock_financial_income_general_pit",
-        "cn_stock_financial_changedate",
-        "cn_stock_financial_note_financial_expense", "cn_stock_financial_note_goodwill", "cn_stock_financial_note_impairment_loss",
-        "cn_stock_financial_note_income_tax", "cn_stock_financial_note_investment_income", "cn_stock_financial_note_margin_business",
-        "cn_stock_financial_note_nonrecurring_gain_loss", "cn_stock_financial_note_supplier_customer",
-        "cn_stock_financial_lf_shift", "cn_stock_financial_ly_shift", "cn_stock_financial_mrq_shift",
-        "cn_stock_financial_notes_shift", "cn_stock_financial_ttm_shift",
-        "cn_stock_financial_capital", "cn_stock_financial_cash_flow", "cn_stock_financial_debt_repay",
-        "cn_stock_financial_derivative", "cn_stock_financial_earning_quality", "cn_stock_financial_growth",
-        "cn_stock_financial_operating", "cn_stock_financial_profitability", "cn_stock_financial_xps",
-    ],
-    "不定期": [
-        "cn_stock_allotment", "cn_stock_dividend", "cn_stock_name_change", "cn_stock_suspend",
-        "cn_stock_index_change", "cn_stock_industry_change",
-    ],
-    "tick级": [
-        "cn_stock_chips_distribution",
-    ],
+    ]
 }
 
 def load_json(path: str) -> dict:
@@ -122,7 +102,7 @@ def format_markdown(tables: list[dict]) -> str:
         desc = t.get('desc', '').replace('\n', ' ').replace('|', '\\|')
         
         fee = '免费' if '免费' in tag else '旗舰版'
-        stable = '稳定' if badge in ('', 'Beta') else badge
+        stable = '稳定' if badge == '' else badge
         data_freq = '日频'
         for freq, names in DATA_FREQ_OVERRIDES.items():
             if name in names:
