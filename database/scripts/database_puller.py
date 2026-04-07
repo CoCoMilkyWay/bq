@@ -25,7 +25,7 @@ def parse_table_names(md_path: Path) -> list[str]:
 
 
 def query_table_schema(table_name: str) -> str:
-    result = dai.query(f"SELECT * FROM {table_name} LIMIT 1")
+    result = dai.query(f"SELECT * FROM {table_name} LIMIT 1", full_db_scan=True)
     df = result.df()
 
     lines = []
