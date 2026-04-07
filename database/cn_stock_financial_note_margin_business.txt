@@ -1,0 +1,78 @@
+               column_name  column_type
+                instrument      VARCHAR
+                      date TIMESTAMP_NS
+               report_date TIMESTAMP_NS
+               change_type      TINYINT
+        name_by_industry_1      VARCHAR
+     revenue_by_industry_1       DOUBLE
+        cost_by_industry_1       DOUBLE
+      profit_by_industry_1       DOUBLE
+profit_ratio_by_industry_1       DOUBLE
+        name_by_industry_2      VARCHAR
+     revenue_by_industry_2       DOUBLE
+        cost_by_industry_2       DOUBLE
+      profit_by_industry_2       DOUBLE
+profit_ratio_by_industry_2       DOUBLE
+        name_by_industry_3      VARCHAR
+     revenue_by_industry_3       DOUBLE
+        cost_by_industry_3       DOUBLE
+      profit_by_industry_3       DOUBLE
+profit_ratio_by_industry_3       DOUBLE
+        name_by_industry_4      VARCHAR
+     revenue_by_industry_4       DOUBLE
+        cost_by_industry_4       DOUBLE
+      profit_by_industry_4       DOUBLE
+profit_ratio_by_industry_4       DOUBLE
+        name_by_industry_5      VARCHAR
+     revenue_by_industry_5       DOUBLE
+        cost_by_industry_5       DOUBLE
+      profit_by_industry_5       DOUBLE
+profit_ratio_by_industry_5       DOUBLE
+         name_by_product_1      VARCHAR
+      revenue_by_product_1       DOUBLE
+         cost_by_product_1       DOUBLE
+       profit_by_product_1       DOUBLE
+ profit_ratio_by_product_1       DOUBLE
+         name_by_product_2      VARCHAR
+      revenue_by_product_2       DOUBLE
+         cost_by_product_2       DOUBLE
+       profit_by_product_2       DOUBLE
+ profit_ratio_by_product_2       DOUBLE
+         name_by_product_3      VARCHAR
+      revenue_by_product_3       DOUBLE
+         cost_by_product_3       DOUBLE
+       profit_by_product_3       DOUBLE
+ profit_ratio_by_product_3       DOUBLE
+         name_by_product_4      VARCHAR
+      revenue_by_product_4       DOUBLE
+         cost_by_product_4       DOUBLE
+       profit_by_product_4       DOUBLE
+ profit_ratio_by_product_4       DOUBLE
+         name_by_product_5      VARCHAR
+      revenue_by_product_5       DOUBLE
+         cost_by_product_5       DOUBLE
+       profit_by_product_5       DOUBLE
+ profit_ratio_by_product_5       DOUBLE
+        name_by_district_1      VARCHAR
+     revenue_by_district_1       DOUBLE
+        cost_by_district_1       DOUBLE
+      profit_by_district_1       DOUBLE
+profit_ratio_by_district_1       DOUBLE
+        name_by_district_2      VARCHAR
+     revenue_by_district_2       DOUBLE
+        cost_by_district_2       DOUBLE
+      profit_by_district_2       DOUBLE
+profit_ratio_by_district_2       DOUBLE
+        name_by_district_3      VARCHAR
+     revenue_by_district_3       DOUBLE
+        cost_by_district_3       DOUBLE
+      profit_by_district_3       DOUBLE
+profit_ratio_by_district_3       DOUBLE
+        name_by_district_4      VARCHAR
+     revenue_by_district_4       DOUBLE
+        cost_by_district_4       DOUBLE
+      profit_by_district_4       DOUBLE
+profit_ratio_by_district_4       DOUBLE
+        name_by_district_5      VARCHAR
+     revenue_by_district_5       DOUBLE
+        cost_by_district_5       DOUBLE

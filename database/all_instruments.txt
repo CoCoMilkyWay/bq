@@ -1,0 +1,5 @@
+  column_name column_type
+   instrument     VARCHAR
+instrument_id     INTEGER
+ product_code     TINYINT
+ product_name     VARCHAR

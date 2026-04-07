@@ -1,0 +1,11 @@
+    column_name  column_type
+           date TIMESTAMP_NS
+     instrument      VARCHAR
+    report_date TIMESTAMP_NS
+   publish_date TIMESTAMP_NS
+     bonus_rate       DOUBLE
+ conversed_rate       DOUBLE
+cash_before_tax       DOUBLE
+ cash_after_tax       DOUBLE
+  register_date TIMESTAMP_NS
+        ex_date TIMESTAMP_NS

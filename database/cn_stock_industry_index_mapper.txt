@@ -1,0 +1,5 @@
+         column_name column_type
+industry_level1_code     VARCHAR
+industry_level1_name     VARCHAR
+   index_level1_code     VARCHAR
+                kind     VARCHAR

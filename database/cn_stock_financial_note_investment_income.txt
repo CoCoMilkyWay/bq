@@ -1,0 +1,16 @@
+                                          column_name  column_type
+                                                 date TIMESTAMP_NS
+                                           instrument      VARCHAR
+                                          report_date TIMESTAMP_NS
+                                          change_type      TINYINT
+    long_term_equity_investment_income_by_cost_method       DOUBLE
+  long_term_equity_investment_income_by_equity_method       DOUBLE
+invest_income_from_saling_long_term_equity_investment       DOUBLE
+          invest_income_from_helding_financial_assets       DOUBLE
+          invest_income_from_helding_held_to_maturity       DOUBLE
+          invest_income_from_helding_salesable_assets       DOUBLE
+         invest_income_from_diposing_financial_assets       DOUBLE
+         invest_income_from_diposing_held_to_maturity       DOUBLE
+         invest_income_from_diposing_salesable_assets       DOUBLE
+                             invest_income_from_other       DOUBLE
+                                  total_invest_income       DOUBLE

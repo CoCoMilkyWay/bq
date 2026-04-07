@@ -1,0 +1,7 @@
+     column_name  column_type
+            date TIMESTAMP_NS
+      instrument      VARCHAR
+           score       DOUBLE
+            rank       BIGINT
+     rank_change       BIGINT
+rank_change_rank       BIGINT

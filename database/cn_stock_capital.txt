@@ -1,0 +1,17 @@
+   column_name  column_type
+    instrument      VARCHAR
+  publish_date TIMESTAMP_NS
+   change_date TIMESTAMP_NS
+        reason      VARCHAR
+  total_shares       DOUBLE
+       float_a       DOUBLE
+       float_b       DOUBLE
+  restricted_a       DOUBLE
+  restricted_b       DOUBLE
+ prefer_shares       DOUBLE
+     shares_hk       DOUBLE
+ shares_aboard       DOUBLE
+shares_a_total       DOUBLE
+shares_b_total       DOUBLE
+   float_total       DOUBLE
+    rest_total       DOUBLE

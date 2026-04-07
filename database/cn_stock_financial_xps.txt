@@ -1,0 +1,45 @@
+                      column_name  column_type
+                             date TIMESTAMP_NS
+                       instrument      VARCHAR
+                      report_date TIMESTAMP_NS
+                            shift      TINYINT
+                 basic_eps_raw_lf       DOUBLE
+      basic_eps_period_capital_lf       DOUBLE
+     basic_eps_period_capital_mrq       DOUBLE
+     basic_eps_period_capital_ttm       DOUBLE
+      basic_eps_latest_capital_lf       DOUBLE
+     basic_eps_latest_capital_mrq       DOUBLE
+     basic_eps_latest_capital_ttm       DOUBLE
+               diluted_eps_raw_lf       DOUBLE
+ real_basic_eps_period_capital_lf       DOUBLE
+real_basic_eps_period_capital_mrq       DOUBLE
+real_basic_eps_period_capital_ttm       DOUBLE
+ real_basic_eps_latest_capital_lf       DOUBLE
+real_basic_eps_latest_capital_mrq       DOUBLE
+real_basic_eps_latest_capital_ttm       DOUBLE
+                           bps_lf       DOUBLE
+              total_revenue_ps_lf       DOUBLE
+             total_revenue_ps_mrq       DOUBLE
+             total_revenue_ps_ttm       DOUBLE
+                    revenue_ps_lf       DOUBLE
+                   revenue_ps_mrq       DOUBLE
+                   revenue_ps_ttm       DOUBLE
+           capital_reserves_ps_lf       DOUBLE
+            surplus_reserve_ps_lf       DOUBLE
+       undistributed_profit_ps_lf       DOUBLE
+            retained_income_ps_lf       DOUBLE
+                        cce_ps_lf       DOUBLE
+                       cce_ps_mrq       DOUBLE
+                       cce_ps_ttm       DOUBLE
+                       ebit_ps_lf       DOUBLE
+                      ebit_ps_mrq       DOUBLE
+                      ebit_ps_ttm       DOUBLE
+                     ebitda_ps_lf       DOUBLE
+                    ebitda_ps_mrq       DOUBLE
+                    ebitda_ps_ttm       DOUBLE
+                       fcff_ps_lf       DOUBLE
+                      fcff_ps_mrq       DOUBLE
+                      fcff_ps_ttm       DOUBLE
+                       fcfe_ps_lf       DOUBLE
+                      fcfe_ps_mrq       DOUBLE
+                      fcfe_ps_ttm       DOUBLE

@@ -1,0 +1,75 @@
+                                  column_name  column_type
+                                         date TIMESTAMP_NS
+                                   instrument      VARCHAR
+                            total_shareholder       DOUBLE
+                        total_shareholder_chg       DOUBLE
+                                a_shareholder       DOUBLE
+                            a_shareholder_chg       DOUBLE
+                  avg_share_per_account_total       DOUBLE
+              avg_share_per_account_total_chg       DOUBLE
+            avg_share_ratio_per_account_total       DOUBLE
+        avg_share_ratio_per_account_total_chg       DOUBLE
+                  avg_share_per_account_float       DOUBLE
+              avg_share_per_account_float_chg       DOUBLE
+            avg_share_ratio_per_account_float       DOUBLE
+        avg_share_ratio_per_account_float_chg       DOUBLE
+                     total_shareholder_chg_1q       DOUBLE
+                     total_shareholder_chg_2q       DOUBLE
+                     total_shareholder_chg_3q       DOUBLE
+                     total_shareholder_chg_4q       DOUBLE
+                         a_shareholder_chg_1q       DOUBLE
+                         a_shareholder_chg_2q       DOUBLE
+                         a_shareholder_chg_3q       DOUBLE
+                         a_shareholder_chg_4q       DOUBLE
+           avg_share_per_account_total_chg_1q       DOUBLE
+           avg_share_per_account_total_chg_2q       DOUBLE
+           avg_share_per_account_total_chg_3q       DOUBLE
+           avg_share_per_account_total_chg_4q       DOUBLE
+     avg_share_ratio_per_account_total_chg_1q       DOUBLE
+     avg_share_ratio_per_account_total_chg_2q       DOUBLE
+     avg_share_ratio_per_account_total_chg_3q       DOUBLE
+     avg_share_ratio_per_account_total_chg_4q       DOUBLE
+           avg_share_per_account_float_chg_1q       DOUBLE
+           avg_share_per_account_float_chg_2q       DOUBLE
+           avg_share_per_account_float_chg_3q       DOUBLE
+           avg_share_per_account_float_chg_4q       DOUBLE
+     avg_share_ratio_per_account_float_chg_1q       DOUBLE
+     avg_share_ratio_per_account_float_chg_2q       DOUBLE
+     avg_share_ratio_per_account_float_chg_3q       DOUBLE
+     avg_share_ratio_per_account_float_chg_4q       DOUBLE
+                       rank_total_shareholder       DOUBLE
+                   rank_total_shareholder_chg       DOUBLE
+                           rank_a_shareholder       DOUBLE
+                       rank_a_shareholder_chg       DOUBLE
+             rank_avg_share_per_account_total       DOUBLE
+         rank_avg_share_per_account_total_chg       DOUBLE
+       rank_avg_share_ratio_per_account_total       DOUBLE
+   rank_avg_share_ratio_per_account_total_chg       DOUBLE
+             rank_avg_share_per_account_float       DOUBLE
+         rank_avg_share_per_account_float_chg       DOUBLE
+       rank_avg_share_ratio_per_account_float       DOUBLE
+   rank_avg_share_ratio_per_account_float_chg       DOUBLE
+                rank_total_shareholder_chg_1q       DOUBLE
+                rank_total_shareholder_chg_2q       DOUBLE
+                rank_total_shareholder_chg_3q       DOUBLE
+                rank_total_shareholder_chg_4q       DOUBLE
+                    rank_a_shareholder_chg_1q       DOUBLE
+                    rank_a_shareholder_chg_2q       DOUBLE
+                    rank_a_shareholder_chg_3q       DOUBLE
+                    rank_a_shareholder_chg_4q       DOUBLE
+      rank_avg_share_per_account_total_chg_1q       DOUBLE
+      rank_avg_share_per_account_total_chg_2q       DOUBLE
+      rank_avg_share_per_account_total_chg_3q       DOUBLE
+      rank_avg_share_per_account_total_chg_4q       DOUBLE
+rank_avg_share_ratio_per_account_total_chg_1q       DOUBLE
+rank_avg_share_ratio_per_account_total_chg_2q       DOUBLE
+rank_avg_share_ratio_per_account_total_chg_3q       DOUBLE
+rank_avg_share_ratio_per_account_total_chg_4q       DOUBLE
+      rank_avg_share_per_account_float_chg_1q       DOUBLE
+      rank_avg_share_per_account_float_chg_2q       DOUBLE
+      rank_avg_share_per_account_float_chg_3q       DOUBLE
+      rank_avg_share_per_account_float_chg_4q       DOUBLE
+rank_avg_share_ratio_per_account_float_chg_1q       DOUBLE
+rank_avg_share_ratio_per_account_float_chg_2q       DOUBLE
+rank_avg_share_ratio_per_account_float_chg_3q       DOUBLE
+rank_avg_share_ratio_per_account_float_chg_4q       DOUBLE

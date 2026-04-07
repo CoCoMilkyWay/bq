@@ -1,0 +1,13 @@
+              column_name  column_type
+                     date TIMESTAMP_NS
+               instrument      VARCHAR
+              report_date TIMESTAMP_NS
+              change_type       BIGINT
+            interest_cost       DOUBLE
+interest_cost_capitalized       DOUBLE
+          interest_income       DOUBLE
+            exchange_gain       DOUBLE
+              charge_free       DOUBLE
+              capitalized       DOUBLE
+                    other       DOUBLE
+                  special       DOUBLE

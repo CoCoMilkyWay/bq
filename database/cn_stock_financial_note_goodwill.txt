@@ -1,0 +1,8 @@
+        column_name  column_type
+               date TIMESTAMP_NS
+         instrument      VARCHAR
+        report_date TIMESTAMP_NS
+        change_type       BIGINT
+original_book_value       DOUBLE
+  impairment_amount       DOUBLE
+         book_value       DOUBLE

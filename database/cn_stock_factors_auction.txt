@@ -1,0 +1,25 @@
+               column_name  column_type
+                      date TIMESTAMP_NS
+                instrument      VARCHAR
+ open_auction_order_volume       DOUBLE
+ open_auction_order_amount       DOUBLE
+ open_auction_trade_volume       DOUBLE
+ open_auction_trade_amount       DOUBLE
+open_auction_cancel_volume       DOUBLE
+  open_auction_trade_price       DOUBLE
+      open_order_price_max       DOUBLE
+      open_order_price_min       DOUBLE
+     open_auction_turnover       DOUBLE
+     open_auction_limit_up      INTEGER
+    open_auction_limit_low      INTEGER
+    open_auction_amplitude       DOUBLE
+    overnight_change_ratio       DOUBLE
+close_auction_order_volume       DOUBLE
+close_auction_order_amount       DOUBLE
+close_auction_trade_volume       DOUBLE
+close_auction_trade_amount       DOUBLE
+ close_auction_trade_price       DOUBLE
+     close_order_price_max       DOUBLE
+     close_order_price_min       DOUBLE
+    close_auction_turnover       DOUBLE
+   close_auction_amplitude       DOUBLE

@@ -1,0 +1,17 @@
+    column_name  column_type
+       username      VARCHAR
+     plain_text      VARCHAR
+         source      VARCHAR
+         region      VARCHAR
+       at_users      VARCHAR
+         topics      VARCHAR
+  reposts_count       BIGINT
+ comments_count       BIGINT
+attitudes_count       BIGINT
+      posted_at TIMESTAMP_NS
+    upldated_at TIMESTAMP_NS
+         origin      BOOLEAN
+      blog_type      VARCHAR
+             id      VARCHAR
+        user_id      VARCHAR
+            bid      VARCHAR

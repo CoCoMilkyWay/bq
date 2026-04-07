@@ -1,0 +1,5 @@
+   column_name  column_type
+    instrument      VARCHAR
+   report_date TIMESTAMP_NS
+    changedate      VARCHAR
+statement_type      VARCHAR

@@ -1,0 +1,10 @@
+         column_name column_type
+            industry     VARCHAR
+industry_level1_name     VARCHAR
+industry_level1_code     VARCHAR
+industry_level2_name     VARCHAR
+industry_level2_code     VARCHAR
+industry_level3_name     VARCHAR
+industry_level3_code     VARCHAR
+industry_level4_code     VARCHAR
+industry_level4_name     VARCHAR

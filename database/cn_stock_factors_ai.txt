@@ -1,0 +1,13 @@
+    column_name  column_type
+           date TIMESTAMP_NS
+     instrument      VARCHAR
+         vp_cnn       DOUBLE
+         vp_dnn       DOUBLE
+         vp_gru       DOUBLE
+    vp_lightgbm       DOUBLE
+        vp_lstm       DOUBLE
+vp_randomforest       DOUBLE
+      vp_resnet       DOUBLE
+         vp_rnn       DOUBLE
+ vp_stockranker       DOUBLE
+     vp_xgboost       DOUBLE

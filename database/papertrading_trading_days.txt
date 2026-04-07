@@ -1,0 +1,3 @@
+column_name  column_type
+       date TIMESTAMP_NS
+market_code      VARCHAR

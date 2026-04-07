@@ -1,0 +1,13 @@
+                          column_name  column_type
+                                 date TIMESTAMP_NS
+                           instrument      VARCHAR
+                          report_date TIMESTAMP_NS
+                          change_type      TINYINT
+                   current_income_tax       DOUBLE
+income_tax_adjust_from_previous_years       DOUBLE
+                     defer_income_tax       DOUBLE
+                            other_tax       DOUBLE
+                            total_tax       DOUBLE
+          current_income_tax_mainland       DOUBLE
+          current_income_tax_hongkong       DOUBLE
+           current_income_tax_foreign       DOUBLE

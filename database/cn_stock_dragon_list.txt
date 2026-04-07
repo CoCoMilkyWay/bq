@@ -1,0 +1,18 @@
+      column_name  column_type
+             date TIMESTAMP_NS
+       instrument      VARCHAR
+           reason      VARCHAR
+            close       DOUBLE
+     price_change       DOUBLE
+   net_buy_amount       DOUBLE
+       buy_amount       DOUBLE
+      sell_amount       DOUBLE
+      deal_amount       DOUBLE
+total_deal_amount       DOUBLE
+    net_buy_ratio       DOUBLE
+deal_amount_ratio       DOUBLE
+             turn       DOUBLE
+ float_market_cap       DOUBLE
+  price_change_1d       DOUBLE
+  price_change_2d       DOUBLE
+  price_change_5d       DOUBLE

@@ -1,0 +1,14 @@
+ column_name  column_type
+        date TIMESTAMP_NS
+  instrument      VARCHAR
+        name      VARCHAR
+   pre_close       DOUBLE
+        open       DOUBLE
+        high       DOUBLE
+         low       DOUBLE
+       close       DOUBLE
+      volume       DOUBLE
+      amount       DOUBLE
+      change       DOUBLE
+change_ratio       DOUBLE
+        turn       DOUBLE

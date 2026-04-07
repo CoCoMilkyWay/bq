@@ -1,0 +1,17 @@
+    column_name  column_type
+           date TIMESTAMP_NS
+     instrument      VARCHAR
+     begin_date TIMESTAMP_NS
+       end_date TIMESTAMP_NS
+fore_profit_min       DOUBLE
+fore_profit_max       DOUBLE
+      fore_type      TINYINT
+  pct_range_min       DOUBLE
+  pct_range_max       DOUBLE
+        news_id        FLOAT
+   fore_eps_min       DOUBLE
+   fore_eps_max       DOUBLE
+   fore_eps_avg       DOUBLE
+    fore_profit       DOUBLE
+        ex_date TIMESTAMP_NS
+         remark      VARCHAR

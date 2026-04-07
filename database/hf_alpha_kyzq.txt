@@ -1,0 +1,14 @@
+column_name  column_type
+       date TIMESTAMP_NS
+ instrument      VARCHAR
+alpha_93031       DOUBLE
+alpha_93032       DOUBLE
+alpha_93033       DOUBLE
+alpha_93036       DOUBLE
+alpha_93037       DOUBLE
+alpha_93038       DOUBLE
+alpha_93035       DOUBLE
+alpha_93034       DOUBLE
+alpha_93014       DOUBLE
+alpha_93015       DOUBLE
+alpha_93016       DOUBLE

@@ -1,0 +1,14 @@
+       column_name  column_type
+              date TIMESTAMP_NS
+        instrument      VARCHAR
+      mf_net_pct_l        FLOAT
+  mf_net_amount_xl       DOUBLE
+     mf_net_pct_xl        FLOAT
+      mf_net_pct_m        FLOAT
+   mf_net_amount_m       DOUBLE
+   mf_net_amount_l       DOUBLE
+     mf_net_amount       DOUBLE
+      mf_net_pct_s        FLOAT
+   mf_net_amount_s       DOUBLE
+   mf_net_pct_main        FLOAT
+mf_net_amount_main       DOUBLE

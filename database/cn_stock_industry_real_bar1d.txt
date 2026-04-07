@@ -1,0 +1,14 @@
+ column_name  column_type
+        date TIMESTAMP_NS
+  instrument      VARCHAR
+      method      TINYINT
+   pre_close       DOUBLE
+        open       DOUBLE
+       close       DOUBLE
+        high       DOUBLE
+         low       DOUBLE
+      volume       BIGINT
+ deal_number      INTEGER
+      amount       DOUBLE
+change_ratio       DOUBLE
+        turn       DOUBLE

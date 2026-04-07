@@ -1,0 +1,26 @@
+                         column_name  column_type
+                                date TIMESTAMP_NS
+                          instrument      VARCHAR
+                         report_date TIMESTAMP_NS
+                               shift      TINYINT
+                    debt_to_asset_lf       DOUBLE
+      interest_bearing_debt_ratio_lf       DOUBLE
+         debt_to_asset_no_advance_lf       DOUBLE
+    debt_to_asset_no_advance_both_lf       DOUBLE
+            noncurr_debt_to_asset_lf       DOUBLE
+        longterm_capital_suitable_lf       DOUBLE
+                equity_multiplier_lf       DOUBLE
+                 equity_to_assets_lf       DOUBLE
+      curr_assets_to_total_assets_lf       DOUBLE
+   noncurr_assets_to_total_assets_lf       DOUBLE
+  tangible_assets_to_total_assets_lf       DOUBLE
+           work_capital_to_assets_lf       DOUBLE
+       curr_liab_to_parent_equity_lf       DOUBLE
+    noncurr_liab_to_parent_equity_lf       DOUBLE
+       equity_to_invested_capital_lf       DOUBLE
+interest_debt_to_invested_capital_lf       DOUBLE
+          curr_liab_to_total_liab_lf       DOUBLE
+       noncurr_liab_to_total_liab_lf       DOUBLE
+      longterm_liab_to_total_liab_lf       DOUBLE
+                 invest_to_equity_lf       DOUBLE
+               fixed_capital_rate_lf       DOUBLE

@@ -1,0 +1,8 @@
+       column_name  column_type
+              date TIMESTAMP_NS
+        instrument      VARCHAR
+         st_status      TINYINT
+   is_risk_warning      TINYINT
+         suspended      TINYINT
+price_limit_status      TINYINT
+              exdr      TINYINT

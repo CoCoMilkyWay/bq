@@ -1,0 +1,8 @@
+column_name  column_type
+       date TIMESTAMP_NS
+     ggt_sh        FLOAT
+     ggt_sz        FLOAT
+      south        FLOAT
+        hgt        FLOAT
+        sgt        FLOAT
+      north        FLOAT

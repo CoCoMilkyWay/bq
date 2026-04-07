@@ -1,0 +1,23 @@
+                                column_name  column_type
+                                       date TIMESTAMP_NS
+                                 instrument      VARCHAR
+                                report_date TIMESTAMP_NS
+                                      shift      TINYINT
+    net_operating_profit_to_total_profit_lf       DOUBLE
+   net_operating_profit_to_total_profit_mrq       DOUBLE
+   net_operating_profit_to_total_profit_ttm       DOUBLE
+     profit_of_value_chg_to_total_profit_lf       DOUBLE
+    profit_of_value_chg_to_total_profit_mrq       DOUBLE
+    profit_of_value_chg_to_total_profit_ttm       DOUBLE
+ net_nonoperating_income_to_total_profit_lf       DOUBLE
+net_nonoperating_income_to_total_profit_mrq       DOUBLE
+net_nonoperating_income_to_total_profit_ttm       DOUBLE
+           invest_income_to_total_profit_lf       DOUBLE
+          invest_income_to_total_profit_mrq       DOUBLE
+          invest_income_to_total_profit_ttm       DOUBLE
+        operating_profit_to_total_profit_lf       DOUBLE
+       operating_profit_to_total_profit_mrq       DOUBLE
+       operating_profit_to_total_profit_ttm       DOUBLE
+       total_profit_to_operating_revenue_lf       DOUBLE
+      total_profit_to_operating_revenue_mrq       DOUBLE
+      total_profit_to_operating_revenue_ttm       DOUBLE

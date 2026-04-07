@@ -1,0 +1,4 @@
+column_name  column_type
+ instrument      VARCHAR
+       date TIMESTAMP_NS
+       name      VARCHAR

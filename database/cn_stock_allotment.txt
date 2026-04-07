@@ -1,0 +1,10 @@
+     column_name  column_type
+            date TIMESTAMP_NS
+      instrument      VARCHAR
+    publish_date TIMESTAMP_NS
+ allotment_price       DOUBLE
+  allotment_rate       DOUBLE
+allotment_shares       BIGINT
+   register_date TIMESTAMP_NS
+    exright_date TIMESTAMP_NS
+  allot_listdate TIMESTAMP_NS

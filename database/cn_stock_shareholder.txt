@@ -1,0 +1,16 @@
+                          column_name  column_type
+                         publish_date TIMESTAMP_NS
+                           instrument      VARCHAR
+                             end_date TIMESTAMP_NS
+                    total_shareholder       DOUBLE
+                total_shareholder_chg       DOUBLE
+                        a_shareholder       DOUBLE
+                    a_shareholder_chg       DOUBLE
+          avg_share_per_account_total       DOUBLE
+      avg_share_per_account_total_chg       DOUBLE
+    avg_share_ratio_per_account_total       DOUBLE
+avg_share_ratio_per_account_total_chg       DOUBLE
+          avg_share_per_account_float       DOUBLE
+      avg_share_per_account_float_chg       DOUBLE
+    avg_share_ratio_per_account_float       DOUBLE
+avg_share_ratio_per_account_float_chg       DOUBLE

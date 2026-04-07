@@ -1,0 +1,43 @@
+  column_name  column_type
+   instrument      VARCHAR
+         date TIMESTAMP_NS
+  alpha_91008       DOUBLE
+  alpha_91009       DOUBLE
+  alpha_91010       DOUBLE
+  alpha_91011       DOUBLE
+  alpha_91007       DOUBLE
+  alpha_91001       DOUBLE
+  alpha_91002       DOUBLE
+  alpha_91003       DOUBLE
+  alpha_91004       DOUBLE
+  alpha_91005       DOUBLE
+  alpha_91006       DOUBLE
+  alpha_91018       DOUBLE
+  alpha_91019       DOUBLE
+  alpha_91020       DOUBLE
+  alpha_91021       DOUBLE
+  alpha_91012       DOUBLE
+  alpha_91013       DOUBLE
+  alpha_91014       DOUBLE
+  alpha_91015       DOUBLE
+  alpha_91016       DOUBLE
+  alpha_91017       DOUBLE
+  alpha_91022       DOUBLE
+  alpha_91023       DOUBLE
+  alpha_91024       DOUBLE
+  alpha_91025       DOUBLE
+  alpha_91038       DOUBLE
+  alpha_91039       DOUBLE
+  alpha_91040       DOUBLE
+  alpha_91041       DOUBLE
+  alpha_91026       DOUBLE
+  alpha_91027       DOUBLE
+  alpha_91028       DOUBLE
+alpha_91028_1       DOUBLE
+alpha_91038_1       DOUBLE
+alpha_91039_1       DOUBLE
+alpha_91040_1       DOUBLE
+alpha_91041_1       DOUBLE
+  alpha_91042       DOUBLE
+  alpha_91043       DOUBLE
+  alpha_91044       DOUBLE

@@ -1,0 +1,23 @@
+                          column_name  column_type
+                                 date TIMESTAMP_NS
+                           instrument      VARCHAR
+                    financing_balance       DOUBLE
+                   financing_quantity       DOUBLE
+              financing_balance_ratio       DOUBLE
+                   financing_purchase       DOUBLE
+          financing_purchase_quantity       DOUBLE
+                  financing_repayment       DOUBLE
+         financing_repayment_quantity       DOUBLE
+               financing_net_purchase       DOUBLE
+      financing_net_purchase_quantity       DOUBLE
+           securities_lending_balance       DOUBLE
+          securities_lending_quantity       DOUBLE
+             securities_lending_sales       DOUBLE
+    securities_lending_sales_quantity       DOUBLE
+         securities_lending_repayment       DOUBLE
+securities_lending_repayment_quantity       DOUBLE
+         securities_lending_net_sales       DOUBLE
+securities_lending_net_sales_quantity       DOUBLE
+               margin_trading_balance       DOUBLE
+                      lendable_shares       DOUBLE
+                 lending_margin_stock       DOUBLE

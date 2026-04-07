@@ -1,0 +1,21 @@
+                column_name  column_type
+                       date TIMESTAMP_NS
+                 instrument      VARCHAR
+           forecast_eps_fy1       DOUBLE
+           forecast_eps_fy2       DOUBLE
+           forecast_eps_fy3       DOUBLE
+           forecast_eps_12m       DOUBLE
+            forecast_np_fy1       DOUBLE
+            forecast_np_fy2       DOUBLE
+            forecast_np_fy3       DOUBLE
+            forecast_np_12m       DOUBLE
+            forecast_np_yoy       DOUBLE
+     forecast_np_yoy_fy2to1       DOUBLE
+         forecast_np_cagr_2       DOUBLE
+       forecast_revenue_fy1       DOUBLE
+       forecast_revenue_fy2       DOUBLE
+       forecast_revenue_fy3       DOUBLE
+       forecast_revenue_12m       DOUBLE
+       forecast_revenue_yoy       DOUBLE
+forecast_revenue_yoy_fy2to1       DOUBLE
+    forecast_revenue_cagr_2       DOUBLE

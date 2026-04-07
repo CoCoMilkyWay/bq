@@ -1,0 +1,7 @@
+       column_name  column_type
+              date TIMESTAMP_NS
+        instrument      VARCHAR
+      total_shares       DOUBLE
+    a_float_shares       DOUBLE
+ free_float_shares       DOUBLE
+total_float_shares       DOUBLE

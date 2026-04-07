@@ -1,0 +1,11 @@
+   column_name  column_type
+          date TIMESTAMP_NS
+    instrument      VARCHAR
+      industry      VARCHAR
+industry_level      TINYINT
+ industry_code      VARCHAR
+ industry_name      VARCHAR
+component_nums      TINYINT
+   pe_trailing       DOUBLE
+        pe_ttm       DOUBLE
+            pb       DOUBLE

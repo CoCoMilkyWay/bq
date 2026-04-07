@@ -1,0 +1,16 @@
+            column_name  column_type
+                   date TIMESTAMP_NS
+             instrument      VARCHAR
+            report_date TIMESTAMP_NS
+           publish_date TIMESTAMP_NS
+            report_type      TINYINT
+        fore_profit_min       DOUBLE
+        fore_profit_max       DOUBLE
+            fore_profit       DOUBLE
+adjust_conexpect_profit       DOUBLE
+         appraisal_date TIMESTAMP_NS
+     appraisal_standard      TINYINT
+       appraisal_result      TINYINT
+         conexpect_date TIMESTAMP_NS
+       conexpect_profit       DOUBLE
+     profit_exceed_rate       DOUBLE

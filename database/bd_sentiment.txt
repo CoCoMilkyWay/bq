@@ -1,0 +1,7 @@
+column_name  column_type
+       date TIMESTAMP_NS
+ instrument      VARCHAR
+ evaluation      VARCHAR
+      title      VARCHAR
+   abstract      VARCHAR
+        url      VARCHAR

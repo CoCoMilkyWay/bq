@@ -1,0 +1,12 @@
+         column_name  column_type
+                date TIMESTAMP_NS
+          instrument      VARCHAR
+            industry      VARCHAR
+       industry_name      VARCHAR
+ industry_instrument      VARCHAR
+industry_level1_code      VARCHAR
+industry_level1_name      VARCHAR
+industry_level2_code      VARCHAR
+industry_level2_name      VARCHAR
+industry_level3_code      VARCHAR
+industry_level3_name      VARCHAR

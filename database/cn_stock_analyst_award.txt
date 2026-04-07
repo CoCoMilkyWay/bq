@@ -1,0 +1,13 @@
+        column_name  column_type
+               date TIMESTAMP_NS
+         award_type      TINYINT
+         award_name      VARCHAR
+         award_year     SMALLINT
+             awards      VARCHAR
+       analyst_name      VARCHAR
+  organization_name      VARCHAR
+               rank        FLOAT
+         yield_rate       DOUBLE
+      accuracy_rate       DOUBLE
+sw_industry_l1_code      VARCHAR
+sw_industry_l1_name      VARCHAR

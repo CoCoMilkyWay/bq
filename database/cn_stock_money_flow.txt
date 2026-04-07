@@ -1,0 +1,25 @@
+    column_name  column_type
+           date TIMESTAMP_NS
+     instrument      VARCHAR
+   money_inflow       DOUBLE
+  money_outflow       DOUBLE
+  money_netflow       DOUBLE
+net_inflow_rate       DOUBLE
+       inflow_s       DOUBLE
+       inflow_m       DOUBLE
+       inflow_l       DOUBLE
+      inflow_xl       DOUBLE
+      outflow_s       DOUBLE
+      outflow_m       DOUBLE
+      outflow_l       DOUBLE
+     outflow_xl       DOUBLE
+      netflow_s       DOUBLE
+      netflow_m       DOUBLE
+      netflow_l       DOUBLE
+     netflow_xl       DOUBLE
+ netflow_s_rate       DOUBLE
+ netflow_m_rate       DOUBLE
+ netflow_l_rate       DOUBLE
+netflow_xl_rate       DOUBLE
+      main_flow       DOUBLE
+      main_rate       DOUBLE

@@ -1,0 +1,13 @@
+  column_name  column_type
+         date TIMESTAMP_NS
+   instrument      VARCHAR
+        price       DOUBLE
+        chips       BIGINT
+  chips_ratio       DOUBLE
+     avg_cost       DOUBLE
+  win_percent       DOUBLE
+     upper_90       DOUBLE
+     lower_90       DOUBLE
+     upper_70       DOUBLE
+     lower_70       DOUBLE
+concentration       DOUBLE

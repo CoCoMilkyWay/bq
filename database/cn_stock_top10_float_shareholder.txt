@@ -1,0 +1,10 @@
+      column_name  column_type
+             date TIMESTAMP_NS
+       instrument      VARCHAR
+             rank      TINYINT
+     publish_date TIMESTAMP_NS
+      holder_name      VARCHAR
+   holding_shares       DOUBLE
+holding_pct_total       DOUBLE
+holding_pct_float       DOUBLE
+       share_type      VARCHAR

@@ -1,0 +1,10 @@
+  column_name  column_type
+   instrument      VARCHAR
+         name      VARCHAR
+    base_time TIMESTAMP_NS
+   base_point       BIGINT
+    list_date TIMESTAMP_NS
+  delist_date TIMESTAMP_NS
+weight_method      VARCHAR
+    publisher      VARCHAR
+      section      VARCHAR

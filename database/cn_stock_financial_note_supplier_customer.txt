@@ -1,0 +1,55 @@
+            column_name  column_type
+             instrument      VARCHAR
+                   date TIMESTAMP_NS
+            report_date TIMESTAMP_NS
+            change_type      TINYINT
+ margin_supplier_name_1      VARCHAR
+      purchase_amount_1       DOUBLE
+       purchase_ratio_1       DOUBLE
+total_purchase_amount_1       DOUBLE
+ total_purchase_ratio_1       DOUBLE
+        customer_name_1      VARCHAR
+          sale_amount_1       DOUBLE
+           sale_ratio_1       DOUBLE
+    total_sale_amount_1       DOUBLE
+     total_sale_ratio_1       DOUBLE
+ margin_supplier_name_2      VARCHAR
+      purchase_amount_2       DOUBLE
+       purchase_ratio_2       DOUBLE
+total_purchase_amount_2       DOUBLE
+ total_purchase_ratio_2       DOUBLE
+        customer_name_2      VARCHAR
+          sale_amount_2       DOUBLE
+           sale_ratio_2       DOUBLE
+    total_sale_amount_2       DOUBLE
+     total_sale_ratio_2       DOUBLE
+ margin_supplier_name_3      VARCHAR
+      purchase_amount_3       DOUBLE
+       purchase_ratio_3       DOUBLE
+total_purchase_amount_3       DOUBLE
+ total_purchase_ratio_3       DOUBLE
+        customer_name_3      VARCHAR
+          sale_amount_3       DOUBLE
+           sale_ratio_3       DOUBLE
+    total_sale_amount_3       DOUBLE
+     total_sale_ratio_3       DOUBLE
+ margin_supplier_name_4      VARCHAR
+      purchase_amount_4       DOUBLE
+       purchase_ratio_4       DOUBLE
+total_purchase_amount_4       DOUBLE
+ total_purchase_ratio_4       DOUBLE
+        customer_name_4      VARCHAR
+          sale_amount_4       DOUBLE
+           sale_ratio_4       DOUBLE
+    total_sale_amount_4       DOUBLE
+     total_sale_ratio_4       DOUBLE
+ margin_supplier_name_5      VARCHAR
+      purchase_amount_5       DOUBLE
+       purchase_ratio_5       DOUBLE
+total_purchase_amount_5       DOUBLE
+ total_purchase_ratio_5       DOUBLE
+        customer_name_5      VARCHAR
+          sale_amount_5       DOUBLE
+           sale_ratio_5       DOUBLE
+    total_sale_amount_5       DOUBLE
+     total_sale_ratio_5       DOUBLE

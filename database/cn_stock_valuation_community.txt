@@ -1,0 +1,9 @@
+     column_name  column_type
+            date TIMESTAMP_NS
+      instrument      VARCHAR
+total_market_cap       DOUBLE
+float_market_cap       DOUBLE
+          pe_ttm       DOUBLE
+              pb       DOUBLE
+          ps_ttm       DOUBLE
+     pcf_net_ttm       DOUBLE

@@ -1,0 +1,19 @@
+       column_name  column_type
+              date TIMESTAMP_NS
+        instrument      VARCHAR
+              name      VARCHAR
+          exchange      VARCHAR
+       trading_day      INTEGER
+         pre_close       DOUBLE
+       upper_limit       DOUBLE
+       lower_limit       DOUBLE
+   security_status      INTEGER
+         suspended      TINYINT
+         st_status      TINYINT
+              exdr      TINYINT
+         in_delist      TINYINT
+        price_tick       DOUBLE
+      crd_buy_flag      TINYINT
+     crd_sell_flag      TINYINT
+       day_trading      TINYINT
+public_float_share       BIGINT
