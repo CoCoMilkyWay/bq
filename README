@@ -1,5 +1,5 @@
 bigquant 此平台是基于sql数据库建立金融量化回测平台, 内部动态维护上百个行情/技术面/基本面指标/因子:
     - database/scripts/database_tables.md 记录了所有表的名称, 含义, 更新, 标签, 付费等信息 (应当选稳定和积极更新的表作为策略基础)
-    - database/scripts/database_nums.md 记录了所有表的指标/特征/因子数量, 有一些表的因子量极为巨大, 访问前要先过滤
+    - database/scripts/database_nums.md 记录了所有表的指标/特征/因子数量, 有一些(日频)表的因子量极为巨大, 访问前要先看描述,理解,过滤
         - 比如 cn_stock_factors, cn_stock_factors_financial_indicators, cn_stock_factors_financial_items, cn_stock_prefactors
     - database/*.txt 记录了(大量txt文件)每个*表的具体schema, 可以先确定使用的表, 再根据txt查具体schema
