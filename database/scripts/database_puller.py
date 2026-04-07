@@ -25,15 +25,11 @@ def parse_table_names(md_path: Path) -> list[str]:
 
 
 def query_table_schema(table_name: str) -> str:
-    result = dai.query(f"SELECT * FROM {table_name} LIMIT 1", full_db_scan=True)
+    result = dai.query(f"DESCRIBE {table_name}")
     df = result.df()
-
-    lines = []
-    lines.append(f"columns: {list(df.columns)}")
-    lines.append(f"dtypes: {dict(df.dtypes)}")
-    lines.append("")
-    lines.append(df.to_string(index=False))
-    return "\n".join(lines)
+    # 只保留 column_name 和 column_type 两列
+    df = df[['column_name', 'column_type']]
+    return df.to_string(index=False)
 
 
 def main():
@@ -45,9 +41,12 @@ def main():
     print(f"Found {len(table_names)} tables")
 
     for table in table_names:
+        output_path = output_dir / f"{table}.txt"
+        if output_path.exists():
+            print(f"Skip {table} (exists)")
+            continue
         print(f"Querying {table}...")
         schema = query_table_schema(table)
-        output_path = output_dir / f"{table}.txt"
         with open(output_path, 'w') as f:
             f.write(schema)
         print(f"  -> {output_path}")
