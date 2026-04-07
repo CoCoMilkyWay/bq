@@ -40,16 +40,28 @@ def main():
     table_names = parse_table_names(md_path)
     print(f"Found {len(table_names)} tables")
 
+    table_col_counts = {}
     for table in table_names:
-        output_path = output_dir / f"{table}.txt"
-        if output_path.exists():
-            print(f"Skip {table} (exists)")
-            continue
         print(f"Querying {table}...")
-        schema = query_table_schema(table)
+        result = dai.query(f"DESCRIBE {table}")
+        df = result.df()
+        col_count = len(df)
+        table_col_counts[table] = col_count
+
+        schema_df = df[['column_name', 'column_type']]
+        output_path = output_dir / f"{table}.txt"
         with open(output_path, 'w') as f:
-            f.write(schema)
-        print(f"  -> {output_path}")
+            f.write(schema_df.to_string(index=False))
+        print(f"  -> {output_path} ({col_count} columns)")
+
+    # 输出汇总
+    summary_path = script_dir / "database_nums.md"
+    with open(summary_path, 'w') as f:
+        f.write("| table | columns |\n")
+        f.write("| --- | --- |\n")
+        for table, count in table_col_counts.items():
+            f.write(f"| {table} | {count} |\n")
+    print(f"\nSummary -> {summary_path}")
 
 
 if __name__ == "__main__":
