@@ -1,0 +1,21 @@
+## 股票数据
+ - 股票数据
+ - 基础数据
+ - 行情数据
+ - 财务数据 data/doc/finnacial
+    - 利润表: income.md
+    - 资产负债表: balancesheet.md
+    - 现金流量表: cashflow.md
+    - 业绩预告: forecast.md
+    - 业绩快报: express.md
+    - 分红送股数据: dividend.md
+    - 财务指标数据: fina_indicator.md
+    - 财务审计意见: fina_audit.md
+    - 主营业务构成: fina_mainbz.md
+    - 财报披露日期表: disclosure_date.md
+ - 参考数据
+ - 特色数据
+ - 两融及转融通
+ - 资金流向数据
+ - 打板专题数据
+
