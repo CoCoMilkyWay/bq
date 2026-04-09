@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "002274.SZ",
+    "ann_date": "20180602",
+    "end_date": "20180630",
+    "type": "预增",
+    "p_change_min": 114.61,
+    "p_change_max": 180.65,
+    "net_profit_min": 6500.0,
+    "net_profit_max": 8500.0,
+    "last_parent_net": 3028.73,
+    "first_ann_date": "20180428",
+    "summary": "预计净利润6500-8500万",
+    "change_reason": "报告期，由于公司所处的行业受国家“供给侧”改革等政策措施落实，以及国家环保要求提高等影响；公司生产正常，产品销售价格出现较大幅度上升，导致原经营业绩预计的市场价格基础发生变化。",
+    "update_flag": "0"
+  }
+]

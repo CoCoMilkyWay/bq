@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "688076.SH",
+    "ann_date": "20240620",
+    "end_date": "20240630",
+    "type": "预增",
+    "p_change_min": 330.08,
+    "p_change_max": 497.34,
+    "net_profit_min": 18000.0,
+    "net_profit_max": 25000.0,
+    "last_parent_net": 4185.25,
+    "first_ann_date": "20240620",
+    "summary": "预计:净利润18000-25000",
+    "change_reason": "报告期内，得益于公司自主选择产品的持续放量及收入占比提升，公司2024年半年度业绩同比实现较大增长。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688516.SH",
+    "ann_date": "20240620",
+    "end_date": "20240630",
+    "type": "略增",
+    "p_change_min": 32.53,
+    "p_change_max": 47.82,
+    "net_profit_min": 69249.0,
+    "net_profit_max": 77242.0,
+    "last_parent_net": 52252.38,
+    "first_ann_date": "20240620",
+    "summary": "预计:净利润69249-77242",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688076.SH",
+    "ann_date": "20240620",
+    "end_date": "20240630",
+    "type": "预增",
+    "p_change_min": 330.08,
+    "p_change_max": 497.34,
+    "net_profit_min": 18000.0,
+    "net_profit_max": 25000.0,
+    "last_parent_net": 4185.25,
+    "first_ann_date": "20240620",
+    "summary": "预计:净利润18000-25000",
+    "change_reason": "报告期内，得益于公司自主选择产品的持续放量及收入占比提升，公司2024年半年度业绩同比实现较大增长。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688516.SH",
+    "ann_date": "20240620",
+    "end_date": "20240630",
+    "type": "略增",
+    "p_change_min": 32.53,
+    "p_change_max": 47.82,
+    "net_profit_min": 69249.0,
+    "net_profit_max": 77242.0,
+    "last_parent_net": 52252.38,
+    "first_ann_date": "20240620",
+    "summary": "预计:净利润69249-77242",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

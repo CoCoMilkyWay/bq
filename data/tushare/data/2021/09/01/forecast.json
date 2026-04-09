@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "301066.SZ",
+    "ann_date": "20210901",
+    "end_date": "20210930",
+    "type": "略增",
+    "p_change_min": 4.97,
+    "p_change_max": 13.72,
+    "net_profit_min": 4800.0,
+    "net_profit_max": 5200.0,
+    "last_parent_net": 4572.6655,
+    "first_ann_date": "20210901",
+    "summary": "预计:净利润4800-5200",
+    "change_reason": "2021年1-9月营业收入较上年同期仍有所下降主要原因系去年同期口罩业务贡献了较多的收入。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688230.SH",
+    "ann_date": "20210901",
+    "end_date": "20210930",
+    "type": "预增",
+    "p_change_min": 69.56,
+    "p_change_max": 88.61,
+    "net_profit_min": 8900.0,
+    "net_profit_max": 9900.0,
+    "last_parent_net": 5242.3341,
+    "first_ann_date": "20210901",
+    "summary": "预计:净利润8900-9900",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688236.SH",
+    "ann_date": "20210901",
+    "end_date": "20210930",
+    "type": "略增",
+    "p_change_min": 24.95,
+    "p_change_max": 41.23,
+    "net_profit_min": 20631.0,
+    "net_profit_max": 23317.0,
+    "last_parent_net": 16510.519,
+    "first_ann_date": "20210901",
+    "summary": "预计:净利润20631-23317",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "301066.SZ",
+    "ann_date": "20210901",
+    "end_date": "20210930",
+    "type": "略增",
+    "p_change_min": 4.97,
+    "p_change_max": 13.72,
+    "net_profit_min": 4800.0,
+    "net_profit_max": 5200.0,
+    "last_parent_net": 4572.6655,
+    "first_ann_date": "20210901",
+    "summary": "预计净利润4800-5200万",
+    "change_reason": "2021年1-9月营业收入较上年同期仍有所下降主要原因系去年同期口罩业务贡献了较多的收入。",
+    "update_flag": "0"
+  }
+]

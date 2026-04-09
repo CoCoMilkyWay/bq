@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "002254.SZ",
+    "ann_date": "20171208",
+    "end_date": "20171231",
+    "type": "预增",
+    "p_change_min": 35.97,
+    "p_change_max": 52.96,
+    "net_profit_min": 8000.0,
+    "net_profit_max": 9000.0,
+    "last_parent_net": 5883.82,
+    "first_ann_date": "20171030",
+    "summary": "预计净利润8000-9000万",
+    "change_reason": "公司于近日收到烟台经济技术开发区财政局企业发展专项资金2,000万元。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002644.SZ",
+    "ann_date": "20171208",
+    "end_date": "20171231",
+    "type": "略增",
+    "p_change_min": 20.0,
+    "p_change_max": 50.0,
+    "net_profit_min": 7311.0,
+    "net_profit_max": 9139.0,
+    "last_parent_net": 6092.62,
+    "first_ann_date": "20171021",
+    "summary": "预计净利润7311-9139万",
+    "change_reason": "公司业绩预计变动的主要原因是公司通过进一步加强内部管理，调整产品结构，加大市场开拓，第四季度主营业务收入实际增长优于预期，净利润相应增加。",
+    "update_flag": "0"
+  }
+]

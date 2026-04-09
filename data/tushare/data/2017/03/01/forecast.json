@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "600696.SH",
+    "ann_date": "20170301",
+    "end_date": "20161231",
+    "type": "续亏",
+    "p_change_min": -339.3462,
+    "p_change_max": -300.2932,
+    "net_profit_min": -45000.0,
+    "net_profit_max": -41000.0,
+    "last_parent_net": -10242.4915,
+    "first_ann_date": "20161031",
+    "summary": "预计净利润-45000~-41000万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300557.SZ",
+    "ann_date": "20170301",
+    "end_date": "20170331",
+    "type": "续亏",
+    "p_change_min": -60.0,
+    "p_change_max": -30.0,
+    "net_profit_min": -534.0,
+    "net_profit_max": -434.0,
+    "last_parent_net": -333.6175,
+    "first_ann_date": "20170301",
+    "summary": "预计净利润-534~-434万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300626.SZ",
+    "ann_date": "20170301",
+    "end_date": "20170331",
+    "type": "预增",
+    "p_change_min": 536.64,
+    "p_change_max": 536.64,
+    "net_profit_min": 322.0,
+    "net_profit_max": 322.0,
+    "last_parent_net": 50.518,
+    "first_ann_date": "20170301",
+    "summary": "预计净利润322万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002564.SZ",
+    "ann_date": "20170301",
+    "end_date": "20170331",
+    "type": "扭亏",
+    "p_change_min": 421.5692,
+    "p_change_max": 528.759,
+    "net_profit_min": 3000.0,
+    "net_profit_max": 4000.0,
+    "last_parent_net": null,
+    "first_ann_date": "20170301",
+    "summary": "预计净利润3000-4000万",
+    "change_reason": "2016年12月21日，中机国能电力工程有限公司（以下简称“中机电力”）80%股权工商变更登记完成，过户至苏州天沃科技股份有限公司名下，中机电力纳入公司合并报表范围，电力工程板块开始为公司贡献利润，大幅提升了公司的盈利能力，市场竞争实力显著增强。",
+    "update_flag": "0"
+  }
+]

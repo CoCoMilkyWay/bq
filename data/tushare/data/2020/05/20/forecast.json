@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "688055.SH",
+    "ann_date": "20200520",
+    "end_date": "20200630",
+    "type": "预增",
+    "p_change_min": -44.25,
+    "p_change_max": 85.84,
+    "net_profit_min": 1200.0,
+    "net_profit_max": 4000.0,
+    "last_parent_net": null,
+    "first_ann_date": "20200520",
+    "summary": "预计净利润1200-4000万",
+    "change_reason": "受新冠疫情影响.",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002699.SZ",
+    "ann_date": "20200520",
+    "end_date": "20200630",
+    "type": "扭亏",
+    "p_change_min": 217.4843,
+    "p_change_max": 276.2265,
+    "net_profit_min": 2000.0,
+    "net_profit_max": 3000.0,
+    "last_parent_net": -1702.36,
+    "first_ann_date": "20200520",
+    "summary": "预计净利润2000-3000万",
+    "change_reason": "经营业绩稳定上升。",
+    "update_flag": "0"
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "605111.SH",
+    "ann_date": "20170218",
+    "end_date": "20161231",
+    "type": "预增",
+    "p_change_min": 123.47,
+    "p_change_max": 150.56,
+    "net_profit_min": 3300.0,
+    "net_profit_max": 3700.0,
+    "last_parent_net": null,
+    "first_ann_date": "20170218",
+    "summary": "预计净利润3300-3700万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300184.SZ",
+    "ann_date": "20170218",
+    "end_date": "20170331",
+    "type": "预增",
+    "p_change_min": 83.79,
+    "p_change_max": 110.05,
+    "net_profit_min": 1400.0,
+    "net_profit_max": 1600.0,
+    "last_parent_net": null,
+    "first_ann_date": "20170218",
+    "summary": "预计净利润1400-1600万",
+    "change_reason": "预计2017年一季度归属于上市公司股东的净利润与上年同期相比同向上升83.79%-110.05%，主要变动原因如下：1、2016年10月，公司完成对南京飞腾电子科技有限公司100%股权的收购，相关资产在2016年10月9日过户完成并开始并入公司合并报表，与2016年一季度相比，2017年一季度合并报表新增南京飞腾业绩，导致公司净利润上升。2、本报告期预计无非经常性损益，上年同期非经常性损益对公司净利润的影响金额为13.06万元，扣除以上非经常性损益的影响，本报告期净利润预计较上年同期上升87.00%-113.71%。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300264.SZ",
+    "ann_date": "20170218",
+    "end_date": "20170331",
+    "type": "续亏",
+    "p_change_min": -60.0,
+    "p_change_max": -30.0,
+    "net_profit_min": -996.0,
+    "net_profit_max": -809.0,
+    "last_parent_net": -622.4843,
+    "first_ann_date": "20170218",
+    "summary": "预计净利润-996~-809万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

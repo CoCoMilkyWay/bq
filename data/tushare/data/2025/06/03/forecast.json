@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "301632.SZ",
+    "ann_date": "20250603",
+    "end_date": "20250630",
+    "type": "略增",
+    "p_change_min": 1.05,
+    "p_change_max": 10.23,
+    "net_profit_min": 3300.0,
+    "net_profit_max": 3600.0,
+    "last_parent_net": 3265.76,
+    "first_ann_date": "20250603",
+    "summary": "预计:净利润3300-3600",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

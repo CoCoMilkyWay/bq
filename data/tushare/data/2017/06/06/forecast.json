@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "603496.SH",
+    "ann_date": "20170606",
+    "end_date": "20170630",
+    "type": "略增",
+    "p_change_min": 6.0,
+    "p_change_max": 15.0,
+    "net_profit_min": 3291.0,
+    "net_profit_max": 3567.0,
+    "last_parent_net": 3105.23,
+    "first_ann_date": "20170516",
+    "summary": "预计净利润3291-3567万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "000040.SZ",
+    "ann_date": "20170606",
+    "end_date": "20170630",
+    "type": "预增",
+    "p_change_min": 50.0,
+    "p_change_max": 61.5,
+    "net_profit_min": 12100.0,
+    "net_profit_max": 13000.0,
+    "last_parent_net": 8048.99,
+    "first_ann_date": "20170606",
+    "summary": "预计净利润12100-13000万",
+    "change_reason": "报告期内，公司归属于上市公司股东的净利润较上年同期上升，主要原因为：本报告期新能源业务收入利润相比上年同期增加，公司投建电站陆续并网发电收入释放，以及公司进军环保产业增厚业绩所致.",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300296.SZ",
+    "ann_date": "20170606",
+    "end_date": "20170630",
+    "type": "预增",
+    "p_change_min": 90.0,
+    "p_change_max": 110.0,
+    "net_profit_min": 34880.0,
+    "net_profit_max": 38552.0,
+    "last_parent_net": 18357.92,
+    "first_ann_date": "20170606",
+    "summary": "预计净利润34880-38552万",
+    "change_reason": "与去年同期相比，本期净利润增长的主要原因是销售规模扩大及订单增加。截至2017年5月31日，夜游经济业务板块本年度新增订单及已中标订单合计10亿元，较上年同期增长300%以上。小间距电视本年度新签订单8亿元，较去年同期增长50%以上。公司预计2017年半年度非经常性损益对净利润的影响金额约为2,300万元，对净利润影响较小。预计2017年半年度经营性现金流净流量将明显好于上年同期。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002883.SZ",
+    "ann_date": "20170606",
+    "end_date": "20170630",
+    "type": "预增",
+    "p_change_min": 54.8,
+    "p_change_max": 54.8,
+    "net_profit_min": 2052.0,
+    "net_profit_max": 2052.0,
+    "last_parent_net": 1325.6113,
+    "first_ann_date": "20170606",
+    "summary": "预计净利润2052万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

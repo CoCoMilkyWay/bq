@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "603583.SH",
+    "ann_date": "20180813",
+    "end_date": "20180930",
+    "type": "略增",
+    "p_change_min": 19.91,
+    "p_change_max": 28.71,
+    "net_profit_min": 13350.0,
+    "net_profit_max": 14330.0,
+    "last_parent_net": 11053.4068,
+    "first_ann_date": "20180813",
+    "summary": "预计净利润13350-14330万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

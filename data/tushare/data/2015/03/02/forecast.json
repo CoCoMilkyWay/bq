@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "000812.SZ",
+    "ann_date": "20150302",
+    "end_date": "20141231",
+    "type": "续盈",
+    "p_change_min": -3.4176,
+    "p_change_max": 4.8609,
+    "net_profit_min": 7000.0,
+    "net_profit_max": 7600.0,
+    "last_parent_net": 7247.6969,
+    "first_ann_date": "20150302",
+    "summary": "预计净利润7000-7600万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

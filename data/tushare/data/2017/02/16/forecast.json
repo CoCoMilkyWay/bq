@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "002617.SZ",
+    "ann_date": "20170216",
+    "end_date": "20170331",
+    "type": "预增",
+    "p_change_min": 877.2,
+    "p_change_max": 1094.35,
+    "net_profit_min": 4500.0,
+    "net_profit_max": 5500.0,
+    "last_parent_net": 509.9911,
+    "first_ann_date": "20170216",
+    "summary": "预计净利润4500-5500万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300131.SZ",
+    "ann_date": "20170216",
+    "end_date": "20170331",
+    "type": "预减",
+    "p_change_min": -66.65,
+    "p_change_max": -59.4,
+    "net_profit_min": 2300.0,
+    "net_profit_max": 2800.0,
+    "last_parent_net": 6895.8788,
+    "first_ann_date": "20170216",
+    "summary": "预计净利润2300-2800万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002677.SZ",
+    "ann_date": "20170216",
+    "end_date": "20170331",
+    "type": "预增",
+    "p_change_min": 30.0,
+    "p_change_max": 70.0,
+    "net_profit_min": 3721.0,
+    "net_profit_max": 4865.0,
+    "last_parent_net": null,
+    "first_ann_date": "20170216",
+    "summary": "预计净利润3721-4865万",
+    "change_reason": "1、在厨电行业平稳增长的有利形势下，集成灶细分行业突飞猛进，步入高速发展阶段；2、公司强化多元化渠道的建设和扩张，专卖店渠道、工程渠道、网络渠道等销售全面提升；3、集成灶主产品增量，有机带动橱柜及小家电产品的销量，实现了企业主营业务的快速增长，盈利能力的进一步提升。",
+    "update_flag": "0"
+  }
+]

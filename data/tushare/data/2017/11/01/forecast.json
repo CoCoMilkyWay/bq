@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "000786.SZ",
+    "ann_date": "20171101",
+    "end_date": "20171231",
+    "type": "预增",
+    "p_change_min": 50.0,
+    "p_change_max": 100.0,
+    "net_profit_min": 175660.0,
+    "net_profit_max": 234214.0,
+    "last_parent_net": 117106.86,
+    "first_ann_date": "20171101",
+    "summary": "预计净利润175660-234214万",
+    "change_reason": "一是公司三季度主产品销售势头良好，销量及单价较上年同期增幅较大；二是公司2016年10月底收购控股子公司泰山石膏有限公司（以下简称泰山石膏）35%的少数股权，2016年11月至12月公司享有泰山石膏100%的收益，本年公司全年享有泰山石膏100%的收益。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300105.SZ",
+    "ann_date": "20171101",
+    "end_date": "20171231",
+    "type": "扭亏",
+    "p_change_min": 100.0,
+    "p_change_max": 103.0398,
+    "net_profit_min": 0.0,
+    "net_profit_max": 500.0,
+    "last_parent_net": -16448.47,
+    "first_ann_date": "20171027",
+    "summary": "预计净利润0-500万",
+    "change_reason": "公司强化应收账款管理工作，加大回款力度，资产减值损失同比大幅下降；加强资金管理工作，提高理财收益；同时强化成本管理，严控各项费用。",
+    "update_flag": "1"
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "ts_code": "603138.SH",
+    "ann_date": "20200925",
+    "end_date": "20200930",
+    "pre_date": "20201013",
+    "actual_date": "20201013"
+  },
+  {
+    "ts_code": "603887.SH",
+    "ann_date": "20200925",
+    "end_date": "20200930",
+    "pre_date": "20201013",
+    "actual_date": "20201013"
+  },
+  {
+    "ts_code": "300267.SZ",
+    "ann_date": "20201009",
+    "end_date": "20200930",
+    "pre_date": "20201013",
+    "actual_date": "20201013"
+  },
+  {
+    "ts_code": "002236.SZ",
+    "ann_date": "20201009",
+    "end_date": "20200930",
+    "pre_date": "20201013",
+    "actual_date": "20201013"
+  },
+  {
+    "ts_code": "300511.SZ",
+    "ann_date": "20201009",
+    "end_date": "20200930",
+    "pre_date": "20201013",
+    "actual_date": "20201013"
+  }
+]

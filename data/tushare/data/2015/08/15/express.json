@@ -1,0 +1,40 @@
+[
+  {
+    "ts_code": "002491.SZ",
+    "ann_date": "20150815",
+    "end_date": "20150630",
+    "revenue": 1491763534.52,
+    "operate_profit": 100265900.71,
+    "total_profit": 108368368.67,
+    "n_income": 79512085.06,
+    "total_assets": 5178730746.44,
+    "total_hldr_eqy_exc_min_int": 2695206346.85,
+    "diluted_eps": 0.0672,
+    "diluted_roe": 3.25,
+    "yoy_net_profit": 104480333.59,
+    "bps": null,
+    "open_net_assets": null,
+    "open_bps": null,
+    "perf_summary": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300348.SZ",
+    "ann_date": "20150815",
+    "end_date": "20150630",
+    "revenue": 146376204.26,
+    "operate_profit": 2863470.12,
+    "total_profit": 2901910.38,
+    "n_income": 3195565.81,
+    "total_assets": 593713590.3,
+    "total_hldr_eqy_exc_min_int": 484377316.38,
+    "diluted_eps": 0.0227,
+    "diluted_roe": 0.66,
+    "yoy_net_profit": 295871.15,
+    "bps": null,
+    "open_net_assets": null,
+    "open_bps": null,
+    "perf_summary": null,
+    "update_flag": "0"
+  }
+]

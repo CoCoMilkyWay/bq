@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "301321.SZ",
+    "ann_date": "20220219",
+    "end_date": "20220331",
+    "type": "略增",
+    "p_change_min": 0.9,
+    "p_change_max": 0.9,
+    "net_profit_min": 3641.0,
+    "net_profit_max": 3641.0,
+    "last_parent_net": 3608.66,
+    "first_ann_date": "20220219",
+    "summary": "预计:净利润3641",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "301321.SZ",
+    "ann_date": "20220219",
+    "end_date": "20220331",
+    "type": "略增",
+    "p_change_min": 0.9,
+    "p_change_max": 0.9,
+    "net_profit_min": 3641.0,
+    "net_profit_max": 3641.0,
+    "last_parent_net": 3608.66,
+    "first_ann_date": "20220219",
+    "summary": "预计净利润3641万",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

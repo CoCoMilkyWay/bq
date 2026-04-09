@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "002642.SZ",
+    "ann_date": "20180222",
+    "end_date": "20180331",
+    "type": "预增",
+    "p_change_min": 580.0,
+    "p_change_max": 615.0,
+    "net_profit_min": 1828.0,
+    "net_profit_max": 1922.0,
+    "last_parent_net": 268.8,
+    "first_ann_date": "20180222",
+    "summary": "预计净利润1828-1922万",
+    "change_reason": "母公司一季度收入较去年同期增长预计超过30%；公司2017年度并购的深圳市赞融电子技术有限公司一季度利润已纳入合并报表。",
+    "update_flag": "0"
+  }
+]

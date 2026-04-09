@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "300083.SZ",
+    "ann_date": "20170311",
+    "end_date": "20170331",
+    "type": "预增",
+    "p_change_min": 303.92,
+    "p_change_max": 321.48,
+    "net_profit_min": 11500.0,
+    "net_profit_max": 12000.0,
+    "last_parent_net": null,
+    "first_ann_date": "20170311",
+    "summary": "预计净利润11500-12000万",
+    "change_reason": "2017年第一季度，公司数控机床等高端装备制造业务的钻铣攻牙机产品销售持续增长，新产品高光机、玻璃精雕机等开始批量出货，毛利率保持在较高水平，带来了净利润的增长。2017年第一季度，公司继续推动金属精密结构件项目产能释放及产品良率提升，实施塑胶精密结构件产品的生产资源整合及产能调减，继续推进产品结构调整，增强消费电子产品精密结构件业务的盈利能力，带来了净利润的增长。2017年第一季度，公司预计非经常性损益对净利润的影响金额为1,800万元至2,500万元。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002625.SZ",
+    "ann_date": "20170311",
+    "end_date": "20170331",
+    "type": "预增",
+    "p_change_min": 110.0012,
+    "p_change_max": 159.9575,
+    "net_profit_min": 1816.0,
+    "net_profit_max": 2248.0,
+    "last_parent_net": 864.7569,
+    "first_ann_date": "20170311",
+    "summary": "预计净利润1816-2248万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300068.SZ",
+    "ann_date": "20170311",
+    "end_date": "20170331",
+    "type": "略增",
+    "p_change_min": 0.0,
+    "p_change_max": 30.0,
+    "net_profit_min": 6050.0,
+    "net_profit_max": 7865.0,
+    "last_parent_net": 6049.6726,
+    "first_ann_date": "20170311",
+    "summary": "预计净利润6050-7865万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

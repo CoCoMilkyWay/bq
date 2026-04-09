@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "688157.SH",
+    "ann_date": "20200507",
+    "end_date": "20201231",
+    "type": "不确定",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 9287.3689,
+    "first_ann_date": "20200507",
+    "summary": "不确定",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688157.SH",
+    "ann_date": "20200507",
+    "end_date": "20200630",
+    "type": "略增",
+    "p_change_min": 13.48,
+    "p_change_max": 13.48,
+    "net_profit_min": 3653.0,
+    "net_profit_max": 3653.0,
+    "last_parent_net": 3331.9098,
+    "first_ann_date": "20200507",
+    "summary": "预计净利润3653万",
+    "change_reason": "由于公司与华为合作项目不断增多且华为主要模厂深圳市比亚迪供应链管理有限公司及杭州耕德电子有限公司复工时间较早，一季度公司对华为收入占比相对较高，而苹果等国外品牌相对占比较低，毛利率较去年同期略低；2020年3月起，下游模厂客户全面复工，公司已有量产项目逐步实现正常交付，疫情影响减弱。考虑到公司已有量产项目较去年同期增多，且开发中的品牌及项目较多，预计2020年上半年度同比收入增长约11.36%。",
+    "update_flag": "1"
+  }
+]

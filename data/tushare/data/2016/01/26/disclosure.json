@@ -1,0 +1,30 @@
+[
+  {
+    "ts_code": "300401.SZ",
+    "ann_date": "20151231",
+    "end_date": "20151231",
+    "pre_date": "20160126",
+    "actual_date": "20160126"
+  },
+  {
+    "ts_code": "002654.SZ",
+    "ann_date": "20151231",
+    "end_date": "20151231",
+    "pre_date": "20160126",
+    "actual_date": "20160126"
+  },
+  {
+    "ts_code": "000711.SZ",
+    "ann_date": "20160120",
+    "end_date": "20151231",
+    "pre_date": "20160126",
+    "actual_date": "20160126"
+  },
+  {
+    "ts_code": "600116.SH",
+    "ann_date": "20151225",
+    "end_date": "20151231",
+    "pre_date": "20160126",
+    "actual_date": "20160126"
+  }
+]

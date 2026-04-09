@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "002939.SZ",
+    "ann_date": "20180917",
+    "end_date": "20181231",
+    "type": "略减",
+    "p_change_min": -29.54,
+    "p_change_max": -18.6,
+    "net_profit_min": 62701.0,
+    "net_profit_max": 72433.0,
+    "last_parent_net": 88983.4897,
+    "first_ann_date": "20180917",
+    "summary": "预计净利润62701-72433万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002939.SZ",
+    "ann_date": "20180917",
+    "end_date": "20180930",
+    "type": "略减",
+    "p_change_min": -28.91,
+    "p_change_max": -19.71,
+    "net_profit_min": 47825.0,
+    "net_profit_max": 54012.0,
+    "last_parent_net": 67274.0886,
+    "first_ann_date": "20180917",
+    "summary": "预计净利润47825-54012万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300088.SZ",
+    "ann_date": "20180917",
+    "end_date": "20180930",
+    "type": "略增",
+    "p_change_min": 29.88,
+    "p_change_max": 38.63,
+    "net_profit_min": 59415.0,
+    "net_profit_max": 63415.0,
+    "last_parent_net": 45745.73,
+    "first_ann_date": "20180917",
+    "summary": "预计净利润59415-63415万",
+    "change_reason": "报告期内，公司充分把握市场发展趋势，依托与国际、国内大客户稳固且积极的合作关系，使得公司各业务板块产能得以释放充分，部分订单已排至年末,七月份开始，公司业绩加快增长，经营指标持续向好；另一方面，公司通过内部管理架构的优化和成本管控措施的实施，进一步推动公司业绩稳健增长。综上因素导致公司2018年前三季度预计净利润较上年同期上升。本期非经常性损益对净利润的影响金额预计为2,000-2,500万元，上年同期非经常性损益对净利润的影响金额为3,102.88万元。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002772.SZ",
+    "ann_date": "20180917",
+    "end_date": "20180930",
+    "type": "续盈",
+    "p_change_min": -10.0,
+    "p_change_max": 5.0,
+    "net_profit_min": 9443.0,
+    "net_profit_max": 11017.0,
+    "last_parent_net": 10492.02,
+    "first_ann_date": "20180717",
+    "summary": "预计净利润9443-11017万",
+    "change_reason": "1、由于部分蔬菜种植地区受到自然灾害影响，使得蔬菜供应偏紧，自8月下旬至今，金针菇销售价格一直保持在较高价位。2、从7月份起，行业内统一恢复使用20kg大包装，取消10kg小包装方式，一定程度上降低了包装费用。3、2018年第二季度金针菇产品价格极度低迷，公司在7月中旬进行第三季度业绩预测时采取了谨慎原则。",
+    "update_flag": "0"
+  }
+]

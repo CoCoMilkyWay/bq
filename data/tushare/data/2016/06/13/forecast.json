@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "300041.SZ",
+    "ann_date": "20160613",
+    "end_date": "20160630",
+    "type": "略增",
+    "p_change_min": 10.0,
+    "p_change_max": 20.0,
+    "net_profit_min": 5253.0,
+    "net_profit_max": 5731.0,
+    "last_parent_net": null,
+    "first_ann_date": "20160613",
+    "summary": "预计净利润5253-5731万",
+    "change_reason": "公司业务布局完善，逐步形成了稳定及可持续发展的产品结构、客户结构。传统业务保持稳定增长，新产品、新客户、新市场贡献较大增量。在新能源领域，光伏新能源用胶、太阳能电池背膜继续保持快速增长；在乘用车整车用聚氨酯胶、绿色环保的耐高温无溶剂包装胶、高端玻璃幕墙胶、微电子及电器等业务领域，大客户销售持续发力，销售增长较快；同时，随着公司产品研发、工艺技术提升，关键原材料替代等因素，产品综合毛利率同比有较大提升；管理费用、销售费用管控成效显著。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "601966.SH",
+    "ann_date": "20160613",
+    "end_date": "20161231",
+    "type": "续盈",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 67761.0902,
+    "first_ann_date": "20160613",
+    "summary": "续盈",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

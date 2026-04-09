@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "603121.SH",
+    "ann_date": "20181127",
+    "end_date": "20181231",
+    "type": "续盈",
+    "p_change_min": -7.53,
+    "p_change_max": 2.17,
+    "net_profit_min": 9156.0,
+    "net_profit_max": 10116.0,
+    "last_parent_net": 9901.4,
+    "first_ann_date": "20181127",
+    "summary": "预计净利润9156-10116万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300014.SZ",
+    "ann_date": "20181127",
+    "end_date": "20181231",
+    "type": "略增",
+    "p_change_min": 33.0,
+    "p_change_max": 45.0,
+    "net_profit_min": 53648.0,
+    "net_profit_max": 58488.0,
+    "last_parent_net": 40336.48,
+    "first_ann_date": "20181127",
+    "summary": "预计净利润53648-58488万",
+    "change_reason": "1、公司积极拓展新兴物联网市场，取得阶段性成果，锂原电池业务基本稳定；2、消费锂离子电池业务，与国内外知名品牌大客户形成稳固的战略合作，带动公司整体业务的增长；3、动力电池和储能电池业务业绩实现增长；4、参股公司深圳麦克韦尔股份有限公司的业绩超预期，带来公司投资收益的增加；5、预计公司2018年年度非经常性损益对公司净利润的影响金额在7000万元到8000万元之间。",
+    "update_flag": "0"
+  }
+]

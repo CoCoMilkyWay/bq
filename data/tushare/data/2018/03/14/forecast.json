@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "002383.SZ",
+    "ann_date": "20180314",
+    "end_date": "20180331",
+    "type": "预增",
+    "p_change_min": 887.58,
+    "p_change_max": 927.08,
+    "net_profit_min": 5000.0,
+    "net_profit_max": 5200.0,
+    "last_parent_net": 506.29,
+    "first_ann_date": "20180314",
+    "summary": "预计净利润5000-5200万",
+    "change_reason": "1、军工订单在本报告期的逐步实现；2、通导一体化业务订单在本报告期的逐步实现与高精度时空一体化合成指挥调度平台项目的进一步实施。",
+    "update_flag": "0"
+  }
+]

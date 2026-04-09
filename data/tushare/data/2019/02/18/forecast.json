@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "002099.SZ",
+    "ann_date": "20190218",
+    "end_date": "20190331",
+    "type": "预增",
+    "p_change_min": 257.39,
+    "p_change_max": 306.54,
+    "net_profit_min": 16000.0,
+    "net_profit_max": 18200.0,
+    "last_parent_net": 4476.84,
+    "first_ann_date": "20190218",
+    "summary": "预计净利润16000-18200万",
+    "change_reason": "2019年一季度公司医药、染料销售收入均同比增长，汇兑损失同比减少，因此预计2019年1-3月归属上市公司股东的净利润变动区间为1.6亿元至1.82亿元。",
+    "update_flag": "0"
+  }
+]

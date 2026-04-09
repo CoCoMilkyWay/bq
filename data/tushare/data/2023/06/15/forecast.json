@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "688573.SH",
+    "ann_date": "20230615",
+    "end_date": "20230630",
+    "type": "扭亏",
+    "p_change_min": 122.22,
+    "p_change_max": 127.78,
+    "net_profit_min": 800.0,
+    "net_profit_max": 1000.0,
+    "last_parent_net": -3600.25,
+    "first_ann_date": "20230615",
+    "summary": "预计:净利润800-1000",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "301486.SZ",
+    "ann_date": "20230615",
+    "end_date": "20230630",
+    "type": "续盈",
+    "p_change_min": -10.13,
+    "p_change_max": 3.51,
+    "net_profit_min": 4721.0,
+    "net_profit_max": 5437.0,
+    "last_parent_net": 5252.71,
+    "first_ann_date": "20230615",
+    "summary": "预计:净利润4721-5437",
+    "change_reason": "公司预计2023年1-6月营业收入同比有所增加，主要系公司的自动化设备业务已实现规模化及市场化，预计自动化设备业务收入将同比增长较快。公司预计2023年1-6月净利润同比将有所下滑，主要系公司预计因新增大额固定资产借款导致财务费用-利息支出大幅增加、受汇率波动影响本期财务费用-汇兑收益同比将大幅减少。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688573.SH",
+    "ann_date": "20230615",
+    "end_date": "20230630",
+    "type": "扭亏",
+    "p_change_min": 122.22,
+    "p_change_max": 127.78,
+    "net_profit_min": 800.0,
+    "net_profit_max": 1000.0,
+    "last_parent_net": -3600.25,
+    "first_ann_date": "20230615",
+    "summary": "预计:净利润800-1000",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "301486.SZ",
+    "ann_date": "20230615",
+    "end_date": "20230630",
+    "type": "续盈",
+    "p_change_min": -10.13,
+    "p_change_max": 3.51,
+    "net_profit_min": 4721.0,
+    "net_profit_max": 5437.0,
+    "last_parent_net": 5252.71,
+    "first_ann_date": "20230615",
+    "summary": "预计:净利润4721-5437",
+    "change_reason": "公司预计2023年1-6月营业收入同比有所增加，主要系公司的自动化设备业务已实现规模化及市场化，预计自动化设备业务收入将同比增长较快。公司预计2023年1-6月净利润同比将有所下滑，主要系公司预计因新增大额固定资产借款导致财务费用-利息支出大幅增加、受汇率波动影响本期财务费用-汇兑收益同比将大幅减少。",
+    "update_flag": "0"
+  }
+]

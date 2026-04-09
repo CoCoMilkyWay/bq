@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "603551.SH",
+    "ann_date": "20191224",
+    "end_date": "20191231",
+    "type": "略减",
+    "p_change_min": -14.85,
+    "p_change_max": -4.95,
+    "net_profit_min": 25724.0,
+    "net_profit_max": 28715.0,
+    "last_parent_net": 30210.37,
+    "first_ann_date": "20191224",
+    "summary": "预计净利润25724-28715万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688178.SH",
+    "ann_date": "20191224",
+    "end_date": "20191231",
+    "type": "预增",
+    "p_change_min": 35.65,
+    "p_change_max": 65.79,
+    "net_profit_min": 10558.0,
+    "net_profit_max": 12904.0,
+    "last_parent_net": 7783.23,
+    "first_ann_date": "20191224",
+    "summary": "预计净利润10558-12904万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

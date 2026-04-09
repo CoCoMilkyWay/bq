@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "002937.SZ",
+    "ann_date": "20180903",
+    "end_date": "20180930",
+    "type": "略增",
+    "p_change_min": 14.98,
+    "p_change_max": 18.0,
+    "net_profit_min": 7600.0,
+    "net_profit_max": 7800.0,
+    "last_parent_net": 6610.0,
+    "first_ann_date": "20180903",
+    "summary": "预计净利润7600-7800万",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

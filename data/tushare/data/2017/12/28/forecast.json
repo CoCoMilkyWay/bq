@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "601868.SH",
+    "ann_date": "20171228",
+    "end_date": "20171231",
+    "type": "其他",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": null,
+    "first_ann_date": null,
+    "summary": null,
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300287.SZ",
+    "ann_date": "20171228",
+    "end_date": "20171231",
+    "type": "略增",
+    "p_change_min": 17.62,
+    "p_change_max": 47.02,
+    "net_profit_min": 40000.0,
+    "net_profit_max": 50000.0,
+    "last_parent_net": 34008.46,
+    "first_ann_date": "20171228",
+    "summary": "预计净利润40000-50000万",
+    "change_reason": "公司通过技术整合提升了行业竞争力，确保公司整体销售收入不断增加；公司通过加大研发投入，有效整合研发力量，使得自有产品销量不断增加。报告期内，公司大数据业务增速较快，在大数据服务金融领域、网游等行业取得较大突破。公司2017年度业绩完全符合年初制定的经营目标。报告期内，预计非经常性损益对公司利润的影响金额约为1500万元,不会对归属于上市公司股东的净利润产生重大影响。",
+    "update_flag": "0"
+  }
+]

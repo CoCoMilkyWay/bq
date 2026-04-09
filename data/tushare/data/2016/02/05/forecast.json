@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "002676.SZ",
+    "ann_date": "20160205",
+    "end_date": "20160331",
+    "type": "略减",
+    "p_change_min": -223.7283,
+    "p_change_max": -177.3302,
+    "net_profit_min": -800.0,
+    "net_profit_max": -500.0,
+    "last_parent_net": null,
+    "first_ann_date": "20160205",
+    "summary": "预计净利润-800~-500万",
+    "change_reason": "受国内经济持续低迷影响，家电行业需求放缓，销售订单数量较去年同期有所下降。同时，随着公司规模扩大，人工成本、摊销费用等固定成本增加，导致公司利润总额下降。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002015.SZ",
+    "ann_date": "20160205",
+    "end_date": "20160331",
+    "type": "续亏",
+    "p_change_min": 83.0555,
+    "p_change_max": 89.8333,
+    "net_profit_min": -250.0,
+    "net_profit_max": -150.0,
+    "last_parent_net": -1475.4026,
+    "first_ann_date": "20160205",
+    "summary": "预计净利润-250~-150万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002452.SZ",
+    "ann_date": "20160205",
+    "end_date": "20151231",
+    "type": "略减",
+    "p_change_min": -30.0,
+    "p_change_max": -10.0,
+    "net_profit_min": 6329.0,
+    "net_profit_max": 8137.0,
+    "last_parent_net": 9041.2468,
+    "first_ann_date": "20151024",
+    "summary": "预计净利润6329-8137万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "601319.SH",
+    "ann_date": "20160205",
+    "end_date": "20151231",
+    "type": "其他",
+    "p_change_min": 40.0,
+    "p_change_max": 40.0,
+    "net_profit_min": 1835260.0,
+    "net_profit_max": 1835260.0,
+    "last_parent_net": null,
+    "first_ann_date": null,
+    "summary": "预计净利润1835260万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

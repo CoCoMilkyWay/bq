@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "300420.SZ",
+    "ann_date": "20150216",
+    "end_date": "20150331",
+    "type": "略增",
+    "p_change_min": 15.98,
+    "p_change_max": 31.44,
+    "net_profit_min": 225.0,
+    "net_profit_max": 255.0,
+    "last_parent_net": null,
+    "first_ann_date": "20150216",
+    "summary": "预计净利润225-255万",
+    "change_reason": "子公司天沃重工业绩贡献加大。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300030.SZ",
+    "ann_date": "20150216",
+    "end_date": "20150331",
+    "type": "略增",
+    "p_change_min": 20.0,
+    "p_change_max": 50.0,
+    "net_profit_min": 786.0,
+    "net_profit_max": 982.0,
+    "last_parent_net": 654.8039,
+    "first_ann_date": "20150216",
+    "summary": "预计净利润786-982万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300353.SZ",
+    "ann_date": "20150216",
+    "end_date": "20150331",
+    "type": "不确定",
+    "p_change_min": 33.326,
+    "p_change_max": 107.4082,
+    "net_profit_min": -450.0,
+    "net_profit_max": 50.0,
+    "last_parent_net": -674.9257,
+    "first_ann_date": "20150216",
+    "summary": "预计净利润-450-50万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

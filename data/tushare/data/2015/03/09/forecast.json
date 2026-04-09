@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "300289.SZ",
+    "ann_date": "20150309",
+    "end_date": "20150331",
+    "type": "略增",
+    "p_change_min": 5.0,
+    "p_change_max": 30.0,
+    "net_profit_min": 1294.0,
+    "net_profit_max": 1602.0,
+    "last_parent_net": 1232.5787,
+    "first_ann_date": "20150309",
+    "summary": "预计净利润1294-1602万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

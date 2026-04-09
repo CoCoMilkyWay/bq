@@ -1,0 +1,23 @@
+[
+  {
+    "ts_code": "300201.SZ",
+    "ann_date": "20220505",
+    "end_date": "20220331",
+    "pre_date": "20220430",
+    "actual_date": "20221213"
+  },
+  {
+    "ts_code": "300201.SZ",
+    "ann_date": "20220630",
+    "end_date": "20220630",
+    "pre_date": "20220829",
+    "actual_date": "20221213"
+  },
+  {
+    "ts_code": "300201.SZ",
+    "ann_date": "20221002",
+    "end_date": "20220930",
+    "pre_date": "20221027",
+    "actual_date": "20221213"
+  }
+]

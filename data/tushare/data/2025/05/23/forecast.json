@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "001233.SZ",
+    "ann_date": "20250523",
+    "end_date": "20250630",
+    "type": "续盈",
+    "p_change_min": -8.15,
+    "p_change_max": 5.21,
+    "net_profit_min": 27500.0,
+    "net_profit_max": 31500.0,
+    "last_parent_net": 29939.35,
+    "first_ann_date": "20250523",
+    "summary": "预计:净利润27500-31500",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "603382.SH",
+    "ann_date": "20250523",
+    "end_date": "20250630",
+    "type": "续盈",
+    "p_change_min": -2.05,
+    "p_change_max": 10.83,
+    "net_profit_min": 7600.0,
+    "net_profit_max": 8600.0,
+    "last_parent_net": 7759.45,
+    "first_ann_date": "20250523",
+    "summary": "预计:净利润7600-8600",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "688809.SH",
+    "ann_date": "20251105",
+    "end_date": "20251231",
+    "type": "预增",
+    "p_change_min": 52.3,
+    "p_change_max": 80.18,
+    "net_profit_min": 35500.0,
+    "net_profit_max": 42000.0,
+    "last_parent_net": 23309.7,
+    "first_ann_date": "20251105",
+    "summary": "预计:净利润35500-42000",
+    "change_reason": "主要变动原因与2025年1-9月相关变动原因一致。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688809.SH",
+    "ann_date": "20251105",
+    "end_date": "20251231",
+    "type": "预增",
+    "p_change_min": 52.3,
+    "p_change_max": 80.18,
+    "net_profit_min": 35500.0,
+    "net_profit_max": 42000.0,
+    "last_parent_net": 23309.7,
+    "first_ann_date": "20251105",
+    "summary": "预计:净利润35500-42000",
+    "change_reason": "主要变动原因与2025年1-9月相关变动原因一致。",
+    "update_flag": "0"
+  }
+]

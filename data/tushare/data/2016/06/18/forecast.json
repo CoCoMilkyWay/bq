@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "000836.SZ",
+    "ann_date": "20160618",
+    "end_date": "20160630",
+    "type": "扭亏",
+    "p_change_min": 135.8775,
+    "p_change_max": 141.2592,
+    "net_profit_min": 2000.0,
+    "net_profit_max": 2300.0,
+    "last_parent_net": -5574.5196,
+    "first_ann_date": "20160618",
+    "summary": "预计净利润2000-2300万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

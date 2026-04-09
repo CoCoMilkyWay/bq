@@ -1,0 +1,30 @@
+[
+  {
+    "ts_code": "601916.SH",
+    "ann_date": null,
+    "end_date": "20160630",
+    "pre_date": null,
+    "actual_date": "20160926"
+  },
+  {
+    "ts_code": "300551.SZ",
+    "ann_date": "20151230",
+    "end_date": "20151231",
+    "pre_date": "20160926",
+    "actual_date": "20160926"
+  },
+  {
+    "ts_code": "300552.SZ",
+    "ann_date": "20151230",
+    "end_date": "20151231",
+    "pre_date": "20160926",
+    "actual_date": "20160926"
+  },
+  {
+    "ts_code": "601229.SH",
+    "ann_date": "20151230",
+    "end_date": "20151231",
+    "pre_date": "20160926",
+    "actual_date": "20160926"
+  }
+]

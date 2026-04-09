@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "300732.SZ",
+    "ann_date": "20171128",
+    "end_date": "20171231",
+    "type": "预增",
+    "p_change_min": 35.0,
+    "p_change_max": 42.71,
+    "net_profit_min": 17512.0,
+    "net_profit_max": 18512.0,
+    "last_parent_net": 12971.86,
+    "first_ann_date": "20171128",
+    "summary": "预计净利润17512-18512万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "603477.SH",
+    "ann_date": "20171128",
+    "end_date": "20171231",
+    "type": "略增",
+    "p_change_min": 18.4,
+    "p_change_max": 23.55,
+    "net_profit_min": 6900.0,
+    "net_profit_max": 7200.0,
+    "last_parent_net": 5829.37,
+    "first_ann_date": "20171128",
+    "summary": "预计净利润6900-7200万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300038.SZ",
+    "ann_date": "20171128",
+    "end_date": "20171231",
+    "type": "预增",
+    "p_change_min": 350.0,
+    "p_change_max": 380.0,
+    "net_profit_min": 48647.0,
+    "net_profit_max": 51890.0,
+    "last_parent_net": 10810.48,
+    "first_ann_date": "20171128",
+    "summary": "预计净利润48647-51890万",
+    "change_reason": "1、2017年公司管理层认真落实董事会制定的年度经营计划，业务取得长足发展。报告期内，公司聚焦信息基础设施投资运营、大数据+人工智能业务，不断加强大数据+人工智能等技术及行业应用的研发，持续推进募集资金投资项目落地。公司经营情况良好，主营业务继续保持稳定增长。2、公司合并报表范围内较上年同期新增全资子公司宁波诺信睿聚投资责任有限公司2017年第二、三、四季度净利润，导致公司2017年年度业绩增长幅度较大。3、报告期内，非经常性损益对公司净利润的贡献金额预计为200万元，上年同期非经常性损益对净利润的影响金额为2,741.29万元。",
+    "update_flag": "0"
+  }
+]

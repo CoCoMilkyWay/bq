@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "002963.SZ",
+    "ann_date": "20190917",
+    "end_date": "20190930",
+    "type": "预增",
+    "p_change_min": 100.11,
+    "p_change_max": 121.18,
+    "net_profit_min": 20190.0,
+    "net_profit_max": 22316.0,
+    "last_parent_net": 9863.5706,
+    "first_ann_date": "20190917",
+    "summary": "预计净利润20190-22316万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688368.SH",
+    "ann_date": "20190917",
+    "end_date": "20190930",
+    "type": "略增",
+    "p_change_min": 6.11,
+    "p_change_max": 7.91,
+    "net_profit_min": 7100.0,
+    "net_profit_max": 7220.0,
+    "last_parent_net": 6690.8988,
+    "first_ann_date": "20190917",
+    "summary": "预计净利润7100-7220万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300497.SZ",
+    "ann_date": "20190917",
+    "end_date": "20190930",
+    "type": "略增",
+    "p_change_min": 20.32,
+    "p_change_max": 27.39,
+    "net_profit_min": 20779.0,
+    "net_profit_max": 22000.0,
+    "last_parent_net": 17269.79,
+    "first_ann_date": "20190917",
+    "summary": "预计净利润20779-22000万",
+    "change_reason": "1、报告期内业绩增长原因：公司生产经营状况良好，主要产品市场需求旺盛，公司主营业务稳定增长，营业收入同比上涨；2、公司前三季度归属于上市公司股东的非经常性损益约810万元，对公司利润影响较小。",
+    "update_flag": "0"
+  }
+]

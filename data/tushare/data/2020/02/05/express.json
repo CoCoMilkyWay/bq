@@ -1,0 +1,40 @@
+[
+  {
+    "ts_code": "603180.SH",
+    "ann_date": "20200205",
+    "end_date": "20191231",
+    "revenue": 2125503100.0,
+    "operate_profit": 273241800.0,
+    "total_profit": 274862500.0,
+    "n_income": 242405500.0,
+    "total_assets": 2678418900.0,
+    "total_hldr_eqy_exc_min_int": 1177981900.0,
+    "diluted_eps": 3.66,
+    "diluted_roe": 22.77,
+    "yoy_net_profit": 210190500.0,
+    "bps": null,
+    "open_net_assets": null,
+    "open_bps": null,
+    "perf_summary": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002787.SZ",
+    "ann_date": "20200205",
+    "end_date": "20191231",
+    "revenue": 1666805100.0,
+    "operate_profit": 89113600.0,
+    "total_profit": 91205900.0,
+    "n_income": 70376800.0,
+    "total_assets": 2384415300.0,
+    "total_hldr_eqy_exc_min_int": 1535138200.0,
+    "diluted_eps": 0.23,
+    "diluted_roe": 4.68,
+    "yoy_net_profit": 53508000.0,
+    "bps": null,
+    "open_net_assets": null,
+    "open_bps": null,
+    "perf_summary": null,
+    "update_flag": "0"
+  }
+]

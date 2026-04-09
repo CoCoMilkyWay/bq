@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "300756.SZ",
+    "ann_date": "20181217",
+    "end_date": "20181231",
+    "type": "续盈",
+    "p_change_min": -5.2,
+    "p_change_max": 6.53,
+    "net_profit_min": 9700.0,
+    "net_profit_max": 10900.0,
+    "last_parent_net": 10231.7177,
+    "first_ann_date": "20181217",
+    "summary": "预计净利润9700-10900万",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

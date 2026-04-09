@@ -1,0 +1,23 @@
+[
+  {
+    "ts_code": "688226.SH",
+    "ann_date": "20170428",
+    "end_date": "20161231",
+    "pre_date": "20170429",
+    "actual_date": "20170503"
+  },
+  {
+    "ts_code": "603855.SH",
+    "ann_date": null,
+    "end_date": "20161231",
+    "pre_date": "20170503",
+    "actual_date": "20170503"
+  },
+  {
+    "ts_code": "300655.SZ",
+    "ann_date": null,
+    "end_date": "20161231",
+    "pre_date": "20170503",
+    "actual_date": "20170503"
+  }
+]

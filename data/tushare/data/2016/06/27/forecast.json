@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "002124.SZ",
+    "ann_date": "20160627",
+    "end_date": "20160630",
+    "type": "扭亏",
+    "p_change_min": 1043.3913,
+    "p_change_max": 1137.7304,
+    "net_profit_min": 20000.0,
+    "net_profit_max": 22000.0,
+    "last_parent_net": -2120.0111,
+    "first_ann_date": "20160426",
+    "summary": "预计净利润20000-22000万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

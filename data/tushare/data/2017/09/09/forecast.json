@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "002346.SZ",
+    "ann_date": "20170909",
+    "end_date": "20170930",
+    "type": "预增",
+    "p_change_min": 1895.16,
+    "p_change_max": 1945.04,
+    "net_profit_min": 24000.0,
+    "net_profit_max": 24600.0,
+    "last_parent_net": 1202.91,
+    "first_ann_date": "20170825",
+    "summary": "预计净利润24000-24600万",
+    "change_reason": "公司预计归属于上市公司股东的净利润变动主要原因为：公司前期进行的征收补偿事项于第三季度全部完成，预计将影响公司2017年第三季度净利润约18,000万元。",
+    "update_flag": "0"
+  }
+]

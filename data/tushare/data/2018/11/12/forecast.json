@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "002943.SZ",
+    "ann_date": "20181112",
+    "end_date": "20181231",
+    "type": "略增",
+    "p_change_min": 38.57,
+    "p_change_max": 47.39,
+    "net_profit_min": 10831.0,
+    "net_profit_max": 11520.0,
+    "last_parent_net": 7816.16,
+    "first_ann_date": "20181112",
+    "summary": "预计净利润10831-11520万",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

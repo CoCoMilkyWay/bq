@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "603500.SH",
+    "ann_date": "20170901",
+    "end_date": "20171231",
+    "type": "略增",
+    "p_change_min": 5.0,
+    "p_change_max": 15.0,
+    "net_profit_min": 7783.0,
+    "net_profit_max": 8524.0,
+    "last_parent_net": 7412.32,
+    "first_ann_date": "20170901",
+    "summary": "预计净利润7783-8524万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "603055.SH",
+    "ann_date": "20170901",
+    "end_date": "20170930",
+    "type": "预增",
+    "p_change_min": 90.0,
+    "p_change_max": 105.0,
+    "net_profit_min": 25472.0,
+    "net_profit_max": 27483.0,
+    "last_parent_net": 13717.5698,
+    "first_ann_date": "20170901",
+    "summary": "预计净利润25472-27483万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300678.SZ",
+    "ann_date": "20170901",
+    "end_date": "20170930",
+    "type": "略增",
+    "p_change_min": 5.54,
+    "p_change_max": 23.13,
+    "net_profit_min": 1200.0,
+    "net_profit_max": 1400.0,
+    "last_parent_net": 1137.0,
+    "first_ann_date": "20170901",
+    "summary": "预计净利润1200-1400万",
+    "change_reason": "2017年以来，随着国家各级党政机关换届选举进入高峰，公司技术服务和技术开发类收入有所增长，促进了公司营业收入的增长；该类收入毛利率较高，从而带动公司整体毛利率提高。在以上两个因素的作用下，公司2017年1-9月实现净利润预计在1200万元至1400万元，较去年同期有所增长。",
+    "update_flag": "0"
+  }
+]

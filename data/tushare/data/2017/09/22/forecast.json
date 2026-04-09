@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "300274.SZ",
+    "ann_date": "20170922",
+    "end_date": "20170930",
+    "type": "预增",
+    "p_change_min": 135.0,
+    "p_change_max": 155.0,
+    "net_profit_min": 70000.0,
+    "net_profit_max": 75720.0,
+    "last_parent_net": 29693.53,
+    "first_ann_date": "20170922",
+    "summary": "预计净利润70000-75720万",
+    "change_reason": "1.分布式电站系统集成业务增长较快；2.国内光伏市场受政策驱动增长较快，海外市场拓展进一步扩大,增幅较大；公司2017年1-9月非经常性损益主要系募集资金利息收入及政府补助，预计对净利润影响约5200万元。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300502.SZ",
+    "ann_date": "20170922",
+    "end_date": "20170930",
+    "type": "略增",
+    "p_change_min": 10.0,
+    "p_change_max": 25.0,
+    "net_profit_min": 8855.0,
+    "net_profit_max": 10062.0,
+    "last_parent_net": 8049.62,
+    "first_ann_date": "20170922",
+    "summary": "预计净利润8855-10062万",
+    "change_reason": "1、报告期内，光通信行业发展趋势良好，公司经营业绩稳健增长；2、预计2017年1-9月非经常性损益对公司净利润的影响约为640万元。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300701.SZ",
+    "ann_date": "20170922",
+    "end_date": "20170930",
+    "type": "略增",
+    "p_change_min": 20.0,
+    "p_change_max": 30.0,
+    "net_profit_min": 4041.0,
+    "net_profit_max": 4377.0,
+    "last_parent_net": 3367.2,
+    "first_ann_date": "20170914",
+    "summary": "预计净利润4041-4377万",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

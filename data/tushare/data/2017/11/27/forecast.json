@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "603161.SH",
+    "ann_date": "20171127",
+    "end_date": "20171231",
+    "type": "略增",
+    "p_change_min": 3.88,
+    "p_change_max": 20.47,
+    "net_profit_min": 10424.0,
+    "net_profit_max": 12087.0,
+    "last_parent_net": 10033.8581,
+    "first_ann_date": "20171127",
+    "summary": "预计净利润10424-12087万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002088.SZ",
+    "ann_date": "20171127",
+    "end_date": "20171231",
+    "type": "预增",
+    "p_change_min": 70.0,
+    "p_change_max": 110.0,
+    "net_profit_min": 17794.0,
+    "net_profit_max": 21980.0,
+    "last_parent_net": 10466.82,
+    "first_ann_date": "20171026",
+    "summary": "预计净利润17794-21980万",
+    "change_reason": "1、陶瓷纤维产品生产效率提升、成本下降陶瓷纤维产品销售收入增长毛利率提升。2、公司“转方式、调结构”经营模式的实施推动公司产品销售结构变化中高端陶瓷纤维产品销量提升。3、玄武岩纤维产品销售数量增加价格提升销售收入增长。4、公司不断开展市场创新新市场销售量增加。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "603809.SH",
+    "ann_date": "20171127",
+    "end_date": "20171231",
+    "type": "略增",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 12627.4443,
+    "first_ann_date": "20171127",
+    "summary": "略增",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

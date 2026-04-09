@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "300136.SZ",
+    "ann_date": "20150509",
+    "end_date": "20150630",
+    "type": "预增",
+    "p_change_min": 137.84,
+    "p_change_max": 160.48,
+    "net_profit_min": 6300.0,
+    "net_profit_max": 6900.0,
+    "last_parent_net": null,
+    "first_ann_date": "20150509",
+    "summary": "预计净利润6300-6900万",
+    "change_reason": "报告期内，受益于公司服务的客户智能移动终端持续增长，公司加快国际国内市场开拓，与品牌客户的合作粘性进一步加强，合作广度加深，市场份额逐步提升，公司对国际、国内客户的出货与去年同期相比得到了快速的增长，公司加强成本管控，规模效益初步显现，使报告期公司归属于上市公司股东的净利润成倍增长。报告期内，影响净利润的非经常性损益金额约为200万元，去年同期为369.7万元。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002130.SZ",
+    "ann_date": "20150509",
+    "end_date": "20150630",
+    "type": "预增",
+    "p_change_min": 810.0,
+    "p_change_max": 840.0,
+    "net_profit_min": 35883.0,
+    "net_profit_max": 37066.0,
+    "last_parent_net": 3943.1527,
+    "first_ann_date": "20150429",
+    "summary": "预计净利润35883-37066万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002045.SZ",
+    "ann_date": "20150509",
+    "end_date": "20150630",
+    "type": "不确定",
+    "p_change_min": -116.35,
+    "p_change_max": -66.38,
+    "net_profit_min": -341.0,
+    "net_profit_max": 701.0,
+    "last_parent_net": 2084.7106,
+    "first_ann_date": "20150425",
+    "summary": "预计净利润-341-701万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

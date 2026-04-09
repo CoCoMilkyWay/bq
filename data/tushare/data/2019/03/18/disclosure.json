@@ -1,0 +1,58 @@
+[
+  {
+    "ts_code": "601916.SH",
+    "ann_date": null,
+    "end_date": "20181231",
+    "pre_date": null,
+    "actual_date": "20190318"
+  },
+  {
+    "ts_code": "600433.SH",
+    "ann_date": "20181227",
+    "end_date": "20181231",
+    "pre_date": "20190318",
+    "actual_date": "20190318"
+  },
+  {
+    "ts_code": "600466.SH",
+    "ann_date": "20190219",
+    "end_date": "20181231",
+    "pre_date": "20190318",
+    "actual_date": "20190318"
+  },
+  {
+    "ts_code": "600603.SH",
+    "ann_date": "20181227",
+    "end_date": "20181231",
+    "pre_date": "20190318",
+    "actual_date": "20190318"
+  },
+  {
+    "ts_code": "601878.SH",
+    "ann_date": "20190308",
+    "end_date": "20181231",
+    "pre_date": "20190318",
+    "actual_date": "20190318"
+  },
+  {
+    "ts_code": "000723.SZ",
+    "ann_date": "20181228",
+    "end_date": "20181231",
+    "pre_date": "20190318",
+    "actual_date": "20190318"
+  },
+  {
+    "ts_code": "600332.SH",
+    "ann_date": "20190225",
+    "end_date": "20181231",
+    "pre_date": "20190318",
+    "actual_date": "20190318"
+  },
+  {
+    "ts_code": "002585.SZ",
+    "ann_date": "20181228",
+    "end_date": "20181231",
+    "pre_date": "20190318",
+    "actual_date": "20190318"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "002048.SZ",
+    "ann_date": "20250621",
+    "end_date": "20250630",
+    "type": "首亏",
+    "p_change_min": -169.12,
+    "p_change_max": -151.09,
+    "net_profit_min": -36893.0,
+    "net_profit_max": -27269.0,
+    "last_parent_net": 53374.86,
+    "first_ann_date": "20250621",
+    "summary": "预计:净利润-36893--27269",
+    "change_reason": "2025年上半年因欧洲业务剥离对公司一次性影响约8.98亿元，属于非经常性损益事项。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002048.SZ",
+    "ann_date": "20250621",
+    "end_date": "20250630",
+    "type": "首亏",
+    "p_change_min": -169.12,
+    "p_change_max": -151.09,
+    "net_profit_min": -36893.0,
+    "net_profit_max": -27269.0,
+    "last_parent_net": 53374.86,
+    "first_ann_date": "20250621",
+    "summary": "预计:净利润-36893--27269",
+    "change_reason": "2025年上半年因欧洲业务剥离对公司一次性影响约8.98亿元，属于非经常性损益事项。",
+    "update_flag": "0"
+  }
+]

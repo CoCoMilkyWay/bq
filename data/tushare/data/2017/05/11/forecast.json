@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "603180.SH",
+    "ann_date": "20170511",
+    "end_date": "20170630",
+    "type": "预增",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": null,
+    "first_ann_date": "20170511",
+    "summary": "预增",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "603042.SH",
+    "ann_date": "20170511",
+    "end_date": "20170630",
+    "type": "略增",
+    "p_change_min": 0.0,
+    "p_change_max": 10.0,
+    "net_profit_min": 3853.0,
+    "net_profit_max": 4238.0,
+    "last_parent_net": 3852.5451,
+    "first_ann_date": "20170511",
+    "summary": "预计净利润3853-4238万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "603580.SH",
+    "ann_date": "20170511",
+    "end_date": "20170630",
+    "type": "略增",
+    "p_change_min": 0.0,
+    "p_change_max": 10.0,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 1244.6305,
+    "first_ann_date": "20170511",
+    "summary": "略增",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

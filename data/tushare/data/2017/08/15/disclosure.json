@@ -1,0 +1,786 @@
+[
+  {
+    "ts_code": "603500.SH",
+    "ann_date": null,
+    "end_date": "20161231",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300699.SZ",
+    "ann_date": null,
+    "end_date": "20161231",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002186.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002196.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002198.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002221.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002297.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002342.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002395.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002398.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002438.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002488.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002493.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002501.SZ",
+    "ann_date": "20170804",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300024.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300101.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300122.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300145.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300169.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300265.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300436.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300487.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300502.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300519.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300582.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300612.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300749.SZ",
+    "ann_date": "20170805",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002884.SZ",
+    "ann_date": "20170719",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002802.SZ",
+    "ann_date": "20170804",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600226.SH",
+    "ann_date": "20170804",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "000026.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "000049.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "000070.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "000096.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "000423.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002188.SZ",
+    "ann_date": "20170724",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "000525.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "000629.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "000831.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "000895.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "000905.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002033.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002061.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002450.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002519.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002524.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002610.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002648.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "603637.SH",
+    "ann_date": "20170726",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600529.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "603228.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "603608.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600572.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600603.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "603288.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002756.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002790.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "603879.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300207.SZ",
+    "ann_date": "20170728",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300271.SZ",
+    "ann_date": "20170807",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300138.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300152.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300224.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300272.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300274.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300285.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300416.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300498.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300609.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300657.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "603737.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600051.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "603898.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600520.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "603389.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600171.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "603177.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600776.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600460.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600217.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "601952.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "603444.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "601016.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600476.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "603033.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "603936.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600794.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "601388.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600982.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600330.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600988.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600538.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600329.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600123.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600740.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600814.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "600868.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "601100.SH",
+    "ann_date": "20170629",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300377.SZ",
+    "ann_date": "20170808",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "301067.SZ",
+    "ann_date": "20170710",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "836077.BJ",
+    "ann_date": "20170710",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "688283.SH",
+    "ann_date": "20170710",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "301212.SZ",
+    "ann_date": "20170811",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "838171.BJ",
+    "ann_date": "20170710",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "836961.BJ",
+    "ann_date": "20170710",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "301538.SZ",
+    "ann_date": "20170710",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "920077.BJ",
+    "ann_date": "20170710",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "920271.BJ",
+    "ann_date": "20170710",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "920061.BJ",
+    "ann_date": "20170710",
+    "end_date": "20170630",
+    "pre_date": "20170815",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300705.SZ",
+    "ann_date": "20170710",
+    "end_date": "20170630",
+    "pre_date": "20170816",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "300149.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170826",
+    "actual_date": "20170815"
+  },
+  {
+    "ts_code": "002512.SZ",
+    "ann_date": "20170630",
+    "end_date": "20170630",
+    "pre_date": "20170828",
+    "actual_date": "20170815"
+  }
+]

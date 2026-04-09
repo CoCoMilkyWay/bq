@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "002882.SZ",
+    "ann_date": "20170717",
+    "end_date": "20170630",
+    "type": "预增",
+    "p_change_min": 37.75,
+    "p_change_max": 68.36,
+    "net_profit_min": 6626.0,
+    "net_profit_max": 8098.0,
+    "last_parent_net": 4809.8,
+    "first_ann_date": "20170602",
+    "summary": "预计净利润6626-8098万",
+    "change_reason": "质检总办公厅于2017年3月23日发布了质检办监函【2017】285号文，在全国范围开展电线电缆生产企业的专项监督检查，全面检查电线电缆企业，查处无证生产和违法生产行为。质检总局的专项检查工作净化了行业竞争环境，本公司由于产品质量优良、具有良好的企业声誉，4月份以来，销售额增长迅速，公司净利润有较大幅度提升。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "000007.SZ",
+    "ann_date": "20170717",
+    "end_date": "20170630",
+    "type": "预增",
+    "p_change_min": 122.55,
+    "p_change_max": 233.83,
+    "net_profit_min": 2400.0,
+    "net_profit_max": 3600.0,
+    "last_parent_net": 1078.4,
+    "first_ann_date": "20170717",
+    "summary": "预计净利润2400-3600万",
+    "change_reason": "本业绩预告期间公司生产经营情况正常，本期业绩较上年同期大幅上升，主要系本期公司转让上海量宽信息技术有限公司股权之收益所致。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "000671.SZ",
+    "ann_date": "20170717",
+    "end_date": "20170630",
+    "type": "预增",
+    "p_change_min": 60.0,
+    "p_change_max": 90.0,
+    "net_profit_min": 27372.0,
+    "net_profit_max": 32504.0,
+    "last_parent_net": 17107.37,
+    "first_ann_date": "20170717",
+    "summary": "预计净利润27372-32504万",
+    "change_reason": "公司2017年1-6月实现的归属于上市公司股东的净利润较上年同期有所增长，主要系公司开发项目将在2017年1-6月陆续结转销售收入，同时由于公司部分计提存货跌价的项目所在地房地产市场稳定增长，存货跌价准备转回所致。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "000585.SZ",
+    "ann_date": "20170717",
+    "end_date": "20170630",
+    "type": "续亏",
+    "p_change_min": -67.1736,
+    "p_change_max": -36.7784,
+    "net_profit_min": -2200.0,
+    "net_profit_max": -1800.0,
+    "last_parent_net": -1316.0,
+    "first_ann_date": "20170717",
+    "summary": "预计净利润-2200~-1800万",
+    "change_reason": "根据公司2017年上半年度生产经营情况，由于销售收入减少，加之管理费用同比增加，预测当期实现的净利润仍将亏损，亏损额度为1,800万元—2,200万元。",
+    "update_flag": "0"
+  }
+]

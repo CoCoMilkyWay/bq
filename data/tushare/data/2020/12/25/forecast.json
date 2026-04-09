@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "688151.SH",
+    "ann_date": "20201225",
+    "end_date": "20201231",
+    "type": "略增",
+    "p_change_min": 42.56,
+    "p_change_max": 48.5,
+    "net_profit_min": 12000.0,
+    "net_profit_max": 12500.0,
+    "last_parent_net": 11017.96,
+    "first_ann_date": "20201225",
+    "summary": "预计净利润12000-12500万",
+    "change_reason": "公司经营模式，主要原材料的采购规模及采购价格，主要产品、服务的生产、销售规模及价格，主要客户及供应商的构成，税收政策以及其他可能影响投资者判断的重大事项方面均未发生重大变化。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688565.SH",
+    "ann_date": "20201225",
+    "end_date": "20201231",
+    "type": "略减",
+    "p_change_min": -29.2,
+    "p_change_max": -20.1,
+    "net_profit_min": 3695.0,
+    "net_profit_max": 4168.0,
+    "last_parent_net": 5217.17,
+    "first_ann_date": "20201225",
+    "summary": "预计净利润3695-4168万",
+    "change_reason": "公司整体经营环境不会发生重大变化。但由于本年度订单受疫情影响而被推迟，预计2020年相关财务数据较2019年同期仍有所下降。",
+    "update_flag": "0"
+  }
+]

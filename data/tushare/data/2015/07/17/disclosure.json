@@ -1,0 +1,51 @@
+[
+  {
+    "ts_code": "603690.SH",
+    "ann_date": null,
+    "end_date": "20140930",
+    "pre_date": null,
+    "actual_date": "20150717"
+  },
+  {
+    "ts_code": "603690.SH",
+    "ann_date": null,
+    "end_date": "20141231",
+    "pre_date": null,
+    "actual_date": "20150717"
+  },
+  {
+    "ts_code": "002939.SZ",
+    "ann_date": null,
+    "end_date": "20150630",
+    "pre_date": null,
+    "actual_date": "20150717"
+  },
+  {
+    "ts_code": "601059.SH",
+    "ann_date": null,
+    "end_date": "20150630",
+    "pre_date": null,
+    "actual_date": "20150717"
+  },
+  {
+    "ts_code": "002326.SZ",
+    "ann_date": "20150704",
+    "end_date": "20150630",
+    "pre_date": "20150717",
+    "actual_date": "20150717"
+  },
+  {
+    "ts_code": "002644.SZ",
+    "ann_date": "20150630",
+    "end_date": "20150630",
+    "pre_date": "20150717",
+    "actual_date": "20150717"
+  },
+  {
+    "ts_code": "002014.SZ",
+    "ann_date": "20150630",
+    "end_date": "20150630",
+    "pre_date": "20150717",
+    "actual_date": "20150717"
+  }
+]

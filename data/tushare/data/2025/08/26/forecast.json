@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "920809.BJ",
+    "ann_date": "20250826",
+    "end_date": "20250930",
+    "type": "续亏",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": null,
+    "first_ann_date": "20250826",
+    "summary": "续亏",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "920809.BJ",
+    "ann_date": "20250826",
+    "end_date": "20250930",
+    "type": "续亏",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": null,
+    "first_ann_date": "20250826",
+    "summary": "续亏",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "830809.BJ",
+    "ann_date": "20250826",
+    "end_date": "20250930",
+    "type": "续亏",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": null,
+    "first_ann_date": "20250826",
+    "summary": "续亏",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002475.SZ",
+    "ann_date": "20250826",
+    "end_date": "20250930",
+    "type": "略增",
+    "p_change_min": 20.0,
+    "p_change_max": 25.0,
+    "net_profit_min": 1088995.0,
+    "net_profit_max": 1134369.0,
+    "last_parent_net": 907495.45,
+    "first_ann_date": "20250826",
+    "summary": "预计:净利润1088995-1134369",
+    "change_reason": "当前，面对复杂多变的全球经济环境和产业链重构挑战，公司凭借深厚的技术积淀和全球化布局优势，持续展现出强劲的发展韧性。展望未来，公司将继续秉持创新驱动发展理念，通过强化内生增长与积极外部拓展，充分发挥遍布全球29个国家、105个生产基地的全球化制造优势，为客户提供更灵活高效的定制化服务，从而进一步巩固和拓展全球市场竞争力。同时，公司将以“智能制造升级”和“底层技术创新”为双轮驱动，全面提升全产业链的运营效率与成本管控能力。此外，公司将加速多元化业务战略布局，持续加大在AI智能终端、光电高速互联产品以及汽车智能电子电器等前沿领域的研发投入与市场渗透，以不断提升核心竞争力，持续为全体股东创造更大价值。",
+    "update_flag": "0"
+  }
+]

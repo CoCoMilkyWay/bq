@@ -1,0 +1,100 @@
+[
+  {
+    "ts_code": "601881.SH",
+    "ann_date": null,
+    "end_date": "20160630",
+    "pre_date": null,
+    "actual_date": "20160901"
+  },
+  {
+    "ts_code": "601375.SH",
+    "ann_date": null,
+    "end_date": "20160630",
+    "pre_date": null,
+    "actual_date": "20160901"
+  },
+  {
+    "ts_code": "688981.SH",
+    "ann_date": null,
+    "end_date": "20160630",
+    "pre_date": null,
+    "actual_date": "20160901"
+  },
+  {
+    "ts_code": "838837.BJ",
+    "ann_date": "20160818",
+    "end_date": "20160630",
+    "pre_date": "20160831",
+    "actual_date": "20160901"
+  },
+  {
+    "ts_code": "920837.BJ",
+    "ann_date": "20160818",
+    "end_date": "20160630",
+    "pre_date": "20160831",
+    "actual_date": "20160901"
+  },
+  {
+    "ts_code": "300721.SZ",
+    "ann_date": "20160708",
+    "end_date": "20160630",
+    "pre_date": "20160901",
+    "actual_date": "20160901"
+  },
+  {
+    "ts_code": "300673.SZ",
+    "ann_date": "20160708",
+    "end_date": "20160630",
+    "pre_date": "20160901",
+    "actual_date": "20160901"
+  },
+  {
+    "ts_code": "300796.SZ",
+    "ann_date": "20160812",
+    "end_date": "20160630",
+    "pre_date": "20160901",
+    "actual_date": "20160901"
+  },
+  {
+    "ts_code": "002982.SZ",
+    "ann_date": "20160826",
+    "end_date": "20160630",
+    "pre_date": "20160901",
+    "actual_date": "20160901"
+  },
+  {
+    "ts_code": "601399.SH",
+    "ann_date": "20160831",
+    "end_date": "20160630",
+    "pre_date": "20160901",
+    "actual_date": "20160901"
+  },
+  {
+    "ts_code": "831855.BJ",
+    "ann_date": "20160823",
+    "end_date": "20160630",
+    "pre_date": "20160901",
+    "actual_date": "20160901"
+  },
+  {
+    "ts_code": "831195.BJ",
+    "ann_date": "20160708",
+    "end_date": "20160630",
+    "pre_date": "20160901",
+    "actual_date": "20160901"
+  },
+  {
+    "ts_code": "920855.BJ",
+    "ann_date": "20160823",
+    "end_date": "20160630",
+    "pre_date": "20160901",
+    "actual_date": "20160901"
+  },
+  {
+    "ts_code": "920195.BJ",
+    "ann_date": "20160708",
+    "end_date": "20160630",
+    "pre_date": "20160901",
+    "actual_date": "20160901"
+  }
+]

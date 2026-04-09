@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "301057.SZ",
+    "ann_date": "20210819",
+    "end_date": "20210930",
+    "type": "略增",
+    "p_change_min": 35.27,
+    "p_change_max": 42.93,
+    "net_profit_min": 5300.0,
+    "net_profit_max": 5600.0,
+    "last_parent_net": 3918.07,
+    "first_ann_date": "20210819",
+    "summary": "预计:净利润5300-5600",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "000806.SZ",
+    "ann_date": "20210819",
+    "end_date": "20210630",
+    "type": "续亏",
+    "p_change_min": -4000.2091,
+    "p_change_max": -3385.1777,
+    "net_profit_min": -20000.0,
+    "net_profit_max": -17000.0,
+    "last_parent_net": -487.78,
+    "first_ann_date": "20210715",
+    "summary": "预计:净利润-20000--17000",
+    "change_reason": "公司于2021年8月16日在巨潮资讯网（http://www.cninfo.com.cn）披露了《关于诉讼进展的公告》，根据公告披露内容：“公司根据一审判决书已于2020年度相应计提了‘预计负债’10,000万元，而在本案二审判决生效后，公司预计2021年度相应调增‘预计负债’10,000万元，减少利润10,000万元”；公司根据上述事项期后新进展对公司可能承担的赔偿责任之预计负债进行了进一步的补充计提，确认调增“预计负债”10,000万元，导致公司报告期亏损金额比前次业绩预告大幅增加。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "301057.SZ",
+    "ann_date": "20210819",
+    "end_date": "20210930",
+    "type": "略增",
+    "p_change_min": 35.27,
+    "p_change_max": 42.93,
+    "net_profit_min": 5300.0,
+    "net_profit_max": 5600.0,
+    "last_parent_net": 3918.07,
+    "first_ann_date": "20210819",
+    "summary": "预计净利润5300-5600万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "000806.SZ",
+    "ann_date": "20210819",
+    "end_date": "20210630",
+    "type": "续亏",
+    "p_change_min": -4000.2091,
+    "p_change_max": -3385.1777,
+    "net_profit_min": -20000.0,
+    "net_profit_max": -17000.0,
+    "last_parent_net": -487.78,
+    "first_ann_date": "20210715",
+    "summary": "预计净利润-20000~-17000万",
+    "change_reason": "公司于2021年8月16日在巨潮资讯网（http://www.cninfo.com.cn）披露了《关于诉讼进展的公告》，根据公告披露内容：“公司根据一审判决书已于2020年度相应计提了‘预计负债’10,000万元，而在本案二审判决生效后，公司预计2021年度相应调增‘预计负债’10,000万元，减少利润10,000万元”；公司根据上述事项期后新进展对公司可能承担的赔偿责任之预计负债进行了进一步的补充计提，确认调增“预计负债”10,000万元，导致公司报告期亏损金额比前次业绩预告大幅增加。",
+    "update_flag": "0"
+  }
+]

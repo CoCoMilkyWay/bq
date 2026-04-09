@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "688488.SH",
+    "ann_date": "20200419",
+    "end_date": "20200331",
+    "type": "预减",
+    "p_change_min": -66.0,
+    "p_change_max": -66.0,
+    "net_profit_min": 208.0,
+    "net_profit_max": 208.0,
+    "last_parent_net": 603.3323,
+    "first_ann_date": "20200419",
+    "summary": "预计净利润208万",
+    "change_reason": "由于新型冠状病毒肺炎疫情突发，全国各省市新型肺炎疫情启动一级响应，导致春节假期延期复工，公司及主要客户、主要供应商的生产经营均受到一定程度的影响。具体而言，公司主要原材料的采购、产品的生产受到延期复工影响，相比正常进度有所延后，2020年1季度主要依靠消耗前期库存满足下游订单需求；与此同时，下游客户受延期复工的影响，对公司产品的采购及验收周期也会相应延后，对公司2020年1季度的主营业务收入产生较大影响。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688600.SH",
+    "ann_date": "20200419",
+    "end_date": "20200630",
+    "type": "预减",
+    "p_change_min": 140.18,
+    "p_change_max": 300.3,
+    "net_profit_min": 900.0,
+    "net_profit_max": 1500.0,
+    "last_parent_net": 455.943,
+    "first_ann_date": "20200419",
+    "summary": "预计净利润900-1500万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

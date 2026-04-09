@@ -1,0 +1,100 @@
+[
+  {
+    "ts_code": "601456.SH",
+    "ann_date": null,
+    "end_date": "20181231",
+    "pre_date": null,
+    "actual_date": "20190415"
+  },
+  {
+    "ts_code": "002511.SZ",
+    "ann_date": "20181228",
+    "end_date": "20181231",
+    "pre_date": "20190415",
+    "actual_date": "20190415"
+  },
+  {
+    "ts_code": "600587.SH",
+    "ann_date": "20181227",
+    "end_date": "20181231",
+    "pre_date": "20190415",
+    "actual_date": "20190415"
+  },
+  {
+    "ts_code": "300634.SZ",
+    "ann_date": "20181228",
+    "end_date": "20181231",
+    "pre_date": "20190415",
+    "actual_date": "20190415"
+  },
+  {
+    "ts_code": "600684.SH",
+    "ann_date": "20190304",
+    "end_date": "20181231",
+    "pre_date": "20190415",
+    "actual_date": "20190415"
+  },
+  {
+    "ts_code": "603918.SH",
+    "ann_date": "20181227",
+    "end_date": "20181231",
+    "pre_date": "20190415",
+    "actual_date": "20190415"
+  },
+  {
+    "ts_code": "000048.SZ",
+    "ann_date": "20190409",
+    "end_date": "20181231",
+    "pre_date": "20190415",
+    "actual_date": "20190415"
+  },
+  {
+    "ts_code": "603187.SH",
+    "ann_date": "20181227",
+    "end_date": "20181231",
+    "pre_date": "20190415",
+    "actual_date": "20190415"
+  },
+  {
+    "ts_code": "600242.SH",
+    "ann_date": "20181227",
+    "end_date": "20181231",
+    "pre_date": "20190415",
+    "actual_date": "20190415"
+  },
+  {
+    "ts_code": "002195.SZ",
+    "ann_date": "20181228",
+    "end_date": "20181231",
+    "pre_date": "20190415",
+    "actual_date": "20190415"
+  },
+  {
+    "ts_code": "300348.SZ",
+    "ann_date": "20181228",
+    "end_date": "20181231",
+    "pre_date": "20190415",
+    "actual_date": "20190415"
+  },
+  {
+    "ts_code": "300034.SZ",
+    "ann_date": "20190329",
+    "end_date": "20190331",
+    "pre_date": "20190415",
+    "actual_date": "20190415"
+  },
+  {
+    "ts_code": "600546.SH",
+    "ann_date": "20190328",
+    "end_date": "20190331",
+    "pre_date": "20190415",
+    "actual_date": "20190415"
+  },
+  {
+    "ts_code": "300569.SZ",
+    "ann_date": "20181228",
+    "end_date": "20181231",
+    "pre_date": "20190415",
+    "actual_date": "20190415"
+  }
+]

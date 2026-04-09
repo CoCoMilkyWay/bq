@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "002921.SZ",
+    "ann_date": "20171213",
+    "end_date": "20171231",
+    "type": "略增",
+    "p_change_min": 1.36,
+    "p_change_max": 3.59,
+    "net_profit_min": 4550.0,
+    "net_profit_max": 4650.0,
+    "last_parent_net": 4745.96,
+    "first_ann_date": "20171213",
+    "summary": "预计净利润4550-4650万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300677.SZ",
+    "ann_date": "20171213",
+    "end_date": "20171231",
+    "type": "预增",
+    "p_change_min": 63.31,
+    "p_change_max": 74.98,
+    "net_profit_min": 14000.0,
+    "net_profit_max": 15000.0,
+    "last_parent_net": 8572.58,
+    "first_ann_date": "20171213",
+    "summary": "预计净利润14000-15000万",
+    "change_reason": "1、2016年下半年和2017年上半年，公司陆续有12条PVC生产线和5条丁腈生产线投产并释放产能，公司报告期内销售收入大幅增加。2、报告期内，丁腈车间部分生产线完成技术改造，进一步提高了生产效率。",
+    "update_flag": "0"
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "002343.SZ",
+    "ann_date": "20160504",
+    "end_date": "20160630",
+    "type": "扭亏",
+    "p_change_min": 368.7739,
+    "p_change_max": 435.9673,
+    "net_profit_min": 8000.0,
+    "net_profit_max": 10000.0,
+    "last_parent_net": -2976.48,
+    "first_ann_date": "20160429",
+    "summary": "预计净利润8000-10000万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

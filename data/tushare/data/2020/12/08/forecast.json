@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "300922.SZ",
+    "ann_date": "20201208",
+    "end_date": "20201231",
+    "type": "略增",
+    "p_change_min": 18.93,
+    "p_change_max": 23.69,
+    "net_profit_min": 6250.0,
+    "net_profit_max": 6500.0,
+    "last_parent_net": 5255.24,
+    "first_ann_date": "20201208",
+    "summary": "预计净利润6250-6500万",
+    "change_reason": "发行人2020年上半年净利润及扣除非经常性损益后的净利润较上年同期均不存在下滑。经发行人与主要客户沟通确认，2020年全年订货计划未发生改变，因此发行人2020年经营业绩预期将显著回升。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "605179.SH",
+    "ann_date": "20201208",
+    "end_date": "20201231",
+    "type": "略减",
+    "p_change_min": -12.56,
+    "p_change_max": -12.56,
+    "net_profit_min": 15214.0,
+    "net_profit_max": 15214.0,
+    "last_parent_net": 17399.48,
+    "first_ann_date": "20201208",
+    "summary": "预计净利润15214万",
+    "change_reason": "公司预测2020年度净利润将较上年度出现小幅下降，主要系由于本年一季度经营业绩受到新冠疫情短期冲击影响较为明显所致；随着后续产品销售情况的较快恢复及增长，年度经营业绩的同比下降幅度预计将较1-9月审阅数据的同比降幅进一步缩小。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688686.SH",
+    "ann_date": "20201208",
+    "end_date": "20201231",
+    "type": "略增",
+    "p_change_min": 7.53,
+    "p_change_max": 20.03,
+    "net_profit_min": 22200.0,
+    "net_profit_max": 24780.0,
+    "last_parent_net": 20644.69,
+    "first_ann_date": "20201208",
+    "summary": "预计净利润22200-24780万",
+    "change_reason": "公司经营状况良好，主要原材料采购情况、主要产品销售情况、主要客户及供应商的构成情况、税收政策以及其他可能影响投资者判断的重大事项方面未发生重大变化，未发生会对发行人持续经营能力及发行条件产生重大不利影响的事项。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688617.SH",
+    "ann_date": "20201208",
+    "end_date": "20201231",
+    "type": "略增",
+    "p_change_min": 11.45,
+    "p_change_max": 32.7,
+    "net_profit_min": 9203.0,
+    "net_profit_max": 10958.0,
+    "last_parent_net": 8257.49,
+    "first_ann_date": "20201208",
+    "summary": "预计净利润9203-10958万",
+    "change_reason": "公司2020年1-9月经营业绩稳定，收入及利润指标均有所上升。根据公司对国内外终端销售市场的分析，随着医院手术量需求恢复，主要经销商陆续复工，预计2020年9月之后的整体市场和销售情况将持续恢复和上升。",
+    "update_flag": "1"
+  }
+]

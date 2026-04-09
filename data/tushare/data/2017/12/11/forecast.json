@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "300735.SZ",
+    "ann_date": "20171211",
+    "end_date": "20171231",
+    "type": "略增",
+    "p_change_min": 16.74,
+    "p_change_max": 23.22,
+    "net_profit_min": 18000.0,
+    "net_profit_max": 19000.0,
+    "last_parent_net": 15419.47,
+    "first_ann_date": "20171211",
+    "summary": "预计净利润18000-19000万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "603655.SH",
+    "ann_date": "20171211",
+    "end_date": "20171231",
+    "type": "略增",
+    "p_change_min": 10.04,
+    "p_change_max": 16.07,
+    "net_profit_min": 3321.0,
+    "net_profit_max": 3503.0,
+    "last_parent_net": 3018.1893,
+    "first_ann_date": "20171211",
+    "summary": "预计净利润3321-3503万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300418.SZ",
+    "ann_date": "20171211",
+    "end_date": "20171231",
+    "type": "预增",
+    "p_change_min": 95.67,
+    "p_change_max": 124.84,
+    "net_profit_min": 104000.0,
+    "net_profit_max": 119500.0,
+    "last_parent_net": 53149.71,
+    "first_ann_date": "20171211",
+    "summary": "预计净利润104000-119500万",
+    "change_reason": "1、报告期内，公司稳步推进“社交媒体与内容平台”的发展战略，各项主营业务保持稳定增长，促使公司预期净利润保持稳定增长。2、报告期内，公司收购的北京闲徕互娱网络科技有限公司棋牌业务市场规模不断扩大，在结合公司丰富的网络游戏发行资源的基础上充分发挥协同效应，促使公司预期净利润大幅增长。3、本次业绩预告没有包括公司投资的北京蜜莱坞网络科技有限公司（即“映客”）股份出售部分可能获得的投资收益5.03亿元人民币，该交易尚需要得到宣亚国际品牌管理（北京）股份有限公司股东大会的批准。如果该交易能够在12月底完成，则本次业绩预告的利润会有较大幅度增长。4、报告期内预计影响净利润的非经常性损益金额约为6,000万元。",
+    "update_flag": "0"
+  }
+]

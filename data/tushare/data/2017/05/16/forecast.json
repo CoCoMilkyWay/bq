@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "603269.SH",
+    "ann_date": "20170516",
+    "end_date": "20170630",
+    "type": "不确定",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 1264.45,
+    "first_ann_date": "20170516",
+    "summary": "不确定",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "603758.SH",
+    "ann_date": "20170516",
+    "end_date": "20170630",
+    "type": "不确定",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 11091.0183,
+    "first_ann_date": "20170516",
+    "summary": "不确定",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "603200.SH",
+    "ann_date": "20170516",
+    "end_date": "20170630",
+    "type": "略增",
+    "p_change_min": 2.14,
+    "p_change_max": 21.0,
+    "net_profit_min": 2632.0,
+    "net_profit_max": 3117.0,
+    "last_parent_net": 2464.4602,
+    "first_ann_date": "20170516",
+    "summary": "预计净利润2632-3117万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "601878.SH",
+    "ann_date": "20170516",
+    "end_date": "20170630",
+    "type": "续盈",
+    "p_change_min": -4.31,
+    "p_change_max": 10.81,
+    "net_profit_min": 51900.0,
+    "net_profit_max": 60100.0,
+    "last_parent_net": 54221.1223,
+    "first_ann_date": "20170516",
+    "summary": "预计净利润51900-60100万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

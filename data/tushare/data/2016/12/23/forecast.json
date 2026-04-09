@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "600519.SH",
+    "ann_date": "20161223",
+    "end_date": "20161231",
+    "type": "略增",
+    "p_change_min": 7.4,
+    "p_change_max": 7.4,
+    "net_profit_min": 1665049.0,
+    "net_profit_max": 1665049.0,
+    "last_parent_net": 1550309.03,
+    "first_ann_date": "20161223",
+    "summary": "预计净利润1665049万",
+    "change_reason": "2016年度主要经营数据：营业总收入：3,985,621.36万元，增加19.16%，归属于上市公司股东的净利润：1,665,048.59万元，增加7.4%。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "603690.SH",
+    "ann_date": "20161223",
+    "end_date": "20161231",
+    "type": "预增",
+    "p_change_min": 137.75,
+    "p_change_max": 174.94,
+    "net_profit_min": 4208.0,
+    "net_profit_max": 4866.0,
+    "last_parent_net": null,
+    "first_ann_date": "20161223",
+    "summary": "预计净利润4208-4866万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300593.SZ",
+    "ann_date": "20161223",
+    "end_date": "20161231",
+    "type": "略增",
+    "p_change_min": 24.38,
+    "p_change_max": 39.19,
+    "net_profit_min": 4200.0,
+    "net_profit_max": 4700.0,
+    "last_parent_net": 3376.7007,
+    "first_ann_date": "20161223",
+    "summary": "预计净利润4200-4700万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

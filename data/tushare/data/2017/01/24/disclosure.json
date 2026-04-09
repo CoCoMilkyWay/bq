@@ -1,0 +1,44 @@
+[
+  {
+    "ts_code": "603345.SH",
+    "ann_date": "20151230",
+    "end_date": "20151231",
+    "pre_date": "20170124",
+    "actual_date": "20170124"
+  },
+  {
+    "ts_code": "000545.SZ",
+    "ann_date": "20161230",
+    "end_date": "20161231",
+    "pre_date": "20170124",
+    "actual_date": "20170124"
+  },
+  {
+    "ts_code": "603716.SH",
+    "ann_date": "20161223",
+    "end_date": "20161231",
+    "pre_date": "20170124",
+    "actual_date": "20170124"
+  },
+  {
+    "ts_code": "300715.SZ",
+    "ann_date": "20161230",
+    "end_date": "20161231",
+    "pre_date": "20170124",
+    "actual_date": "20170124"
+  },
+  {
+    "ts_code": "300401.SZ",
+    "ann_date": "20161230",
+    "end_date": "20161231",
+    "pre_date": "20170124",
+    "actual_date": "20170124"
+  },
+  {
+    "ts_code": "600227.SH",
+    "ann_date": "20161223",
+    "end_date": "20161231",
+    "pre_date": "20170124",
+    "actual_date": "20170124"
+  }
+]

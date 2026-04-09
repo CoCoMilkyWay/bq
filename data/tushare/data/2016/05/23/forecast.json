@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "601127.SH",
+    "ann_date": "20160523",
+    "end_date": "20161231",
+    "type": "略增",
+    "p_change_min": 0.0,
+    "p_change_max": 10.0,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": null,
+    "first_ann_date": "20160523",
+    "summary": "略增",
+    "change_reason": "基于对经济环境、行业变动趋势的判断以及本公司整体经营情况的分析，预计本公司2016年度公司订单数量、产品、客户群体以及原材料供应等情况不会发生重大不利变化，经营情况保持稳定.",
+    "update_flag": "0"
+  }
+]

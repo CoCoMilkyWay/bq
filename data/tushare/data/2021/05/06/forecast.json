@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "688285.SH",
+    "ann_date": "20210506",
+    "end_date": "20210331",
+    "type": "略增",
+    "p_change_min": 20.2,
+    "p_change_max": 20.2,
+    "net_profit_min": 3500.0,
+    "net_profit_max": 3500.0,
+    "last_parent_net": null,
+    "first_ann_date": "20210506",
+    "summary": "预计:净利润3500",
+    "change_reason": "公司2021年1-3月业绩较去年同期增长，一方面体现公司作为行业龙头企业经营稳步增长，另一方面由于2020年一季度受新冠肺炎疫情影响，公司部分项目验收延迟结算，因此去年同期基数较低。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688285.SH",
+    "ann_date": "20210506",
+    "end_date": "20210331",
+    "type": "略增",
+    "p_change_min": 20.2,
+    "p_change_max": 20.2,
+    "net_profit_min": 3500.0,
+    "net_profit_max": 3500.0,
+    "last_parent_net": null,
+    "first_ann_date": "20210506",
+    "summary": "预计净利润3500万",
+    "change_reason": "公司2021年1-3月业绩较去年同期增长，一方面体现公司作为行业龙头企业经营稳步增长，另一方面由于2020年一季度受新冠肺炎疫情影响，公司部分项目验收延迟结算，因此去年同期基数较低。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300989.SZ",
+    "ann_date": "20210506",
+    "end_date": "20210630",
+    "type": "略增",
+    "p_change_min": 4.42,
+    "p_change_max": 11.88,
+    "net_profit_min": 2800.0,
+    "net_profit_max": 3000.0,
+    "last_parent_net": 2681.4976,
+    "first_ann_date": "20210506",
+    "summary": "预计:净利润2800-3000",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

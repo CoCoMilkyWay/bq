@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "002930.SZ",
+    "ann_date": "20180305",
+    "end_date": "20180331",
+    "type": "略增",
+    "p_change_min": 8.95,
+    "p_change_max": 11.0,
+    "net_profit_min": 2650.0,
+    "net_profit_max": 2700.0,
+    "last_parent_net": null,
+    "first_ann_date": "20180305",
+    "summary": "预计净利润2650-2700万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "600929.SH",
+    "ann_date": "20180305",
+    "end_date": "20180331",
+    "type": "略增",
+    "p_change_min": 0.91,
+    "p_change_max": 7.79,
+    "net_profit_min": 4400.0,
+    "net_profit_max": 4700.0,
+    "last_parent_net": 4360.41,
+    "first_ann_date": "20180305",
+    "summary": "预计净利润4400-4700万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002745.SZ",
+    "ann_date": "20180305",
+    "end_date": "20180331",
+    "type": "略增",
+    "p_change_min": 13.15,
+    "p_change_max": 35.78,
+    "net_profit_min": 15000.0,
+    "net_profit_max": 18000.0,
+    "last_parent_net": 13256.89,
+    "first_ann_date": "20180305",
+    "summary": "预计净利润15000-18000万",
+    "change_reason": "1、主要产品价格稳定，全产业链的布局有效的控制成本。2、募投项目新增产能逐步释放，规模化效应明显提高从而促使产品的单位成本进一步下降，市场的占有率稳步提升。",
+    "update_flag": "0"
+  }
+]

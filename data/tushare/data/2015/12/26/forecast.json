@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "002698.SZ",
+    "ann_date": "20151226",
+    "end_date": "20151231",
+    "type": "续盈",
+    "p_change_min": -5.0,
+    "p_change_max": 5.0,
+    "net_profit_min": 17796.0,
+    "net_profit_max": 19669.0,
+    "last_parent_net": 18732.3819,
+    "first_ann_date": "20150820",
+    "summary": "预计净利润17796-19669万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

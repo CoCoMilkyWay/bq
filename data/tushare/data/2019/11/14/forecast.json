@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "688357.SH",
+    "ann_date": "20191114",
+    "end_date": "20191231",
+    "type": "预增",
+    "p_change_min": 83.57,
+    "p_change_max": 83.57,
+    "net_profit_min": 8600.0,
+    "net_profit_max": 8600.0,
+    "last_parent_net": 4707.25,
+    "first_ann_date": "20191114",
+    "summary": "预计净利润8600万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300091.SZ",
+    "ann_date": "20191114",
+    "end_date": "20191231",
+    "type": "略增",
+    "p_change_min": 30.1,
+    "p_change_max": 47.38,
+    "net_profit_min": 12800.0,
+    "net_profit_max": 14500.0,
+    "last_parent_net": 9838.8,
+    "first_ann_date": "20191114",
+    "summary": "预计净利润12800-14500万",
+    "change_reason": "1、报告期内，由于流动性仍偏紧，公司对部分总包项目的投入进行了计划调整和投资收缩，对公司年度经营成果收入方面产生了一定的负面影响。但同时公司在原材料钢材价格持续高位震荡，运费等营业费用增幅较大的情况下，加大了内部管理的力度，注重开源节流，集中公司资源推进优质项目的建设，促使公司利润同比有较大幅度的增长。2、预计报告期非经常性损益对净利润的影响金额不超过2,000万元。",
+    "update_flag": "0"
+  }
+]

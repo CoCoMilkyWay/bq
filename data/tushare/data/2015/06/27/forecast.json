@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "601898.SH",
+    "ann_date": "20150627",
+    "end_date": "20150630",
+    "type": "首亏",
+    "p_change_min": -274.8499,
+    "p_change_max": -216.5666,
+    "net_profit_min": -120000.0,
+    "net_profit_max": -80000.0,
+    "last_parent_net": 68630.3,
+    "first_ann_date": "20150425",
+    "summary": "预计净利润-120000~-80000万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300283.SZ",
+    "ann_date": "20150627",
+    "end_date": "20150630",
+    "type": "略减",
+    "p_change_min": -50.0,
+    "p_change_max": -20.0,
+    "net_profit_min": 713.0,
+    "net_profit_max": 1141.0,
+    "last_parent_net": 1426.8468,
+    "first_ann_date": "20150627",
+    "summary": "预计净利润713-1141万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

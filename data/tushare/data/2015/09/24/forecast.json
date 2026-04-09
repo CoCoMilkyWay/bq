@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "300267.SZ",
+    "ann_date": "20150924",
+    "end_date": "20150930",
+    "type": "预增",
+    "p_change_min": 102.5,
+    "p_change_max": 132.0,
+    "net_profit_min": 40024.0,
+    "net_profit_max": 45855.0,
+    "last_parent_net": 19765.1015,
+    "first_ann_date": "20150924",
+    "summary": "预计净利润40024-45855万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

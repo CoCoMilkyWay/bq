@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "301373.SZ",
+    "ann_date": "20170207",
+    "end_date": "20161231",
+    "type": "预增",
+    "p_change_min": 93.0,
+    "p_change_max": 137.0,
+    "net_profit_min": 3000.0,
+    "net_profit_max": 3700.0,
+    "last_parent_net": null,
+    "first_ann_date": "20170207",
+    "summary": "预计净利润3000-3700万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300605.SZ",
+    "ann_date": "20170207",
+    "end_date": "20170331",
+    "type": "略增",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": 240.0,
+    "net_profit_max": 270.0,
+    "last_parent_net": 295.057,
+    "first_ann_date": "20170207",
+    "summary": "预计净利润240-270万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002089.SZ",
+    "ann_date": "20170207",
+    "end_date": "20170331",
+    "type": "扭亏",
+    "p_change_min": 500.0145,
+    "p_change_max": 600.0181,
+    "net_profit_min": 4540.0,
+    "net_profit_max": 5675.0,
+    "last_parent_net": null,
+    "first_ann_date": "20170207",
+    "summary": "预计净利润4540-5675万",
+    "change_reason": "董事会关于业绩变动的具体原因说明：1、公司参股38.07%的陕西通家汽车股份有限公司（以下简称“陕西通家”）有四款新能源汽车车型进入国家工业和信息化部于2017年1月23日发布的《新能源汽车推广应用推荐车型目录》（2017年第1批），预计陕西通家2017年第一季度的生产和销售将大幅增加。预计会给本公司带来较大的投资收益。2、公司控股子公司苏州新纳晶光电有限公司预计2017年第一季度不再亏损。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300606.SZ",
+    "ann_date": "20170207",
+    "end_date": "20170331",
+    "type": "预增",
+    "p_change_min": 5.0,
+    "p_change_max": 20.0,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": null,
+    "first_ann_date": "20170207",
+    "summary": "预增",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

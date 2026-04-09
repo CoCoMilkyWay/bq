@@ -1,0 +1,23 @@
+[
+  {
+    "ts_code": "600734.SH",
+    "ann_date": "20200610",
+    "end_date": "20191231",
+    "pre_date": "20200613",
+    "actual_date": "20200613"
+  },
+  {
+    "ts_code": "000732.SZ",
+    "ann_date": "20200420",
+    "end_date": "20191231",
+    "pre_date": "20200615",
+    "actual_date": "20200613"
+  },
+  {
+    "ts_code": "002625.SZ",
+    "ann_date": "20200422",
+    "end_date": "20191231",
+    "pre_date": "20200615",
+    "actual_date": "20200613"
+  }
+]

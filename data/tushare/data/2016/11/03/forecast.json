@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "300556.SZ",
+    "ann_date": "20161103",
+    "end_date": "20161231",
+    "type": "略减",
+    "p_change_min": -15.0,
+    "p_change_max": 15.0,
+    "net_profit_min": 2756.0,
+    "net_profit_max": 3729.0,
+    "last_parent_net": null,
+    "first_ann_date": "20161103",
+    "summary": "预计净利润2756-3729万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

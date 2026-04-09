@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "002798.SZ",
+    "ann_date": "20160524",
+    "end_date": "20160630",
+    "type": "略减",
+    "p_change_min": -8.92,
+    "p_change_max": -0.38,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 1757.3253,
+    "first_ann_date": "20160524",
+    "summary": "略减",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002670.SZ",
+    "ann_date": "20160524",
+    "end_date": "20160630",
+    "type": "预增",
+    "p_change_min": 170.0,
+    "p_change_max": 220.0,
+    "net_profit_min": 7831.0,
+    "net_profit_max": 9281.0,
+    "last_parent_net": null,
+    "first_ann_date": "20160422",
+    "summary": "预计净利润7831-9281万",
+    "change_reason": "公司发行股份及支付现金购买国盛证券有限责任公司100%股权并募集配套资金（以下简称本次重组）方案已实施完毕。其中，国盛证券有限责任公司（以下简称国盛证券）股权变更于2016年4月12日办理完毕，相关现金对价、股份对价分别于2016年5月6日、5月18日支付完毕。本次业绩变动系合并范围变更导致。",
+    "update_flag": "0"
+  }
+]

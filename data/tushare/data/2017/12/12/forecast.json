@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "603080.SH",
+    "ann_date": "20171212",
+    "end_date": "20171231",
+    "type": "略减",
+    "p_change_min": -14.53,
+    "p_change_max": -9.2,
+    "net_profit_min": 10129.0,
+    "net_profit_max": 10761.0,
+    "last_parent_net": 11850.95,
+    "first_ann_date": "20171212",
+    "summary": "预计净利润10129-10761万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002922.SZ",
+    "ann_date": "20171212",
+    "end_date": "20171231",
+    "type": "略增",
+    "p_change_min": 5.0,
+    "p_change_max": 10.0,
+    "net_profit_min": 7476.0,
+    "net_profit_max": 7832.0,
+    "last_parent_net": 7162.94,
+    "first_ann_date": "20171212",
+    "summary": "预计净利润7476-7832万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "601216.SH",
+    "ann_date": "20171212",
+    "end_date": "20171231",
+    "type": "预增",
+    "p_change_min": 25.0,
+    "p_change_max": 55.0,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 158391.84,
+    "first_ann_date": "20171212",
+    "summary": "预增",
+    "change_reason": "（一）公司长期依靠科技创新和科学管理提升企业的核心竞争能力，和同业相比较具有更好的综合竞争优势，毛利率继续保持较高水平；（二）公司全力推进“产业为轮，金融为翼”的发展战略，战略投资的金融企业进入稳定发展的良性阶段，按权益法核算参股公司投资收益总体同比增加。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "603329.SH",
+    "ann_date": "20171212",
+    "end_date": "20171231",
+    "type": "略增",
+    "p_change_min": 20.0,
+    "p_change_max": 30.0,
+    "net_profit_min": 7782.0,
+    "net_profit_max": 8430.0,
+    "last_parent_net": 6484.65,
+    "first_ann_date": "20171212",
+    "summary": "预计净利润7782-8430万",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

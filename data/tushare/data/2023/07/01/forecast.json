@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "002037.SZ",
+    "ann_date": "20230701",
+    "end_date": "20230630",
+    "type": "预增",
+    "p_change_min": 2592.0,
+    "p_change_max": 3542.0,
+    "net_profit_min": 5560.0,
+    "net_profit_max": 7522.0,
+    "last_parent_net": 206.51,
+    "first_ann_date": "20230701",
+    "summary": "预计:净利润5560-7522",
+    "change_reason": "公司炸药、电子雷管销量同比增加，带动收入利润增加。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002241.SZ",
+    "ann_date": "20230701",
+    "end_date": "20230630",
+    "type": "预减",
+    "p_change_min": -84.0,
+    "p_change_max": -76.0,
+    "net_profit_min": 33262.0,
+    "net_profit_max": 49892.0,
+    "last_parent_net": 207884.62,
+    "first_ann_date": "20230701",
+    "summary": "预计:净利润33262-49892",
+    "change_reason": "公司2023年半年度盈利同比下降的主要原因是：受宏观经济和行业因素的影响，终端市场需求不足，公司智能声学整机业务和部分智能硬件业务的销售低于预期。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002241.SZ",
+    "ann_date": "20230701",
+    "end_date": "20230630",
+    "type": "预减",
+    "p_change_min": -84.0,
+    "p_change_max": -76.0,
+    "net_profit_min": 33262.0,
+    "net_profit_max": 49892.0,
+    "last_parent_net": 207884.62,
+    "first_ann_date": "20230701",
+    "summary": "预计:净利润33262-49892",
+    "change_reason": "公司2023年半年度盈利同比下降的主要原因是：受宏观经济和行业因素的影响，终端市场需求不足，公司智能声学整机业务和部分智能硬件业务的销售低于预期。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002037.SZ",
+    "ann_date": "20230701",
+    "end_date": "20230630",
+    "type": "预增",
+    "p_change_min": 2592.0,
+    "p_change_max": 3542.0,
+    "net_profit_min": 5560.0,
+    "net_profit_max": 7522.0,
+    "last_parent_net": 206.51,
+    "first_ann_date": "20230701",
+    "summary": "预计:净利润5560-7522",
+    "change_reason": "公司炸药、电子雷管销量同比增加，带动收入利润增加。",
+    "update_flag": "0"
+  }
+]

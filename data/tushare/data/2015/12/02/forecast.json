@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "000594.SZ",
+    "ann_date": "20151202",
+    "end_date": "20151231",
+    "type": "首亏",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 576.338,
+    "first_ann_date": "20151202",
+    "summary": "首亏",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300152.SZ",
+    "ann_date": "20151202",
+    "end_date": "20151231",
+    "type": "略减",
+    "p_change_min": -40.0,
+    "p_change_max": -20.0,
+    "net_profit_min": 2535.0,
+    "net_profit_max": 3380.0,
+    "last_parent_net": 4224.4511,
+    "first_ann_date": "20151202",
+    "summary": "预计净利润2535-3380万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

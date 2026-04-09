@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "603390.SH",
+    "ann_date": "20191105",
+    "end_date": "20191231",
+    "type": "略增",
+    "p_change_min": 0.22,
+    "p_change_max": 5.63,
+    "net_profit_min": 17171.0,
+    "net_profit_max": 18097.0,
+    "last_parent_net": 17132.15,
+    "first_ann_date": "20191105",
+    "summary": "预计净利润17171-18097万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688363.SH",
+    "ann_date": "20191105",
+    "end_date": "20191231",
+    "type": "不确定",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 42386.0,
+    "first_ann_date": "20191105",
+    "summary": "不确定",
+    "change_reason": "公司整体经营状况良好，各业务板块运营情况正常稳定，发行人在经营环境、经营模式、业务运行、主要客户及供应商、税收政策以及其他影响经营业绩的主要因素等方面均不存在重大变化。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688021.SH",
+    "ann_date": "20191105",
+    "end_date": "20191231",
+    "type": "不确定",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 4676.14,
+    "first_ann_date": "20191105",
+    "summary": "不确定",
+    "change_reason": "公司经营模式，主要原材料的采购规模和采购价格，主要产品的生产、销售规模及销售价格，主要客户及供应商的构成，税收政策以及其他可能影响投资者判断的重大事项方面均未发生重大变化。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300800.SZ",
+    "ann_date": "20191105",
+    "end_date": "20191231",
+    "type": "略增",
+    "p_change_min": 21.75,
+    "p_change_max": 32.82,
+    "net_profit_min": 22000.0,
+    "net_profit_max": 24000.0,
+    "last_parent_net": 18070.0761,
+    "first_ann_date": "20191105",
+    "summary": "预计净利润22000-24000万",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

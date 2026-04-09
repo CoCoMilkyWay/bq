@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "000960.SZ",
+    "ann_date": "20170626",
+    "end_date": "20170630",
+    "type": "预增",
+    "p_change_min": 5377.7843,
+    "p_change_max": 6183.3408,
+    "net_profit_min": 34000.0,
+    "net_profit_max": 39000.0,
+    "last_parent_net": 620.69,
+    "first_ann_date": "20170626",
+    "summary": "预计净利润34000-39000万",
+    "change_reason": "公司经营业绩同比大幅上升，主要原因是报告期内公司进一步强化经营管理，严控成本费用，运营管理水平有效提升。同时，有色金属价格同比有较大涨幅。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "603387.SH",
+    "ann_date": "20170626",
+    "end_date": "20170630",
+    "type": "略增",
+    "p_change_min": 19.92,
+    "p_change_max": 38.76,
+    "net_profit_min": 7852.0,
+    "net_profit_max": 8725.0,
+    "last_parent_net": 6287.6953,
+    "first_ann_date": "20170626",
+    "summary": "预计净利润7852-8725万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002564.SZ",
+    "ann_date": "20170626",
+    "end_date": "20170630",
+    "type": "扭亏",
+    "p_change_min": 457.2038,
+    "p_change_max": 520.2397,
+    "net_profit_min": 8500.0,
+    "net_profit_max": 10000.0,
+    "last_parent_net": -2379.59,
+    "first_ann_date": "20170428",
+    "summary": "预计净利润8500-10000万",
+    "change_reason": "1、2016年底，公司重大资产重组工作顺利完成。重组标的中机国能电力工程有限公司与公司的融合情况较好，上半年新能源项目建设超预期。2、部分子公司上半年经营目标完成情况较好，张家港锦隆重件码头有限公司、无锡红旗船厂有限公司实现扭亏增盈。3、公司启动了资产结构优化调整工作，资产配置优化取得初步成效。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002061.SZ",
+    "ann_date": "20170626",
+    "end_date": "20170630",
+    "type": "预增",
+    "p_change_min": 1027.97,
+    "p_change_max": 1153.31,
+    "net_profit_min": 18000.0,
+    "net_profit_max": 20000.0,
+    "last_parent_net": 1595.7793,
+    "first_ann_date": "20170428",
+    "summary": "预计净利润18000-20000万",
+    "change_reason": "1．今年上半年，化工行业持续向好，传统淡季时间滞后，公司主要产品经营环境较好，产品原材料及销售价格剪刀差扩大，增加公司盈利。2.公司全资子公司宁波浙铁大风化工有限公司及宁波浙铁江宁化工有限公司原计划于二季度进行装置年度检修工作，目前两子公司检修工作将于6月底开展，对公司上半年整体经营业绩影响较小。",
+    "update_flag": "0"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "603026.SH",
+    "ann_date": "20150528",
+    "end_date": "20150630",
+    "type": "续盈",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 5420.9816,
+    "first_ann_date": "20150528",
+    "summary": "续盈",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "603300.SH",
+    "ann_date": "20150528",
+    "end_date": "20150630",
+    "type": "略增",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 3929.624,
+    "first_ann_date": "20150528",
+    "summary": "略增",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

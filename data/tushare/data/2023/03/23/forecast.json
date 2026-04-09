@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "688573.SH",
+    "ann_date": "20230323",
+    "end_date": "20221231",
+    "type": "略增",
+    "p_change_min": 10.38,
+    "p_change_max": 10.38,
+    "net_profit_min": 6673.0,
+    "net_profit_max": 6673.0,
+    "last_parent_net": 6045.31,
+    "first_ann_date": "20230323",
+    "summary": "预计:净利润6673",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "000739.SZ",
+    "ann_date": "20230323",
+    "end_date": "20230331",
+    "type": "预增",
+    "p_change_min": 40.05,
+    "p_change_max": 61.09,
+    "net_profit_min": 21300.0,
+    "net_profit_max": 24500.0,
+    "last_parent_net": 15209.17,
+    "first_ann_date": "20230323",
+    "summary": "预计:净利润21300-24500",
+    "change_reason": "本报告期业绩变动的主要原因为：公司三项业务销售收入均取得增长，其中CDMO业务大幅增长；公司产品毛利率同比提升。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "000739.SZ",
+    "ann_date": "20230323",
+    "end_date": "20230331",
+    "type": "预增",
+    "p_change_min": 40.05,
+    "p_change_max": 61.09,
+    "net_profit_min": 21300.0,
+    "net_profit_max": 24500.0,
+    "last_parent_net": 15209.17,
+    "first_ann_date": "20230323",
+    "summary": "预计:净利润21300-24500",
+    "change_reason": "本报告期业绩变动的主要原因为：公司三项业务销售收入均取得增长，其中CDMO业务大幅增长；公司产品毛利率同比提升。",
+    "update_flag": "0"
+  }
+]

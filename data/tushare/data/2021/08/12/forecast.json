@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "600984.SH",
+    "ann_date": "20210812",
+    "end_date": "20210630",
+    "type": "预增",
+    "p_change_min": 58.22,
+    "p_change_max": 58.22,
+    "net_profit_min": 25545.0,
+    "net_profit_max": 25545.0,
+    "last_parent_net": 16144.905,
+    "first_ann_date": "20210430",
+    "summary": "预计:净利润25545",
+    "change_reason": "本公司上年同期受全国新冠肺炎防疫的影响，收入虽有所增加，但2-4月开工不足导致公司建筑机械租赁业务成本费用率有所上升。2021年半年度租赁价格虽有所下滑，但随着公司近几年加大对租赁设备的采购，使市场份额不断扩大，营业收入较上年同期增长45%左右，同时公司加大了成本费用的管控力度，促使盈利水平进一步提升。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "600984.SH",
+    "ann_date": "20210812",
+    "end_date": "20210630",
+    "type": "预增",
+    "p_change_min": 58.22,
+    "p_change_max": 58.22,
+    "net_profit_min": 25545.0,
+    "net_profit_max": 25545.0,
+    "last_parent_net": 16144.905,
+    "first_ann_date": "20210430",
+    "summary": "预计净利润25545万",
+    "change_reason": "本公司上年同期受全国新冠肺炎防疫的影响，收入虽有所增加，但2-4月开工不足导致公司建筑机械租赁业务成本费用率有所上升。2021年半年度租赁价格虽有所下滑，但随着公司近几年加大对租赁设备的采购，使市场份额不断扩大，营业收入较上年同期增长45%左右，同时公司加大了成本费用的管控力度，促使盈利水平进一步提升。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688091.SH",
+    "ann_date": "20210812",
+    "end_date": "20210930",
+    "type": "续亏",
+    "p_change_min": -70.274,
+    "p_change_max": -49.8411,
+    "net_profit_min": -2500.0,
+    "net_profit_max": -2200.0,
+    "last_parent_net": -1468.2216,
+    "first_ann_date": "20210812",
+    "summary": "预计:净利润-2500--2200",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688776.SH",
+    "ann_date": "20210812",
+    "end_date": "20211231",
+    "type": "预增",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 9540.72,
+    "first_ann_date": "20210812",
+    "summary": "预增",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

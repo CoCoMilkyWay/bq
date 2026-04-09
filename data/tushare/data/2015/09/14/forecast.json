@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "000939.SZ",
+    "ann_date": "20150914",
+    "end_date": "20150930",
+    "type": "预增",
+    "p_change_min": 80.0,
+    "p_change_max": 120.0,
+    "net_profit_min": 23476.0,
+    "net_profit_max": 28171.0,
+    "last_parent_net": 13080.8487,
+    "first_ann_date": "20150831",
+    "summary": "预计净利润23476-28171万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

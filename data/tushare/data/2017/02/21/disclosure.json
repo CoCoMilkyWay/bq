@@ -1,0 +1,100 @@
+[
+  {
+    "ts_code": "300409.SZ",
+    "ann_date": "20170220",
+    "end_date": "20161231",
+    "pre_date": "20170220",
+    "actual_date": "20170221"
+  },
+  {
+    "ts_code": "603630.SH",
+    "ann_date": "20161230",
+    "end_date": "20161231",
+    "pre_date": "20170221",
+    "actual_date": "20170221"
+  },
+  {
+    "ts_code": "603908.SH",
+    "ann_date": "20161230",
+    "end_date": "20161231",
+    "pre_date": "20170221",
+    "actual_date": "20170221"
+  },
+  {
+    "ts_code": "600318.SH",
+    "ann_date": "20161223",
+    "end_date": "20161231",
+    "pre_date": "20170221",
+    "actual_date": "20170221"
+  },
+  {
+    "ts_code": "000040.SZ",
+    "ann_date": "20170217",
+    "end_date": "20161231",
+    "pre_date": "20170221",
+    "actual_date": "20170221"
+  },
+  {
+    "ts_code": "002135.SZ",
+    "ann_date": "20161230",
+    "end_date": "20161231",
+    "pre_date": "20170221",
+    "actual_date": "20170221"
+  },
+  {
+    "ts_code": "601211.SH",
+    "ann_date": "20161223",
+    "end_date": "20161231",
+    "pre_date": "20170221",
+    "actual_date": "20170221"
+  },
+  {
+    "ts_code": "300391.SZ",
+    "ann_date": "20170210",
+    "end_date": "20161231",
+    "pre_date": "20170221",
+    "actual_date": "20170221"
+  },
+  {
+    "ts_code": "300398.SZ",
+    "ann_date": "20170215",
+    "end_date": "20161231",
+    "pre_date": "20170221",
+    "actual_date": "20170221"
+  },
+  {
+    "ts_code": "300620.SZ",
+    "ann_date": null,
+    "end_date": "20161231",
+    "pre_date": "20170221",
+    "actual_date": "20170221"
+  },
+  {
+    "ts_code": "600527.SH",
+    "ann_date": "20161223",
+    "end_date": "20161231",
+    "pre_date": "20170221",
+    "actual_date": "20170221"
+  },
+  {
+    "ts_code": "003003.SZ",
+    "ann_date": "20161230",
+    "end_date": "20161231",
+    "pre_date": "20170221",
+    "actual_date": "20170221"
+  },
+  {
+    "ts_code": "830809.BJ",
+    "ann_date": "20161230",
+    "end_date": "20161231",
+    "pre_date": "20170221",
+    "actual_date": "20170221"
+  },
+  {
+    "ts_code": "920809.BJ",
+    "ann_date": "20161230",
+    "end_date": "20161231",
+    "pre_date": "20170221",
+    "actual_date": "20170221"
+  }
+]

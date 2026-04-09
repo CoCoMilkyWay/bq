@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "300747.SZ",
+    "ann_date": "20180605",
+    "end_date": "20180630",
+    "type": "预增",
+    "p_change_min": 56.4,
+    "p_change_max": 75.29,
+    "net_profit_min": 22050.0,
+    "net_profit_max": 24713.0,
+    "last_parent_net": 14098.3316,
+    "first_ann_date": "20180605",
+    "summary": "预计净利润22050-24713万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "000818.SZ",
+    "ann_date": "20180605",
+    "end_date": "20180630",
+    "type": "预增",
+    "p_change_min": 270.0,
+    "p_change_max": 320.0,
+    "net_profit_min": 22600.0,
+    "net_profit_max": 25600.0,
+    "last_parent_net": 6101.65,
+    "first_ann_date": "20180605",
+    "summary": "预计净利润22600-25600万",
+    "change_reason": "公司的战略发展方向系“化工+军工”的双主业布局。化工业务方面，尽管第二季度受到公司自身及部分主要客户年度例行停产检修的影响，公司管理层实行的精细化管理策略仍卓有成效，与去年同期相比，公司管理效率和经营毛利率均有所提升，化工板块2018半年度同比预计实现228%-278%的盈利增长。军工板块受益于订单释放的影响，与去年同期相比业绩提升明显。",
+    "update_flag": "0"
+  }
+]

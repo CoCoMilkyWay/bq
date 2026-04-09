@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "300089.SZ",
+    "ann_date": "20161108",
+    "end_date": "20161231",
+    "type": "预增",
+    "p_change_min": 930.0,
+    "p_change_max": 960.0,
+    "net_profit_min": 12762.0,
+    "net_profit_max": 13133.0,
+    "last_parent_net": null,
+    "first_ann_date": "20161028",
+    "summary": "预计净利润12762-13133万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002818.SZ",
+    "ann_date": "20161108",
+    "end_date": "20161231",
+    "type": "略增",
+    "p_change_min": 15.0,
+    "p_change_max": 30.0,
+    "net_profit_min": 52000.0,
+    "net_profit_max": 58800.0,
+    "last_parent_net": 45267.1465,
+    "first_ann_date": "20161108",
+    "summary": "预计净利润52000-58800万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300569.SZ",
+    "ann_date": "20161108",
+    "end_date": "20161231",
+    "type": "略减",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": null,
+    "first_ann_date": "20161108",
+    "summary": "略减",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

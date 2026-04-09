@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "603779.SH",
+    "ann_date": "20160513",
+    "end_date": "20160630",
+    "type": "预增",
+    "p_change_min": 50.0,
+    "p_change_max": 100.0,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": null,
+    "first_ann_date": "20160513",
+    "summary": "预增",
+    "change_reason": "预计2016年上半年同比2015年上半年财务费用有较大幅度下降，以及销售收入同比有所增长。",
+    "update_flag": "1"
+  }
+]

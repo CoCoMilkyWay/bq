@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "920002.BJ",
+    "ann_date": "20240518",
+    "end_date": "20241231",
+    "type": "略增",
+    "p_change_min": 15.35,
+    "p_change_max": 15.35,
+    "net_profit_min": 5710.0,
+    "net_profit_max": 5710.0,
+    "last_parent_net": 4950.46,
+    "first_ann_date": "20240518",
+    "summary": "预计:净利润5710",
+    "change_reason": "2024年预计净利润增速高于营业收入增速，主要受管理费用预计下降影响。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "920002.BJ",
+    "ann_date": "20240518",
+    "end_date": "20241231",
+    "type": "略增",
+    "p_change_min": 15.35,
+    "p_change_max": 15.35,
+    "net_profit_min": 5710.0,
+    "net_profit_max": 5710.0,
+    "last_parent_net": 4950.46,
+    "first_ann_date": "20240518",
+    "summary": "预计:净利润5710",
+    "change_reason": "2024年预计净利润增速高于营业收入增速，主要受管理费用预计下降影响。",
+    "update_flag": "0"
+  }
+]

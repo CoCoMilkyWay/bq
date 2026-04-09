@@ -1,0 +1,23 @@
+[
+  {
+    "ts_code": "836504.BJ",
+    "ann_date": null,
+    "end_date": "20151231",
+    "pre_date": null,
+    "actual_date": "20160505"
+  },
+  {
+    "ts_code": "920504.BJ",
+    "ann_date": null,
+    "end_date": "20151231",
+    "pre_date": null,
+    "actual_date": "20160505"
+  },
+  {
+    "ts_code": "301106.SZ",
+    "ann_date": "20160425",
+    "end_date": "20151231",
+    "pre_date": "20160427",
+    "actual_date": "20160505"
+  }
+]

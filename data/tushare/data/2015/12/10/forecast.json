@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "600466.SH",
+    "ann_date": "20151210",
+    "end_date": "20151231",
+    "type": "略减",
+    "p_change_min": -8.0886,
+    "p_change_max": -4.6419,
+    "net_profit_min": 80000.0,
+    "net_profit_max": 83000.0,
+    "last_parent_net": 1258.1186,
+    "first_ann_date": "20151210",
+    "summary": "预计净利润80000-83000万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]
