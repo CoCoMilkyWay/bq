@@ -35,7 +35,7 @@ def query_table_schema(table_name: str) -> str:
 def main():
     script_dir = Path(__file__).parent
     md_path = script_dir / "database_tables.md"
-    output_dir = script_dir.parent
+    output_dir = script_dir.parent / "database"
 
     table_names = parse_table_names(md_path)
     print(f"Found {len(table_names)} tables")

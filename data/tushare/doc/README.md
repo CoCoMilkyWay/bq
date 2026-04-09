@@ -2,7 +2,7 @@
  - 股票数据
  - 基础数据
  - 行情数据
- - 财务数据 data/doc/finnacial
+ - 财务数据 data/tushare/doc/finnacial
     - 利润表: income.md
     - 资产负债表: balancesheet.md
     - 现金流量表: cashflow.md
