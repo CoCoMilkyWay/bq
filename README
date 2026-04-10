@@ -1,5 +1,30 @@
-bigquant 此平台是基于sql数据库建立金融量化回测平台, 内部动态维护上百个行情/技术面/基本面指标/因子:
-    - database/scripts/database_tables.md 记录了所有表的名称, 含义, 更新, 标签, 付费等信息 (应当选稳定和积极更新的表作为策略基础)
-    - database/scripts/database_nums.md 记录了所有表的指标/特征/因子数量, 有一些(日频)表的因子量极为巨大, 访问前要先看描述,理解,过滤
-        - 比如 cn_stock_factors, cn_stock_factors_financial_indicators, cn_stock_factors_financial_items, cn_stock_prefactors
-    - database/*.txt 记录了(大量txt文件)每个*表的具体schema, 可以先确定使用的表, 再根据txt查具体schema
+Motive: 量化策略研究, 建立因子模型, 执行回测
+Insight: bigquant平台的SQL因子库是核心数据源; tushare补充财报披露时间线
+
+bq/
+├── data/
+│   ├── bigquant/                      # BigQuant平台数据
+│   │   ├── database/                  # 表schema (*.txt)
+│   │   │   └── cn_stock_*.txt         # 股票相关表schema
+│   │   ├── scripts/                   # 数据工具
+│   │   │   ├── database_tables.md     # 表名/含义/更新频率/付费 (个别(日频)表的因子量极为巨大, 使用前要先过滤)
+│   │   │   ├── database_nums.md       # 各表列数统计
+│   │   │   ├── database_crawler.py    # 爬BigQuant网页元数据
+│   │   │   ├── database_puller.py     # 用dai.query拉schema
+│   │   │   └── database_formatter.py  # 格式化输出
+│   │   └── research/                  # 数据研究脚本
+│   └── tushare/                       # Tushare财报披露数据
+│       ├── data/YYYY/MM/DD/*.json     # 按日期存储 (disclosure/forecast/express)
+│       ├── update_bulk.py             # 全量拉取
+│       ├── update_incre.py            # 增量更新
+│       ├── analysis.py                # 覆盖率分析 (按财季+发布偏移月统计D/F/E)
+│       └── doc/                       # API文档
+│           ├── README.md              # tushare接口索引
+│           └── financial/             # 财务报表API
+├── strategy/                          # 策略逻辑
+│   ├── filter/
+│   │   └── filter.md                  # 股票池过滤条件
+│   └── factor/
+│       └── factor.md                  # 因子池因子定义
+└── tmp/                               # 实验性策略
+    └── 小市值/                        # 小市值因子策略示例
