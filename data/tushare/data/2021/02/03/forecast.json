@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "605060.SH",
+    "ann_date": "20210203",
+    "end_date": "20210331",
+    "type": "略增",
+    "p_change_min": 21.71,
+    "p_change_max": 21.71,
+    "net_profit_min": 3822.0,
+    "net_profit_max": 3822.0,
+    "last_parent_net": 3140.44,
+    "first_ann_date": "20210203",
+    "summary": "预计:净利润3822",
+    "change_reason": "公司所处行业产业政策未发生重大调整，公司进出口业务没有受到重大限制，税收政策没有出现重大变化。公司所处的机械设备零部件行业以及下游的主要应用行业发展趋势良好，业务模式及竞争趋势未发生重大不利变化。公司主要原材料的采购规模及采购价格不存在异常变动，主要产品的生产、销售规模及销售价格不存在异常变动。公司主要客户及供应商的构成、重大合同条款及实际执行情况等方面均未发生重大不利变化。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "600069.SH",
+    "ann_date": "20210203",
+    "end_date": "20201231",
+    "type": "续亏",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": -63848.1072,
+    "first_ann_date": "20210203",
+    "summary": "续亏",
+    "change_reason": "河南银鸽实业投资股份有限公司(以下简称“公司”)经过对2020年财务数据进行初步结算,预计公司2020年年度业绩将出现亏损.",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "605060.SH",
+    "ann_date": "20210203",
+    "end_date": "20210331",
+    "type": "略增",
+    "p_change_min": 21.71,
+    "p_change_max": 21.71,
+    "net_profit_min": 3822.0,
+    "net_profit_max": 3822.0,
+    "last_parent_net": 3140.44,
+    "first_ann_date": "20210203",
+    "summary": "预计净利润3822万",
+    "change_reason": "公司所处行业产业政策未发生重大调整，公司进出口业务没有受到重大限制，税收政策没有出现重大变化。公司所处的机械设备零部件行业以及下游的主要应用行业发展趋势良好，业务模式及竞争趋势未发生重大不利变化。公司主要原材料的采购规模及采购价格不存在异常变动，主要产品的生产、销售规模及销售价格不存在异常变动。公司主要客户及供应商的构成、重大合同条款及实际执行情况等方面均未发生重大不利变化。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "600145.SH",
+    "ann_date": "20210203",
+    "end_date": "20201231",
+    "type": "首亏",
+    "p_change_min": -713.3347,
+    "p_change_max": -697.1943,
+    "net_profit_min": -7600.0,
+    "net_profit_max": -7400.0,
+    "last_parent_net": 1239.13,
+    "first_ann_date": "20210128",
+    "summary": "预计净利润-7600~-7400万",
+    "change_reason": "2020年，因受新冠肺炎疫情影响给公司生产经营带来较大影响，导致收入和利润造成一定影响。",
+    "update_flag": "1"
+  }
+]

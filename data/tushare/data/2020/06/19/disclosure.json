@@ -1,0 +1,30 @@
+[
+  {
+    "ts_code": "603603.SH",
+    "ann_date": "20200420",
+    "end_date": "20191231",
+    "pre_date": "20200619",
+    "actual_date": "20200619"
+  },
+  {
+    "ts_code": "002071.SZ",
+    "ann_date": "20200423",
+    "end_date": "20191231",
+    "pre_date": "20200619",
+    "actual_date": "20200619"
+  },
+  {
+    "ts_code": "833914.BJ",
+    "ann_date": "20200430",
+    "end_date": "20191231",
+    "pre_date": "20200619",
+    "actual_date": "20200619"
+  },
+  {
+    "ts_code": "920914.BJ",
+    "ann_date": "20200430",
+    "end_date": "20191231",
+    "pre_date": "20200619",
+    "actual_date": "20200619"
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "ts_code": "002714.SZ",
+    "ann_date": "20191231",
+    "end_date": "20191231",
+    "pre_date": "20200227",
+    "actual_date": "20200227"
+  },
+  {
+    "ts_code": "300496.SZ",
+    "ann_date": "20200206",
+    "end_date": "20191231",
+    "pre_date": "20200227",
+    "actual_date": "20200227"
+  },
+  {
+    "ts_code": "300824.SZ",
+    "ann_date": "20200225",
+    "end_date": "20191231",
+    "pre_date": "20200227",
+    "actual_date": "20200227"
+  }
+]

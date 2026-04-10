@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "601112.SH",
+    "ann_date": "20251111",
+    "end_date": "20251231",
+    "type": "略增",
+    "p_change_min": 20.53,
+    "p_change_max": 42.0,
+    "net_profit_min": 73000.0,
+    "net_profit_max": 86000.0,
+    "last_parent_net": 60563.7,
+    "first_ann_date": "20251111",
+    "summary": "预计:净利润73000-86000",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

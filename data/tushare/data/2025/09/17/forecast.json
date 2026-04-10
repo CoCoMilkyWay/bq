@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "688796.SH",
+    "ann_date": "20250917",
+    "end_date": "20250930",
+    "type": "扭亏",
+    "p_change_min": 162.18,
+    "p_change_max": 162.18,
+    "net_profit_min": 5779.0,
+    "net_profit_max": 5779.0,
+    "last_parent_net": -9293.89,
+    "first_ann_date": "20250917",
+    "summary": "预计:净利润5779",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002562.SZ",
+    "ann_date": "20250917",
+    "end_date": "20250930",
+    "type": "预增",
+    "p_change_min": 207.32,
+    "p_change_max": 253.42,
+    "net_profit_min": 10000.0,
+    "net_profit_max": 11500.0,
+    "last_parent_net": 3253.91,
+    "first_ann_date": "20250917",
+    "summary": "预计:净利润10000-11500",
+    "change_reason": "2025年前三季度业绩同比实现增长，主要系部分维生素产品价格上涨，苯二酚项目整体产能利用率提升、产品销量增加，同时部分产品成本下降，报告期整体毛利率较上年同期提升所致。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002562.SZ",
+    "ann_date": "20250917",
+    "end_date": "20250930",
+    "type": "预增",
+    "p_change_min": 207.32,
+    "p_change_max": 253.42,
+    "net_profit_min": 10000.0,
+    "net_profit_max": 11500.0,
+    "last_parent_net": 3253.91,
+    "first_ann_date": "20250917",
+    "summary": "预计:净利润10000-11500",
+    "change_reason": "2025年前三季度业绩同比实现增长，主要系部分维生素产品价格上涨，苯二酚项目整体产能利用率提升、产品销量增加，同时部分产品成本下降，报告期整体毛利率较上年同期提升所致。",
+    "update_flag": "0"
+  }
+]

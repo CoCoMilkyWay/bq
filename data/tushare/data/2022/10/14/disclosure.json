@@ -1,0 +1,30 @@
+[
+  {
+    "ts_code": "600481.SH",
+    "ann_date": "20220920",
+    "end_date": "20220930",
+    "pre_date": "20221014",
+    "actual_date": "20221014"
+  },
+  {
+    "ts_code": "600313.SH",
+    "ann_date": "20220920",
+    "end_date": "20220930",
+    "pre_date": "20221014",
+    "actual_date": "20221014"
+  },
+  {
+    "ts_code": "830839.BJ",
+    "ann_date": "20221010",
+    "end_date": "20220930",
+    "pre_date": "20221014",
+    "actual_date": "20221014"
+  },
+  {
+    "ts_code": "920839.BJ",
+    "ann_date": "20221010",
+    "end_date": "20220930",
+    "pre_date": "20221014",
+    "actual_date": "20221014"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "301498.SZ",
+    "ann_date": "20230815",
+    "end_date": "20230930",
+    "type": "略增",
+    "p_change_min": 32.68,
+    "p_change_max": 41.91,
+    "net_profit_min": 28768.0,
+    "net_profit_max": 30768.0,
+    "last_parent_net": 21682.07,
+    "first_ann_date": "20230815",
+    "summary": "预计:净利润28768-30768",
+    "change_reason": "公司产品品牌知名度的提高和影响力的增加，公司自有品牌销售规模快速增长。公司自有品牌销售收入快速增长，占比持续提升，带动公司整体毛利率提升；境外自有品牌盈利增加。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "603270.SH",
+    "ann_date": "20230815",
+    "end_date": "20230930",
+    "type": "略增",
+    "p_change_min": 21.21,
+    "p_change_max": 33.82,
+    "net_profit_min": 12500.0,
+    "net_profit_max": 13800.0,
+    "last_parent_net": 10312.6,
+    "first_ann_date": "20230815",
+    "summary": "预计:净利润12500-13800",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "301498.SZ",
+    "ann_date": "20230815",
+    "end_date": "20230930",
+    "type": "略增",
+    "p_change_min": 32.68,
+    "p_change_max": 41.91,
+    "net_profit_min": 28768.0,
+    "net_profit_max": 30768.0,
+    "last_parent_net": 21682.07,
+    "first_ann_date": "20230815",
+    "summary": "预计:净利润28768-30768",
+    "change_reason": "公司产品品牌知名度的提高和影响力的增加，公司自有品牌销售规模快速增长。公司自有品牌销售收入快速增长，占比持续提升，带动公司整体毛利率提升；境外自有品牌盈利增加。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "603270.SH",
+    "ann_date": "20230815",
+    "end_date": "20230930",
+    "type": "略增",
+    "p_change_min": 21.21,
+    "p_change_max": 33.82,
+    "net_profit_min": 12500.0,
+    "net_profit_max": 13800.0,
+    "last_parent_net": 10312.6,
+    "first_ann_date": "20230815",
+    "summary": "预计:净利润12500-13800",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

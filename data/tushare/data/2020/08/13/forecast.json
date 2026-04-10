@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "300778.SZ",
+    "ann_date": "20200813",
+    "end_date": "20200630",
+    "type": "略减",
+    "p_change_min": -30.0,
+    "p_change_max": 0.0,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 5760.4609,
+    "first_ann_date": "20200813",
+    "summary": "略减",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "605006.SH",
+    "ann_date": "20200813",
+    "end_date": "20200930",
+    "type": "略减",
+    "p_change_min": -22.5,
+    "p_change_max": -11.84,
+    "net_profit_min": 8000.0,
+    "net_profit_max": 9100.0,
+    "last_parent_net": 10322.3985,
+    "first_ann_date": "20200813",
+    "summary": "预计净利润8000-9100万",
+    "change_reason": "2020年1-3月受疫情影响，销售略有下降，2020年二季度销售状况好转，销量回升，上半年营业收入较上年同期略有减少。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300879.SZ",
+    "ann_date": "20200813",
+    "end_date": "20200930",
+    "type": "略增",
+    "p_change_min": 9.91,
+    "p_change_max": 25.9,
+    "net_profit_min": 5500.0,
+    "net_profit_max": 6300.0,
+    "last_parent_net": 5004.1077,
+    "first_ann_date": "20200813",
+    "summary": "预计净利润5500-6300万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300880.SZ",
+    "ann_date": "20200813",
+    "end_date": "20200930",
+    "type": "略增",
+    "p_change_min": 2.31,
+    "p_change_max": 13.26,
+    "net_profit_min": 4413.0,
+    "net_profit_max": 4885.0,
+    "last_parent_net": 4313.3987,
+    "first_ann_date": "20200813",
+    "summary": "预计净利润4413-4885万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

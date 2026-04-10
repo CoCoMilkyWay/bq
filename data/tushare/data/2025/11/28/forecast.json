@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "688807.SH",
+    "ann_date": "20251128",
+    "end_date": "20251231",
+    "type": "略增",
+    "p_change_min": 18.15,
+    "p_change_max": 25.86,
+    "net_profit_min": 9200.0,
+    "net_profit_max": 9800.0,
+    "last_parent_net": 7786.64,
+    "first_ann_date": "20251128",
+    "summary": "预计:净利润9200-9800",
+    "change_reason": "主要系公司销售收入增长。",
+    "update_flag": "0"
+  }
+]

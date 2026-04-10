@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "688030.SH",
+    "ann_date": "20190909",
+    "end_date": "20190930",
+    "type": "扭亏",
+    "p_change_min": 122.65,
+    "p_change_max": 131.7,
+    "net_profit_min": 1000.0,
+    "net_profit_max": 1400.0,
+    "last_parent_net": null,
+    "first_ann_date": "20190909",
+    "summary": "预计净利润1000-1400万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

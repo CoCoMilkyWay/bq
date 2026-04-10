@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "002442.SZ",
+    "ann_date": "20190215",
+    "end_date": "20190331",
+    "type": "预减",
+    "p_change_min": -62.38,
+    "p_change_max": -37.3,
+    "net_profit_min": 1200.0,
+    "net_profit_max": 2000.0,
+    "last_parent_net": 3189.72,
+    "first_ann_date": "20190215",
+    "summary": "预计净利润1200-2000万",
+    "change_reason": "受上年末美国贸易战及国际原油价格大幅下滑的影响，国内经济下行压力增大，炭黑原料油价格的大幅波动致使炭黑产品价格下降。一季度公司经营业绩有所降低。",
+    "update_flag": "0"
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "002958.SZ",
+    "ann_date": "20190212",
+    "end_date": "20190331",
+    "type": "略增",
+    "p_change_min": 2.64,
+    "p_change_max": 9.97,
+    "net_profit_min": 70000.0,
+    "net_profit_max": 75000.0,
+    "last_parent_net": 68200.0,
+    "first_ann_date": "20190212",
+    "summary": "预计净利润70000-75000万",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

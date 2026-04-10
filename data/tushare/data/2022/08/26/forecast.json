@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "002475.SZ",
+    "ann_date": "20220826",
+    "end_date": "20220930",
+    "type": "略增",
+    "p_change_min": 30.0,
+    "p_change_max": 40.0,
+    "net_profit_min": 609656.0,
+    "net_profit_max": 656553.0,
+    "last_parent_net": 468966.14,
+    "first_ann_date": "20220826",
+    "summary": "预计:净利润609656-656553",
+    "change_reason": "预告期内，国际政治经济局势复杂，地缘政治风险持续，国内外疫情形势依然严峻，国际货币政策收紧以及俄乌冲突不确定性将持续影响大宗商品价格震荡。面对当前复杂的外部环境冲击，公司持续精进核心技术实力、以更高标准和严格要求不断优化自身，为客户提供最佳解决方案，凭借新老产品的优异表现获得客户的高度认可，实现整体盈利的稳步提升。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "001255.SZ",
+    "ann_date": "20220826",
+    "end_date": "20220930",
+    "type": "预增",
+    "p_change_min": 29.07,
+    "p_change_max": 52.37,
+    "net_profit_min": 5587.0,
+    "net_profit_max": 6596.0,
+    "last_parent_net": 4329.0,
+    "first_ann_date": "20220826",
+    "summary": "预计净利润5587-6596万",
+    "change_reason": "主要原因系公司加大了客户开发力度，绝缘树脂收入与上年同期相比将保持较快增长。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002475.SZ",
+    "ann_date": "20220826",
+    "end_date": "20220930",
+    "type": "略增",
+    "p_change_min": 30.0,
+    "p_change_max": 40.0,
+    "net_profit_min": 609656.0,
+    "net_profit_max": 656553.0,
+    "last_parent_net": 468966.14,
+    "first_ann_date": "20220826",
+    "summary": "预计净利润609656-656553万",
+    "change_reason": "预告期内，国际政治经济局势复杂，地缘政治风险持续，国内外疫情形势依然严峻，国际货币政策收紧以及俄乌冲突不确定性将持续影响大宗商品价格震荡。面对当前复杂的外部环境冲击，公司持续精进核心技术实力、以更高标准和严格要求不断优化自身，为客户提供最佳解决方案，凭借新老产品的优异表现获得客户的高度认可，实现整体盈利的稳步提升。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "001255.SZ",
+    "ann_date": "20220826",
+    "end_date": "20220930",
+    "type": "预增",
+    "p_change_min": 29.07,
+    "p_change_max": 52.37,
+    "net_profit_min": 5587.0,
+    "net_profit_max": 6596.0,
+    "last_parent_net": 4329.0,
+    "first_ann_date": "20220826",
+    "summary": "预计:净利润5587-6596",
+    "change_reason": "主要原因系公司加大了客户开发力度，绝缘树脂收入与上年同期相比将保持较快增长。",
+    "update_flag": "1"
+  }
+]

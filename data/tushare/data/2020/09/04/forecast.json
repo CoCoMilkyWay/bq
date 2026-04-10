@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "688669.SH",
+    "ann_date": "20200904",
+    "end_date": "20200930",
+    "type": "预增",
+    "p_change_min": 113.52,
+    "p_change_max": 124.75,
+    "net_profit_min": 14374.0,
+    "net_profit_max": 15131.0,
+    "last_parent_net": 7173.7639,
+    "first_ann_date": "20200904",
+    "summary": "预计净利润14374-15131万",
+    "change_reason": "公司的主要经营模式、主要原材料的采购规模及采购价格、主要产品的生产、销售规模及销售价格、主要客户及供应商的构成、税收政策以及其他可能影响投资者判断的重大事项未发生重大变化。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688658.SH",
+    "ann_date": "20200904",
+    "end_date": "20200930",
+    "type": "略增",
+    "p_change_min": 6.0,
+    "p_change_max": 19.0,
+    "net_profit_min": 19434.0,
+    "net_profit_max": 21893.0,
+    "last_parent_net": null,
+    "first_ann_date": "20200904",
+    "summary": "预计净利润19434-21893万",
+    "change_reason": "因新冠肺炎疫情影响，患者门诊量和住院量直线下降，公司抗感染药物和消化系统类药物销量有所减少。同时，公司下属原料药子公司通过降低成本、扩大销售，改善经营状况，提升经营利润，公司主要品种银杏叶提取物注射液由于扩大终端市场拉动销量增长，使得品种利润同比增幅较大。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "605198.SH",
+    "ann_date": "20200904",
+    "end_date": "20200930",
+    "type": "略增",
+    "p_change_min": 2.5,
+    "p_change_max": 7.05,
+    "net_profit_min": 11787.0,
+    "net_profit_max": 12311.0,
+    "last_parent_net": 11499.8781,
+    "first_ann_date": "20200904",
+    "summary": "预计净利润11787-12311万",
+    "change_reason": "发行人经营状况稳定，发行人的经营模式、销售规模及销售价格、主要客户及供应商的构成、税收政策等未发生重大变化。新冠肺炎疫情尚未对公司的生产、日常订单或重大合同履行造成重大障碍，未发生其他可能影响投资者判断的重大事项。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688698.SH",
+    "ann_date": "20200904",
+    "end_date": "20200930",
+    "type": "略增",
+    "p_change_min": 23.85,
+    "p_change_max": 39.15,
+    "net_profit_min": 6450.0,
+    "net_profit_max": 7136.0,
+    "last_parent_net": 5193.4971,
+    "first_ann_date": "20200904",
+    "summary": "预计净利润6450-7136万",
+    "change_reason": "一方面，公司自2020年2月份以来积极复工复产，保障下游客户各类型机械设备对工控自动化产品的需求；另一方面，公司持续推进既定发展战略，产品在下游行业市场认可度不断提升，保持营收稳健增长。",
+    "update_flag": "1"
+  }
+]

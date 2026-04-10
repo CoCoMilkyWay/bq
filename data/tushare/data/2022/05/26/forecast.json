@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "430564.BJ",
+    "ann_date": "20220526",
+    "end_date": "20220331",
+    "type": "预增",
+    "p_change_min": 74.14,
+    "p_change_max": 122.9,
+    "net_profit_min": 250.0,
+    "net_profit_max": 320.0,
+    "last_parent_net": 143.56,
+    "first_ann_date": "20220526",
+    "summary": "预计:净利润250-320",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "430564.BJ",
+    "ann_date": "20220526",
+    "end_date": "20220331",
+    "type": "预增",
+    "p_change_min": 74.14,
+    "p_change_max": 122.9,
+    "net_profit_min": 250.0,
+    "net_profit_max": 320.0,
+    "last_parent_net": 143.56,
+    "first_ann_date": "20220526",
+    "summary": "预计净利润250-320万",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

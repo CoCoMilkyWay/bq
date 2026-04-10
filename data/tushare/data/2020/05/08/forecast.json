@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "605166.SH",
+    "ann_date": "20200508",
+    "end_date": "20200630",
+    "type": "续盈",
+    "p_change_min": -7.38,
+    "p_change_max": 2.91,
+    "net_profit_min": 4500.0,
+    "net_profit_max": 5000.0,
+    "last_parent_net": 4858.809,
+    "first_ann_date": "20200508",
+    "summary": "预计净利润4500-5000万",
+    "change_reason": "公司经营状况正常，除已披露的疫情影响外，未发生重大变化导致公司经营业绩异常波动的重大不利因素，随着我国疫情防控形势好转，各地复工复产有序推进。",
+    "update_flag": "0"
+  }
+]

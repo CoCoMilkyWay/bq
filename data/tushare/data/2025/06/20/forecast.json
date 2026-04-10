@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "603370.SH",
+    "ann_date": "20250620",
+    "end_date": "20250630",
+    "type": "略增",
+    "p_change_min": 1.9,
+    "p_change_max": 12.63,
+    "net_profit_min": 8828.0,
+    "net_profit_max": 9757.0,
+    "last_parent_net": 8663.02,
+    "first_ann_date": "20250620",
+    "summary": "预计:净利润8828-9757",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688117.SH",
+    "ann_date": "20250620",
+    "end_date": "20250630",
+    "type": "预增",
+    "p_change_min": 253.54,
+    "p_change_max": 332.1,
+    "net_profit_min": 7703.0,
+    "net_profit_max": 9414.0,
+    "last_parent_net": 2178.76,
+    "first_ann_date": "20250620",
+    "summary": "预计:净利润7703-9414",
+    "change_reason": "公司紧跟多肽行业发展趋势，持续拓展国内外营销市场，加大产品销售力度。2025年上半年，公司多肽原料药业务表现较好，使得业绩同比实现较大增长，净利润同比显著提升。",
+    "update_flag": "0"
+  }
+]

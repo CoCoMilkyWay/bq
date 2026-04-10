@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "300814.SZ",
+    "ann_date": "20210811",
+    "end_date": "20210930",
+    "type": "略减",
+    "p_change_min": -19.69,
+    "p_change_max": -11.79,
+    "net_profit_min": 6100.0,
+    "net_profit_max": 6700.0,
+    "last_parent_net": 8124.0102,
+    "first_ann_date": "20210811",
+    "summary": "预计:净利润6100-6700",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "300814.SZ",
+    "ann_date": "20210811",
+    "end_date": "20210930",
+    "type": "略减",
+    "p_change_min": -19.69,
+    "p_change_max": -11.79,
+    "net_profit_min": 6100.0,
+    "net_profit_max": 6700.0,
+    "last_parent_net": 8124.0102,
+    "first_ann_date": "20210811",
+    "summary": "预计净利润6100-6700万",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

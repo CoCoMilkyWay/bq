@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "688671.SH",
+    "ann_date": "20221213",
+    "end_date": "20221231",
+    "type": "略减",
+    "p_change_min": -19.05,
+    "p_change_max": -13.47,
+    "net_profit_min": 5800.0,
+    "net_profit_max": 6200.0,
+    "last_parent_net": 7165.32,
+    "first_ann_date": "20221213",
+    "summary": "预计:净利润5800-6200",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688525.SH",
+    "ann_date": "20221213",
+    "end_date": "20221231",
+    "type": "略减",
+    "p_change_min": -44.24,
+    "p_change_max": -31.37,
+    "net_profit_min": 6500.0,
+    "net_profit_max": 8000.0,
+    "last_parent_net": 11657.26,
+    "first_ann_date": "20221213",
+    "summary": "预计:净利润6500-8000",
+    "change_reason": "公司归属于母公司所有者的净利润和扣除非经常性损益后归属于母公司所有者的净利润变动的主要原因为1、宏观经济波动导致消费电子行业需求下滑，公司毛利总额有所下降；2、公司持续导入知名终端客户和相关项目，上述客户和项目对产品的研发需求和产品技术水平均提出更高的要求，为保证公司的可持续发展，持续加大研发投入。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688525.SH",
+    "ann_date": "20221213",
+    "end_date": "20221231",
+    "type": "略减",
+    "p_change_min": -44.24,
+    "p_change_max": -31.37,
+    "net_profit_min": 6500.0,
+    "net_profit_max": 8000.0,
+    "last_parent_net": 11657.26,
+    "first_ann_date": "20221213",
+    "summary": "预计净利润6500-8000万",
+    "change_reason": "公司归属于母公司所有者的净利润和扣除非经常性损益后归属于母公司所有者的净利润变动的主要原因为1、宏观经济波动导致消费电子行业需求下滑，公司毛利总额有所下降；2、公司持续导入知名终端客户和相关项目，上述客户和项目对产品的研发需求和产品技术水平均提出更高的要求，为保证公司的可持续发展，持续加大研发投入。",
+    "update_flag": "0"
+  }
+]

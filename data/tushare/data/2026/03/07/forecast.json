@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "002082.SZ",
+    "ann_date": "20260307",
+    "end_date": "20260331",
+    "type": "预增",
+    "p_change_min": 985.4,
+    "p_change_max": 985.4,
+    "net_profit_min": 16500.0,
+    "net_profit_max": 16500.0,
+    "last_parent_net": 1520.18,
+    "first_ann_date": "20260307",
+    "summary": "预计:净利润16500",
+    "change_reason": "1、公司由仿制药向创新药战略发展转型初见成效，报告期业务拓展取得积极进展，带来新的业绩增长点，并持续加大研发力度。2、报告期内，公司加强内部管理，加大应收款回收力度，有效加速资金回笼。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002082.SZ",
+    "ann_date": "20260307",
+    "end_date": "20260331",
+    "type": "预增",
+    "p_change_min": 985.4,
+    "p_change_max": 985.4,
+    "net_profit_min": 16500.0,
+    "net_profit_max": 16500.0,
+    "last_parent_net": 1520.18,
+    "first_ann_date": "20260307",
+    "summary": "预计:净利润16500",
+    "change_reason": "1、公司由仿制药向创新药战略发展转型初见成效，报告期业务拓展取得积极进展，带来新的业绩增长点，并持续加大研发力度。2、报告期内，公司加强内部管理，加大应收款回收力度，有效加速资金回笼。",
+    "update_flag": "0"
+  }
+]

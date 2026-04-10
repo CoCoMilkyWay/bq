@@ -1,0 +1,44 @@
+[
+  {
+    "ts_code": "688568.SH",
+    "ann_date": "20250224",
+    "end_date": "20241231",
+    "pre_date": "20250304",
+    "actual_date": "20250304"
+  },
+  {
+    "ts_code": "000429.SZ",
+    "ann_date": "20250218",
+    "end_date": "20241231",
+    "pre_date": "20250304",
+    "actual_date": "20250304"
+  },
+  {
+    "ts_code": "300353.SZ",
+    "ann_date": "20250303",
+    "end_date": "20241231",
+    "pre_date": "20250304",
+    "actual_date": "20250304"
+  },
+  {
+    "ts_code": "920116.BJ",
+    "ann_date": "20250222",
+    "end_date": "20241231",
+    "pre_date": "20250304",
+    "actual_date": "20250304"
+  },
+  {
+    "ts_code": "920100.BJ",
+    "ann_date": "20250430",
+    "end_date": "20241231",
+    "pre_date": "20250304",
+    "actual_date": "20250304"
+  },
+  {
+    "ts_code": "920180.BJ",
+    "ann_date": "20250430",
+    "end_date": "20241231",
+    "pre_date": "20250304",
+    "actual_date": "20250304"
+  }
+]

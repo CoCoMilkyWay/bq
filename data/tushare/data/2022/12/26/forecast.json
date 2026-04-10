@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "688631.SH",
+    "ann_date": "20221226",
+    "end_date": "20221231",
+    "type": "续盈",
+    "p_change_min": -13.3,
+    "p_change_max": 7.35,
+    "net_profit_min": 8400.0,
+    "net_profit_max": 10400.0,
+    "last_parent_net": 9688.24,
+    "first_ann_date": "20221226",
+    "summary": "预计:净利润8400-10400",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688631.SH",
+    "ann_date": "20221226",
+    "end_date": "20221231",
+    "type": "续盈",
+    "p_change_min": -13.3,
+    "p_change_max": 7.35,
+    "net_profit_min": 8400.0,
+    "net_profit_max": 10400.0,
+    "last_parent_net": 9688.24,
+    "first_ann_date": "20221226",
+    "summary": "预计净利润8400-10400万",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

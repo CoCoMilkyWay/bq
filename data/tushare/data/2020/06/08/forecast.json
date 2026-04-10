@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "603087.SH",
+    "ann_date": "20200608",
+    "end_date": "20200630",
+    "type": "略增",
+    "p_change_min": 5.0,
+    "p_change_max": 15.0,
+    "net_profit_min": 28000.0,
+    "net_profit_max": 31000.0,
+    "last_parent_net": 26770.93,
+    "first_ann_date": "20200608",
+    "summary": "预计净利润28000-31000万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

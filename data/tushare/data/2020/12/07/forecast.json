@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "300921.SZ",
+    "ann_date": "20201207",
+    "end_date": "20201231",
+    "type": "略增",
+    "p_change_min": 6.31,
+    "p_change_max": 15.29,
+    "net_profit_min": 7644.0,
+    "net_profit_max": 8290.0,
+    "last_parent_net": 7190.12,
+    "first_ann_date": "20201207",
+    "summary": "预计净利润7644-8290万",
+    "change_reason": "净利润预计较上年同期增幅明显，主要是由于2020年预计系统集成业务收入占比有所下降，增值电信类业务收入占比有所上升，增值电信类业务毛利率高于系统集成类业务，带动净利润的增长。前述业绩情况系公司预计数据，不构成公司的盈利预测或业绩承诺。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300920.SZ",
+    "ann_date": "20201207",
+    "end_date": "20201231",
+    "type": "略增",
+    "p_change_min": 21.79,
+    "p_change_max": 32.73,
+    "net_profit_min": 14107.0,
+    "net_profit_max": 15375.0,
+    "last_parent_net": 11583.32,
+    "first_ann_date": "20201207",
+    "summary": "预计净利润14107-15375万",
+    "change_reason": "公司2020年预计经营情况良好，各项指标稳定增长。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "003029.SZ",
+    "ann_date": "20201207",
+    "end_date": "20201231",
+    "type": "略增",
+    "p_change_min": 1.18,
+    "p_change_max": 6.8,
+    "net_profit_min": 9000.0,
+    "net_profit_max": 9500.0,
+    "last_parent_net": 8895.34,
+    "first_ann_date": "20201207",
+    "summary": "预计净利润9000-9500万",
+    "change_reason": "财务报告审计截止日后，公司经营状况良好，未发生影响投资者判断的重大事项。公司的经营模式、主要原材料的采购、主要产品的生产和销售、主要客户及供应商的构成、税收政策以及其他可能影响投资者判断的重大事项等均未发生重大变化。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "003028.SZ",
+    "ann_date": "20201207",
+    "end_date": "20201231",
+    "type": "预增",
+    "p_change_min": 33.77,
+    "p_change_max": 33.77,
+    "net_profit_min": 15500.0,
+    "net_profit_max": 15500.0,
+    "last_parent_net": 11575.2,
+    "first_ann_date": "20201207",
+    "summary": "预计净利润15500万",
+    "change_reason": "自财务报告审计截止日至本招股意向书签署日，公司经营状况良好，主营业务、经营模式、税收政策和其他可能影响投资者判断的重大事项等方面均未发生重大不利变化。",
+    "update_flag": "1"
+  }
+]

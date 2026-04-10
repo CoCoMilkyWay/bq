@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "688071.SH",
+    "ann_date": "20201224",
+    "end_date": "20201231",
+    "type": "略增",
+    "p_change_min": 0.66,
+    "p_change_max": 5.82,
+    "net_profit_min": 3900.0,
+    "net_profit_max": 4100.0,
+    "last_parent_net": 3874.5,
+    "first_ann_date": "20201224",
+    "summary": "预计净利润3900-4100万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688633.SH",
+    "ann_date": "20201224",
+    "end_date": "20201231",
+    "type": "略增",
+    "p_change_min": 22.88,
+    "p_change_max": 22.88,
+    "net_profit_min": 15048.0,
+    "net_profit_max": 15048.0,
+    "last_parent_net": 12246.19,
+    "first_ann_date": "20201224",
+    "summary": "预计净利润15048万",
+    "change_reason": "随着国内疫情的有效控制，下游客户的复工复产情况已基本恢复正常，而近年来下游客户对公司相关产品的需求旺盛，公司相关产品的在手订单、排产、发货及安装验收情况均维持良好状态，因而预计2020年的相关经营性数据较2019年同期有望上升。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688191.SH",
+    "ann_date": "20201224",
+    "end_date": "20201231",
+    "type": "略增",
+    "p_change_min": 17.26,
+    "p_change_max": 40.72,
+    "net_profit_min": 10000.0,
+    "net_profit_max": 12000.0,
+    "last_parent_net": 8527.77,
+    "first_ann_date": "20201224",
+    "summary": "预计净利润10000-12000万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688328.SH",
+    "ann_date": "20201224",
+    "end_date": "20201231",
+    "type": "略增",
+    "p_change_min": 35.87,
+    "p_change_max": 53.83,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": 5088.93,
+    "first_ann_date": "20201224",
+    "summary": "略增",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]

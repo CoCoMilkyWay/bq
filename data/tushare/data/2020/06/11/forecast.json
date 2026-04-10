@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "688559.SH",
+    "ann_date": "20200611",
+    "end_date": "20200630",
+    "type": "略减",
+    "p_change_min": -49.53,
+    "p_change_max": -41.12,
+    "net_profit_min": 3000.0,
+    "net_profit_max": 3500.0,
+    "last_parent_net": 5944.64,
+    "first_ann_date": "20200611",
+    "summary": "预计净利润3000-3500万",
+    "change_reason": "①公司目前经营情况良好，在手订单充足，预计2020年1-6月业绩稳定增长，其中显示及脆性材料精密激光及自动化设备收入规模增速较快，主要系2020年1-6月苹果等主要客户销售规模增长较高所致；②2020年1-6月公司综合毛利率整体保持稳定，受收入规模增长带动，毛利润金额有所提高；③公司经过多年发展，已形成相对稳定成熟的销售、管理及研发模式，2020年1-6月期间费用规模预计同比保持稳定，增幅相对较低。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300845.SZ",
+    "ann_date": "20200611",
+    "end_date": "20200630",
+    "type": "略增",
+    "p_change_min": 3.44,
+    "p_change_max": 7.58,
+    "net_profit_min": 1250.0,
+    "net_profit_max": 1300.0,
+    "last_parent_net": 1208.38,
+    "first_ann_date": "20200611",
+    "summary": "预计净利润1250-1300万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002576.SZ",
+    "ann_date": "20200611",
+    "end_date": "20200630",
+    "type": "预增",
+    "p_change_min": 100.0,
+    "p_change_max": 150.0,
+    "net_profit_min": 3010.0,
+    "net_profit_max": 3763.0,
+    "last_parent_net": 1505.0,
+    "first_ann_date": "20200611",
+    "summary": "预计净利润3010-3763万",
+    "change_reason": "公司按照年初经营计划有序推进各项工作，营业收入稳定增长所致。其中风电业务板块着力于全球市场客户管理，经营业绩稳步增长，推动公司业务规模不断发展壮大。",
+    "update_flag": "0"
+  }
+]

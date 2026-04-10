@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "688165.SH",
+    "ann_date": "20251031",
+    "end_date": "20251231",
+    "type": "续亏",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": -15715.529,
+    "first_ann_date": "20251031",
+    "summary": "续亏",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002475.SZ",
+    "ann_date": "20251031",
+    "end_date": "20251231",
+    "type": "略增",
+    "p_change_min": 23.59,
+    "p_change_max": 28.59,
+    "net_profit_min": 1651810.0,
+    "net_profit_max": 1718638.0,
+    "last_parent_net": 1336565.1,
+    "first_ann_date": "20251031",
+    "summary": "预计:净利润1651810-1718638",
+    "change_reason": "展望2025年全年，公司将持续深化全球化战略，充分发挥海外生产基地的战略支点作用，灵活响应并贴近服务全球客户的区域化市场需求，提供更具韧性和成本优势的全球化制造解决方案。通过“底层能力创新”与“智能制造升级”的双轮驱动，公司将全面提升全产业成本管控效能，推动智能制造与AI技术深度融合，实现生产良效率的跃升。同时，公司将继续推动多元化业务的拓展，加大在AI端侧硬件、数据中心高速互联、热管理、智能汽车、机器人等新兴领域的战略投入，构建更具弹性的业务矩阵，为全体股东带来长期、稳健的回报。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "688165.SH",
+    "ann_date": "20251031",
+    "end_date": "20251231",
+    "type": "续亏",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": -15715.529,
+    "first_ann_date": "20251031",
+    "summary": "续亏",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002475.SZ",
+    "ann_date": "20251031",
+    "end_date": "20251231",
+    "type": "略增",
+    "p_change_min": 23.59,
+    "p_change_max": 28.59,
+    "net_profit_min": 1651810.0,
+    "net_profit_max": 1718638.0,
+    "last_parent_net": 1336565.1,
+    "first_ann_date": "20251031",
+    "summary": "预计:净利润1651810-1718638",
+    "change_reason": "展望2025年全年，公司将持续深化全球化战略，充分发挥海外生产基地的战略支点作用，灵活响应并贴近服务全球客户的区域化市场需求，提供更具韧性和成本优势的全球化制造解决方案。通过“底层能力创新”与“智能制造升级”的双轮驱动，公司将全面提升全产业成本管控效能，推动智能制造与AI技术深度融合，实现生产良效率的跃升。同时，公司将继续推动多元化业务的拓展，加大在AI端侧硬件、数据中心高速互联、热管理、智能汽车、机器人等新兴领域的战略投入，构建更具弹性的业务矩阵，为全体股东带来长期、稳健的回报。",
+    "update_flag": "0"
+  }
+]

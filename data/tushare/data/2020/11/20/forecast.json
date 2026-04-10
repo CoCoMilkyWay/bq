@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "688533.SH",
+    "ann_date": "20201120",
+    "end_date": "20201231",
+    "type": "略减",
+    "p_change_min": -32.21,
+    "p_change_max": -19.42,
+    "net_profit_min": 5300.0,
+    "net_profit_max": 6300.0,
+    "last_parent_net": 7837.86,
+    "first_ann_date": "20201120",
+    "summary": "预计净利润5300-6300万",
+    "change_reason": "公司主要经营模式未发生重大变化；公司主要原材料的采购规模及采购价格不存在异常变动；公司主要产品的生产、销售以及主要客户及供应商的构成不存在异常变动；公司所处行业产业政策未发生重大调整。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688395.SH",
+    "ann_date": "20201120",
+    "end_date": "20200930",
+    "type": "略增",
+    "p_change_min": 25.12,
+    "p_change_max": 25.12,
+    "net_profit_min": 5229.0,
+    "net_profit_max": 5229.0,
+    "last_parent_net": null,
+    "first_ann_date": "20201120",
+    "summary": "预计净利润5229万",
+    "change_reason": "公司的经营模式、主要原材料的采购规模及采购价格、主要产品的生产、销售规模及销售价格，主要供应商、客户的构成，税收政策以及其他可能影响投资者判断的重大事项，未发生重大不利变化。",
+    "update_flag": "0"
+  }
+]

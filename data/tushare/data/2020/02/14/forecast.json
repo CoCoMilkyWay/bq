@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "600680.SH",
+    "ann_date": "20200214",
+    "end_date": "20191231",
+    "type": "续亏",
+    "p_change_min": null,
+    "p_change_max": null,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": -19864.4731,
+    "first_ann_date": "20200214",
+    "summary": "续亏",
+    "change_reason": "公司经过对2019年财务数据进行初步估计和审核，预计公司2019年年度业绩将出现亏损。",
+    "update_flag": "0"
+  }
+]

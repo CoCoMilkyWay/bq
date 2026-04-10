@@ -1,0 +1,62 @@
+[
+  {
+    "ts_code": "301630.SZ",
+    "ann_date": "20250627",
+    "end_date": "20250630",
+    "type": "略增",
+    "p_change_min": 4.11,
+    "p_change_max": 4.11,
+    "net_profit_min": 7821.0,
+    "net_profit_max": 7821.0,
+    "last_parent_net": 7511.69,
+    "first_ann_date": "20250627",
+    "summary": "预计:净利润7821",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "600930.SH",
+    "ann_date": "20250627",
+    "end_date": "20250630",
+    "type": "续盈",
+    "p_change_min": -7.19,
+    "p_change_max": 7.79,
+    "net_profit_min": 576000.0,
+    "net_profit_max": 669000.0,
+    "last_parent_net": 620645.79,
+    "first_ann_date": "20250627",
+    "summary": "预计:净利润576000-669000",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "301630.SZ",
+    "ann_date": "20250627",
+    "end_date": "20250630",
+    "type": "略增",
+    "p_change_min": 4.11,
+    "p_change_max": 4.11,
+    "net_profit_min": 7821.0,
+    "net_profit_max": 7821.0,
+    "last_parent_net": 7511.69,
+    "first_ann_date": "20250627",
+    "summary": "预计:净利润7821",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002204.SZ",
+    "ann_date": "20250627",
+    "end_date": "20250630",
+    "type": "略增",
+    "p_change_min": 11.12,
+    "p_change_max": 18.92,
+    "net_profit_min": 30460.0,
+    "net_profit_max": 32600.0,
+    "last_parent_net": 27412.76,
+    "first_ann_date": "20250627",
+    "summary": "预计:净利润30460-32600",
+    "change_reason": "2025年上半年，公司预计归属于上市公司股东的净利润同比增长11.12%-18.92%，主要原因为报告期内公司营业收入预计较上年同期增长6%左右，带动公司整体净利润增长，其中主要是物料搬运设备毛利同比增长。",
+    "update_flag": "0"
+  }
+]

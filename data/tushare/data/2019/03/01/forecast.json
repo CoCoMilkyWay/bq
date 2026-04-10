@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "002473.SZ",
+    "ann_date": "20190301",
+    "end_date": "20190331",
+    "type": "续亏",
+    "p_change_min": -15.0639,
+    "p_change_max": 12.7936,
+    "net_profit_min": -950.0,
+    "net_profit_max": -720.0,
+    "last_parent_net": -825.62,
+    "first_ann_date": "20190301",
+    "summary": "预计净利润-950~-720万",
+    "change_reason": "受行业竞争加剧影响，公司主营业务收入下滑。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002306.SZ",
+    "ann_date": "20190301",
+    "end_date": "20190331",
+    "type": "续亏",
+    "p_change_min": -4.8004,
+    "p_change_max": 35.5075,
+    "net_profit_min": -650.0,
+    "net_profit_max": -400.0,
+    "last_parent_net": -620.23,
+    "first_ann_date": "20190301",
+    "summary": "预计净利润-650~-400万",
+    "change_reason": "基于目前经营状况作出的谨慎预计。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300613.SZ",
+    "ann_date": "20190301",
+    "end_date": "20190331",
+    "type": "首亏",
+    "p_change_min": -326.0,
+    "p_change_max": -297.0,
+    "net_profit_min": -3450.0,
+    "net_profit_max": -3000.0,
+    "last_parent_net": 1523.23,
+    "first_ann_date": "20190301",
+    "summary": "预计净利润-3450~-3000万",
+    "change_reason": "1、由于宏观经济和资本市场环境变化较大，经审慎考虑，公司董事会决定终止实施2017年限制性股票激励计划，对剩余未分摊的股份支付一次性冲减当期损益，此部分金额约为2,300万元；2、一季度业绩仍未达预期，较去年同期有所下降；3、本报告期内，预计非经常性损益对公司净利润的影响金额约为300万元。",
+    "update_flag": "0"
+  }
+]

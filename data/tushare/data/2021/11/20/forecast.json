@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "688246.SH",
+    "ann_date": "20211120",
+    "end_date": "20211231",
+    "type": "预增",
+    "p_change_min": 233.88,
+    "p_change_max": 327.92,
+    "net_profit_min": 7100.0,
+    "net_profit_max": 9100.0,
+    "last_parent_net": 2126.54,
+    "first_ann_date": "20211120",
+    "summary": "预计:净利润7100-9100",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "836957.BJ",
+    "ann_date": "20211120",
+    "end_date": "20211231",
+    "type": "略减",
+    "p_change_min": -16.53,
+    "p_change_max": -9.58,
+    "net_profit_min": 3600.0,
+    "net_profit_max": 3900.0,
+    "last_parent_net": 4313.12,
+    "first_ann_date": "20211120",
+    "summary": "预计:净利润3600-3900",
+    "change_reason": "本期业绩无重大变化.",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "836957.BJ",
+    "ann_date": "20211120",
+    "end_date": "20211231",
+    "type": "略减",
+    "p_change_min": -16.53,
+    "p_change_max": -9.58,
+    "net_profit_min": 3600.0,
+    "net_profit_max": 3900.0,
+    "last_parent_net": 4313.12,
+    "first_ann_date": "20211120",
+    "summary": "预计净利润3600-3900万",
+    "change_reason": "本期业绩无重大变化.",
+    "update_flag": "0"
+  }
+]

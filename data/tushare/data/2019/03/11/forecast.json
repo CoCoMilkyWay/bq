@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "688385.SH",
+    "ann_date": "20190311",
+    "end_date": "20181231",
+    "type": "预减",
+    "p_change_min": -50.0,
+    "p_change_max": -50.0,
+    "net_profit_min": null,
+    "net_profit_max": null,
+    "last_parent_net": null,
+    "first_ann_date": null,
+    "summary": "预减",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300559.SZ",
+    "ann_date": "20190311",
+    "end_date": "20190331",
+    "type": "预增",
+    "p_change_min": 68.13,
+    "p_change_max": 95.03,
+    "net_profit_min": 1250.0,
+    "net_profit_max": 1450.0,
+    "last_parent_net": 743.46,
+    "first_ann_date": "20190311",
+    "summary": "预计净利润1250-1450万",
+    "change_reason": "1．报告期内，公司归属于上市公司股东的净利润较上年同期增加，主要系：国家教育考试信息化建设市场需求量增加，新高考改革逐步实施带动公司智慧教育产品销售，公司标准化考点业务和智慧教育业务收入增加所致。2．报告期内，公司非经常性损益对净利润的影响金额约0万元-100万元。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "300531.SZ",
+    "ann_date": "20190311",
+    "end_date": "20190331",
+    "type": "预增",
+    "p_change_min": 74.0,
+    "p_change_max": 102.0,
+    "net_profit_min": 4541.0,
+    "net_profit_max": 5272.0,
+    "last_parent_net": 2610.04,
+    "first_ann_date": "20190311",
+    "summary": "预计净利润4541-5272万",
+    "change_reason": "1、报告期内，公司受益于物联网行业的快速发展及自身国内外市场的不断拓展，订单数量和收入同比上升，各项费用保持稳定，归属于上市公司股东的净利润同比增长。2、2019年第一季度，非经常性损益对归属于上市公司股东的净利润的影响金额预计为-300万元至-100万元，受美元汇率变动的影响，公司2019年第一季度持有的外汇套期保值产品的公允价值可能产生波动。",
+    "update_flag": "0"
+  }
+]

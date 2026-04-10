@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "001285.SZ",
+    "ann_date": "20250506",
+    "end_date": "20250630",
+    "type": "略增",
+    "p_change_min": 11.4,
+    "p_change_max": 32.18,
+    "net_profit_min": 13400.0,
+    "net_profit_max": 15900.0,
+    "last_parent_net": 12029.2,
+    "first_ann_date": "20250506",
+    "summary": "预计:净利润13400-15900",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

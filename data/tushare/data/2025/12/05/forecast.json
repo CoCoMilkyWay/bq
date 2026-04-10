@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "688811.SH",
+    "ann_date": "20251205",
+    "end_date": "20251231",
+    "type": "续盈",
+    "p_change_min": -8.46,
+    "p_change_max": 2.22,
+    "net_profit_min": 6000.0,
+    "net_profit_max": 6700.0,
+    "last_parent_net": 6554.78,
+    "first_ann_date": "20251205",
+    "summary": "预计:净利润6000-6700",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "688805.SH",
+    "ann_date": "20251205",
+    "end_date": "20251231",
+    "type": "略增",
+    "p_change_min": 29.07,
+    "p_change_max": 38.03,
+    "net_profit_min": 7200.0,
+    "net_profit_max": 7700.0,
+    "last_parent_net": 5578.39,
+    "first_ann_date": "20251205",
+    "summary": "预计:净利润7200-7700",
+    "change_reason": "受益于无液氦超导产品收入放量增长、重点客户合作持续深入及国内医疗设备采购需求逐步释放等因素，公司预计2025年经营业绩将较快增长。",
+    "update_flag": "0"
+  }
+]

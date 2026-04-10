@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "688358.SH",
+    "ann_date": "20191113",
+    "end_date": "20191231",
+    "type": "略增",
+    "p_change_min": 8.0,
+    "p_change_max": 18.0,
+    "net_profit_min": 10267.0,
+    "net_profit_max": 11217.0,
+    "last_parent_net": 9506.31,
+    "first_ann_date": "20191113",
+    "summary": "预计净利润10267-11217万",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

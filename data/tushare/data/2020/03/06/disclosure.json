@@ -1,0 +1,65 @@
+[
+  {
+    "ts_code": "000712.SZ",
+    "ann_date": "20200229",
+    "end_date": "20191231",
+    "pre_date": "20200306",
+    "actual_date": "20200306"
+  },
+  {
+    "ts_code": "002880.SZ",
+    "ann_date": "20191231",
+    "end_date": "20191231",
+    "pre_date": "20200306",
+    "actual_date": "20200306"
+  },
+  {
+    "ts_code": "002597.SZ",
+    "ann_date": "20200211",
+    "end_date": "20191231",
+    "pre_date": "20200306",
+    "actual_date": "20200306"
+  },
+  {
+    "ts_code": "000708.SZ",
+    "ann_date": "20200218",
+    "end_date": "20191231",
+    "pre_date": "20200306",
+    "actual_date": "20200306"
+  },
+  {
+    "ts_code": "300686.SZ",
+    "ann_date": "20191231",
+    "end_date": "20191231",
+    "pre_date": "20200306",
+    "actual_date": "20200306"
+  },
+  {
+    "ts_code": "835670.BJ",
+    "ann_date": "20200305",
+    "end_date": "20191231",
+    "pre_date": "20200306",
+    "actual_date": "20200306"
+  },
+  {
+    "ts_code": "833580.BJ",
+    "ann_date": "20200305",
+    "end_date": "20191231",
+    "pre_date": "20200306",
+    "actual_date": "20200306"
+  },
+  {
+    "ts_code": "920670.BJ",
+    "ann_date": "20200305",
+    "end_date": "20191231",
+    "pre_date": "20200306",
+    "actual_date": "20200306"
+  },
+  {
+    "ts_code": "920580.BJ",
+    "ann_date": "20200305",
+    "end_date": "20191231",
+    "pre_date": "20200306",
+    "actual_date": "20200306"
+  }
+]

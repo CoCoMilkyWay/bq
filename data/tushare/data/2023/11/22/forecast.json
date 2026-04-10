@@ -1,0 +1,32 @@
+[
+  {
+    "ts_code": "001239.SZ",
+    "ann_date": "20231122",
+    "end_date": "20231231",
+    "type": "续盈",
+    "p_change_min": -6.83,
+    "p_change_max": 12.84,
+    "net_profit_min": 8670.0,
+    "net_profit_max": 10500.0,
+    "last_parent_net": 9305.24,
+    "first_ann_date": "20231122",
+    "summary": "预计:净利润8670-10500",
+    "change_reason": "截至2023年10月末，发行人的在手订单金额为48,451.28万元（含税金额）。随着盾体和风电行业向着大型化趋势发展，且双馈风电机组需求增加，发行人目前在手订单充足。",
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "001239.SZ",
+    "ann_date": "20231122",
+    "end_date": "20231231",
+    "type": "续盈",
+    "p_change_min": -6.83,
+    "p_change_max": 12.84,
+    "net_profit_min": 8670.0,
+    "net_profit_max": 10500.0,
+    "last_parent_net": 9305.24,
+    "first_ann_date": "20231122",
+    "summary": "预计:净利润8670-10500",
+    "change_reason": "截至2023年10月末，发行人的在手订单金额为48,451.28万元（含税金额）。随着盾体和风电行业向着大型化趋势发展，且双馈风电机组需求增加，发行人目前在手订单充足。",
+    "update_flag": "0"
+  }
+]

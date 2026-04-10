@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "688089.SH",
+    "ann_date": "20191202",
+    "end_date": "20191231",
+    "type": "略增",
+    "p_change_min": 14.54,
+    "p_change_max": 26.6,
+    "net_profit_min": 11109.0,
+    "net_profit_max": 12278.0,
+    "last_parent_net": 9698.6,
+    "first_ann_date": "20191202",
+    "summary": "预计净利润11109-12278万",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "002968.SZ",
+    "ann_date": "20191202",
+    "end_date": "20191231",
+    "type": "略增",
+    "p_change_min": 7.29,
+    "p_change_max": 13.46,
+    "net_profit_min": 9500.0,
+    "net_profit_max": 10000.0,
+    "last_parent_net": 8807.7935,
+    "first_ann_date": "20191202",
+    "summary": "预计净利润9500-10000万",
+    "change_reason": null,
+    "update_flag": "1"
+  },
+  {
+    "ts_code": "002971.SZ",
+    "ann_date": "20191202",
+    "end_date": "20191231",
+    "type": "略增",
+    "p_change_min": 14.12,
+    "p_change_max": 14.12,
+    "net_profit_min": 8600.0,
+    "net_profit_max": 8600.0,
+    "last_parent_net": 7535.92,
+    "first_ann_date": "20191202",
+    "summary": "预计净利润8600万",
+    "change_reason": "随着客户数量及需求量的增长导致公司在执行合同金额的增长，生产基地和尾气回收项目对净利润贡献的比重上升，公司营业收入和净利润持续增长。",
+    "update_flag": "1"
+  }
+]

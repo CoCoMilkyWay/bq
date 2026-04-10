@@ -1,0 +1,47 @@
+[
+  {
+    "ts_code": "688583.SH",
+    "ann_date": "20240816",
+    "end_date": "20240930",
+    "type": "略增",
+    "p_change_min": 6.57,
+    "p_change_max": 14.87,
+    "net_profit_min": 7700.0,
+    "net_profit_max": 8300.0,
+    "last_parent_net": 7225.54,
+    "first_ann_date": "20240816",
+    "summary": "预计:净利润7700-8300",
+    "change_reason": "2024年1-9月业绩继续保持增长，主要系公司新推出的创新产品为公司发展提供了新的动力，并与下游客户持续扩大合作所致。",
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "301607.SZ",
+    "ann_date": "20240816",
+    "end_date": "20241231",
+    "type": "略减",
+    "p_change_min": -3.67,
+    "p_change_max": -3.67,
+    "net_profit_min": 9290.0,
+    "net_profit_max": 9290.0,
+    "last_parent_net": 9643.93,
+    "first_ann_date": "20240816",
+    "summary": "预计:净利润9290",
+    "change_reason": null,
+    "update_flag": "0"
+  },
+  {
+    "ts_code": "301607.SZ",
+    "ann_date": "20240816",
+    "end_date": "20240930",
+    "type": "略减",
+    "p_change_min": -10.91,
+    "p_change_max": -7.66,
+    "net_profit_min": 8234.0,
+    "net_profit_max": 8534.0,
+    "last_parent_net": 9241.58,
+    "first_ann_date": "20240816",
+    "summary": "预计:净利润8234-8534",
+    "change_reason": null,
+    "update_flag": "0"
+  }
+]

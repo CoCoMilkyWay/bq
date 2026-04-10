@@ -1,0 +1,17 @@
+[
+  {
+    "ts_code": "603267.SH",
+    "ann_date": "20190514",
+    "end_date": "20190630",
+    "type": "略增",
+    "p_change_min": 17.87,
+    "p_change_max": 33.58,
+    "net_profit_min": 15000.0,
+    "net_profit_max": 17000.0,
+    "last_parent_net": 12726.1866,
+    "first_ann_date": "20190514",
+    "summary": "预计净利润15000-17000万",
+    "change_reason": null,
+    "update_flag": "1"
+  }
+]
