@@ -1,3 +1,10 @@
+### forecast_st (预期连续两年亏损)
+`forecast_st := 前年亏损 AND 去年预亏 AND 年报未发 AND 年报截至前(4月底)`
+- 前年亏损 = `last_parent_net < 0`
+- 去年预亏 = `type ∈ {'首亏', '续亏'}` (年报: `end_date[4:6]=='12'`)
+- 年报未发 = `date < disclosure.actual_date`
+- 年报截至 = `disclosure.actual_date ?? (end_date.year+1, 4, monthend) 次年4月月末`
+
 - 国九条分红ST预警:
     - 主板：最近三年累计现金分红总额 < 最近三年年均净利润的30%，且累计分红金额 < 5000万元
     - 科创板/创业板：研发投入满足条件可豁免
