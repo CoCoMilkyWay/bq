@@ -1,12 +1,17 @@
+import json
+from pathlib import Path
+
 from bigmodule import M, I
 import dai
 import pandas as pd
+from tqdm import tqdm
 
 '''
 ## 策略配置
 - **股票池** (`cn_stock_prefactors_community`)
   - 按 `total_market_cap` 升序取前500只
   - 排除 ST、停牌、北交所
+  - 股票池作为指标benchmark (过滤和排序都作为策略超额)
   - 每日重算
 - **过滤因子**
   - 股票池排除过滤因子=1的标的
@@ -16,9 +21,12 @@ import pandas as pd
   - TODO: 暂时没有排序因子, 持有所有股票池内标的
 - **持仓**
   - 等权分配，每日调仓
+- **交易限制**
+  - 涨/跌停时不会买入/卖出
 
 过滤因子:
 **预期连续两年亏损**:
+    数据源: strategy/filter/forecast_2_year_loss/indicator.json
     `forecast_2_year_loss := 前年亏损 AND 去年预亏 AND 年报未发 AND 年报截至前(4月底)`
     - 前年亏损 = `last_parent_net < 0`
     - 去年预亏 = `type ∈ {'首亏', '续亏'}` (年报: `end_date[4:6]=='12'`)
@@ -31,237 +39,228 @@ import pandas as pd
 1. 回测vector mode应该和实盘incremental mode实现一致, 尽量共享代码和逻辑
 2. 每个因子的实现应该尽量独立定义在代码最前, 不要和后面的框架耦合
 '''
+BACKTEST_START_DATE = "2021-01-01"
+BACKTEST_END_DATE = "2026-04-07"
 
 
+def factor_forecast_2_year_loss(start_date, end_date):
+    indicator_path = Path(__file__).resolve().parent / "filter" / "forecast_2_year_loss" / "indicator.json"
+    raw_rows = json.loads(indicator_path.read_text())
+    assert isinstance(raw_rows, list), f"invalid forecast json: {indicator_path}"
 
-def m5_initialize_bigquant_run(context):
+    interval_rows = []
+    for item in raw_rows:
+        assert isinstance(item, dict) and len(item) == 1, f"invalid forecast item: {item}"
+        instrument, intervals = next(iter(item.items()))
+        assert isinstance(instrument, str) and instrument, f"invalid instrument: {item}"
+        assert isinstance(intervals, list), f"invalid intervals: {item}"
+        for interval in intervals:
+            assert isinstance(interval, list) and len(interval) == 2, f"invalid interval: {interval}"
+            start_date_int, end_date_int = interval
+            assert isinstance(start_date_int, int) and isinstance(end_date_int, int), f"invalid interval date: {interval}"
+            assert start_date_int <= end_date_int, f"start_date > end_date: {interval}"
+            interval_rows.append(
+                {
+                    "instrument": instrument,
+                    "start_date": start_date_int,
+                    "end_date": end_date_int,
+                }
+            )
+
+    start_int = int(start_date.replace("-", ""))
+    end_int = int(end_date.replace("-", ""))
+    state_df = pd.DataFrame(interval_rows, columns=["instrument", "start_date", "end_date"])
+    assert not state_df.empty, "forecast_2_year_loss source is empty"
+    source_start_int = int(state_df["start_date"].min())
+    source_end_int = int(state_df["end_date"].max())
+    assert source_start_int <= start_int, f"tushare coverage start not enough: {source_start_int} > {start_int}"
+    assert source_end_int >= end_int, f"tushare coverage end not enough: {source_end_int} < {end_int}"
+    state_df = state_df[(state_df["end_date"] >= start_int) & (state_df["start_date"] <= end_int)].copy()
+    assert not state_df.empty, "forecast_2_year_loss has no interval in backtest range"
+    state_df["value"] = 1
+    return {
+        "name": "forecast_2_year_loss",
+        "kind": "interval",
+        "data": state_df[["instrument", "start_date", "end_date", "value"]],
+    }
+
+
+def prepare_filter_states(start_date, end_date):
+    factor_builders = [
+        factor_forecast_2_year_loss,
+    ]
+    states = []
+    state_names = set()
+    for factor_builder in factor_builders:
+        state = factor_builder(start_date, end_date)
+        assert isinstance(state, dict), f"invalid state type: {factor_builder.__name__}"
+        assert {"name", "kind", "data"}.issubset(state.keys()), f"invalid state keys: {factor_builder.__name__}"
+        assert isinstance(state["name"], str) and state["name"], f"invalid state name: {factor_builder.__name__}"
+        assert state["name"] not in state_names, f"duplicated factor name: {state['name']}"
+        assert state["kind"] in {"interval", "daily"}, f"invalid state kind: {state['kind']}"
+        assert isinstance(state["data"], pd.DataFrame), f"invalid state data: {state['name']}"
+        states.append(state)
+        state_names.add(state["name"])
+    return states
+
+
+def calc_filter_on_day(trade_date, universe_today_df, states):
+    factor_df = universe_today_df[["instrument"]].drop_duplicates().copy()
+    trade_date_int = int(trade_date.replace("-", ""))
+
+    for state in states:
+        factor_name = state["name"]
+        state_kind = state["kind"]
+        state_df = state["data"]
+
+        if state_df.empty:
+            factor_df[factor_name] = 0
+            continue
+
+        if state_kind == "interval":
+            assert {"instrument", "start_date", "end_date", "value"}.issubset(state_df.columns), f"invalid interval state: {factor_name}"
+            day_factor_df = factor_df[["instrument"]].merge(state_df, on="instrument", how="left")
+            day_factor_df[factor_name] = (
+                ((trade_date_int >= day_factor_df["start_date"]) & (trade_date_int <= day_factor_df["end_date"])).astype(int)
+                * day_factor_df["value"].fillna(0).astype(int)
+            )
+            day_factor_df = day_factor_df.groupby("instrument", as_index=False)[factor_name].max()
+        else:
+            assert {"date", "instrument", "value"}.issubset(state_df.columns), f"invalid daily state: {factor_name}"
+            day_factor_df = state_df[state_df["date"] == trade_date][["instrument", "value"]].copy()
+            day_factor_df = day_factor_df.groupby("instrument", as_index=False)["value"].max()
+            day_factor_df = day_factor_df.rename(columns={"value": factor_name})
+
+        factor_df = factor_df.merge(day_factor_df, on="instrument", how="left")
+        factor_df[factor_name] = factor_df[factor_name].fillna(0).astype(int)
+
+    return factor_df
+
+
+def build_target_on_day(trade_date, universe_today_df, states):
+    factor_df = calc_filter_on_day(trade_date, universe_today_df, states)
+    merged_df = universe_today_df.merge(factor_df, on="instrument", how="left")
+    factor_cols = [state["name"] for state in states]
+    target_df = merged_df[(merged_df[factor_cols] == 0).all(axis=1)].copy()
+
+    if target_df.empty:
+        target_df["position"] = pd.Series(dtype=float)
+        return target_df[["instrument", "position"]]
+
+    target_df["position"] = 1.0 / len(target_df)
+    return target_df[["instrument", "position"]]
+
+
+def bt_init(context):
     from bigtrader.finance.commission import PerOrder
     context.set_commission(PerOrder(buy_cost=0.0003, sell_cost=0.0013, min_cost=5))
+    context.factor_states = prepare_filter_states(start_date=BACKTEST_START_DATE, end_date=BACKTEST_END_DATE)
+    context.universe_by_date = {
+        date: day_df[["instrument", "total_market_cap"]].reset_index(drop=True)
+        for date, day_df in context.data.groupby("date", sort=False)
+    }
+    assert len(context.universe_by_date) > 0, "bigquant universe is empty in backtest range"
+    universe_dates = sorted(context.universe_by_date.keys())
+    assert universe_dates[0] <= BACKTEST_END_DATE, "bigquant coverage starts after backtest end"
+    assert universe_dates[-1] >= BACKTEST_START_DATE, "bigquant coverage ends before backtest start"
+
+    price_limit_sql = """
+    SELECT date, instrument, price_limit_status
+    FROM cn_stock_status
+    WHERE price_limit_status IN (1, 3)
+    """
+    price_limit_df = dai.query(price_limit_sql, filters={"date": [BACKTEST_START_DATE, BACKTEST_END_DATE]}).df()
+    price_limit_df["date"] = price_limit_df["date"].astype(str).str[:10]
+    context.price_limit_set = set(zip(price_limit_df["date"], price_limit_df["instrument"]))
+
+    context.progress_total_days = len(context.universe_by_date)
+    context.progress_done_days = 0
+    context.progress_bar = tqdm(total=context.progress_total_days, desc="backtest", unit="day")
 
 
-def m5_before_trading_start_bigquant_run(context, data):
+def bt_pre(context, data):
     pass
 
 
-def m5_handle_tick_bigquant_run(context, tick):
+def bt_tick(context, tick):
     pass
 
 
-def m5_handle_data_bigquant_run(context, data):
-    today_df = context.data[context.data["date"] == data.current_dt.strftime("%Y-%m-%d")]
-    target_instruments = set(today_df["instrument"])
+def bt_bar(context, data):
+    trade_date = data.current_dt.strftime("%Y-%m-%d")
+    context.progress_done_days += 1
+    assert context.progress_done_days <= context.progress_total_days
+    context.progress_bar.update(1)
+    if context.progress_done_days == context.progress_total_days:
+        context.progress_bar.close()
+
+    if not context.rebalance_period.is_signal_date(data.current_dt.date()):
+        return
+
+    universe_today_df = context.universe_by_date.get(trade_date)
+    if universe_today_df is None:
+        universe_today_df = context.data[context.data["date"] == trade_date][["instrument", "total_market_cap"]].copy()
+    target_df = build_target_on_day(trade_date, universe_today_df, context.factor_states)
+    target_instruments = set(target_df["instrument"])
     holding_instruments = set(context.get_account_positions().keys())
 
-    for instrument in holding_instruments - target_instruments:
+    def is_price_limited(inst):
+        return (trade_date, inst) in context.price_limit_set
+
+    for instrument in sorted(holding_instruments - target_instruments):
+        if is_price_limited(instrument):
+            continue
         context.order_target_percent(instrument, 0)
 
-    for i, x in today_df.iterrows():
-        position = 0.0 if pd.isnull(x.position) else float(x.position)
-        context.order_target_percent(x.instrument, position)
+    for _, row in target_df.iterrows():
+        if is_price_limited(row.instrument):
+            continue
+        position = 0.0 if pd.isnull(row.position) else float(row.position)
+        context.order_target_percent(row.instrument, position)
 
 
-def m5_handle_trade_bigquant_run(context, trade):
+def bt_trade(context, trade):
     pass
 
 
-def m5_handle_order_bigquant_run(context, order):
+def bt_order(context, order):
     pass
 
 
-def m5_after_trading_bigquant_run(context, data):
+def bt_post(context, data):
     pass
 
-
-# ========== 数据准备 ==========
-# 预期ST因子：去年年报亏损 AND 当年预亏公告（年报披露前有效）
-
-# ==================== 预计算数据（只需运行一次）====================
-# 预计算年报披露日期和 net_profit_ly，避免在策略 SQL 中 JOIN 大表
-
-# 1. 年报披露日期（通过 net_profit_ly 变化推断，每年取第一次变化日期）
-ANNUAL_REPORT_SQL = """
-SELECT DISTINCT ON (instrument, YEAR(date))
-    date AS publish_date,
-    instrument,
-    YEAR(date) AS publish_year
-FROM (
-    SELECT 
-        date,
-        instrument,
-        net_profit_ly,
-        LAG(net_profit_ly) OVER (PARTITION BY instrument ORDER BY date) AS prev_profit
-    FROM cn_stock_factors_financial_items
-)
-WHERE net_profit_ly IS DISTINCT FROM prev_profit
-  AND net_profit_ly IS NOT NULL
-  AND MONTH(date) IN (1,2,3,4)
-ORDER BY instrument, YEAR(date), date
-"""
-
-print("预计算年报披露日期...")
-annual_report_df = dai.query(ANNUAL_REPORT_SQL, filters={"date": ["2015-01-01", "2030-01-01"]}).df()
-print(f"年报披露记录数：{len(annual_report_df)}")
-
-# 2. 预计算 net_profit_ly（只提取需要的字段，大幅减少内存）
-NET_PROFIT_SQL = """
-SELECT date, instrument, net_profit_ly
-FROM cn_stock_factors_financial_items
-WHERE net_profit_ly IS NOT NULL
-"""
-
-print("预计算 net_profit_ly...")
-net_profit_df = dai.query(NET_PROFIT_SQL, filters={"date": ["2015-01-01", "2030-01-01"]}).df()
-print(f"net_profit_ly 记录数：{len(net_profit_df)}")
-
-# ==================== 指标定义 ====================
-
-# 预期ST指标SQL
-# - annual_report_publish: 预计算的年报披露日期（通过 bind_relations 引用）
-# - net_profit_ly: PIT数据，当日可知的最新年报利润，无未来信息
-# - profit_estimate: 业绩预告公告日期，无未来信息
-INDICATOR_EXPECTED_ST = """
--- 年报披露日期（预计算数据）
-annual_report_publish AS (
-    SELECT publish_date, instrument, publish_year
-    FROM annual_report_ref
-),
-
--- net_profit_ly（预计算数据）
-net_profit_data AS (
-    SELECT date, instrument, net_profit_ly
-    FROM net_profit_ref
-),
-
--- 业绩预告（只取年报预亏，end_date 月份=12，fore_profit < 0）
-profit_estimate AS (
-    SELECT
-        date AS announce_date,
-        CASE WHEN CAST(instrument AS INT) >= 600000
-             THEN LPAD(CAST(CAST(instrument AS INT) AS VARCHAR), 6, '0') || '.SH'
-             ELSE LPAD(CAST(CAST(instrument AS INT) AS VARCHAR), 6, '0') || '.SZ'
-        END AS instrument,
-        YEAR(end_date) AS fore_year
-    FROM cn_stock_profit_estimate
-    WHERE MONTH(end_date) = 12 AND fore_profit < 0
-),
-
--- 计算预期ST指标
--- 核心逻辑：使用当日可知的 net_profit_ly（PIT数据，无未来信息）
-expected_st AS (
-    SELECT
-        a.date,
-        a.instrument,
-        -- 当日可知的最新年报利润（PIT数据，在年报披露前是前年的值）
-        b.net_profit_ly AS net_profit_ly_prev,
-        -- 预告年份应为去年
-        YEAR(a.date) - 1 AS target_fore_year,
-        -- LAST 按 (instrument, year) 分区，扫描当年发布的预告
-        LAST(d.fore_year IGNORE NULLS) OVER (
-            PARTITION BY a.instrument, YEAR(a.date)
-            ORDER BY a.date 
-            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-        ) AS latest_fore_year,
-        -- 当年年报披露日期
-        e.publish_date AS annual_report_date
-    FROM cn_stock_prefactors_community a
-    LEFT JOIN net_profit_data b USING (date, instrument)
-    LEFT JOIN profit_estimate d ON a.instrument = d.instrument AND a.date = d.announce_date
-    LEFT JOIN annual_report_publish e ON a.instrument = e.instrument AND YEAR(a.date) = e.publish_year
-),
-
--- 预期ST = 前年年报亏损 AND 当年预亏公告（年报披露前有效）
-with_expected_st AS (
-    SELECT
-        date,
-        instrument,
-        net_profit_ly_prev,
-        target_fore_year,
-        latest_fore_year,
-        annual_report_date,
-        CASE WHEN
-            -- 条件1：前年年报亏损（net_profit_ly 是当日可知的最新年报）
-            net_profit_ly_prev < 0
-            -- 条件2：当年预亏公告
-            AND latest_fore_year = target_fore_year
-            -- 条件3：当年年报尚未披露（缺失则用4月30日作为默认截止）
-            AND date < COALESCE(annual_report_date, MAKE_DATE(YEAR(date), 5, 1))
-        THEN 1 ELSE 0 END AS is_expected_st
-    FROM expected_st
-),
-"""
-
-# ==================== 策略SQL ====================
-
-stock_sql = f"""
-WITH 
--- 股票池：市值最小500只（非ST、非停牌、非北交所）
-small_cap_500 AS (
-    SELECT date, instrument, total_market_cap
-    FROM cn_stock_prefactors_community
-    WHERE st_status = 0 AND suspended = 0 AND is_bz50 = 0
-    QUALIFY ROW_NUMBER() OVER (PARTITION BY date ORDER BY total_market_cap ASC) <= 500
-),
-
-{INDICATOR_EXPECTED_ST}
-
--- 筛选：股票池 + 指标=1
-filtered AS (
-    SELECT 
-        a.date,
-        a.instrument,
-        a.total_market_cap,
-        b.net_profit_ly_prev,
-        b.latest_fore_year,
-        b.annual_report_date,
-        b.is_expected_st
-    FROM small_cap_500 a
-    JOIN with_expected_st b USING (date, instrument)
-    WHERE b.is_expected_st = 1
-)
-
+# ==================== vector / incremental 共享信号 ====================
+universe_sql = """
 SELECT
     date,
     instrument,
-    total_market_cap,
-    net_profit_ly_prev,
-    latest_fore_year,
-    annual_report_date,
-    is_expected_st,
-    -total_market_cap AS score,
-    1.0 / c_sum(1) AS position
-FROM filtered
+    total_market_cap
+FROM cn_stock_prefactors_community
+WHERE st_status = 0
+  AND suspended = 0
+  AND is_bz50 = 0
+QUALIFY ROW_NUMBER() OVER (PARTITION BY date ORDER BY total_market_cap ASC) <= 500
 ORDER BY date, instrument
 """
-
-print("正在查询数据...")
-filtered_df = dai.query(
-    stock_sql, 
-    filters={"date": ["2020-01-01", "2026-12-31"]},
-    bind_relations={
-        "annual_report_ref": annual_report_df,
-        "net_profit_ref": net_profit_df
-    }
-).df()
-print(f"满足预期ST条件的记录数：{len(filtered_df)}")
-print(f"每日平均持仓数量：{filtered_df.groupby('date')['instrument'].count().mean():.1f}")
-
-stock_data_ds = dai.DataSource.write_bdb(filtered_df)
+universe_df = dai.query(universe_sql, filters={"date": [BACKTEST_START_DATE, BACKTEST_END_DATE]}).df()
+assert {"date", "instrument", "total_market_cap"}.issubset(universe_df.columns)
+universe_df["date"] = universe_df["date"].astype(str).str[:10]
+print(f"股票池记录数：{len(universe_df)}")
+stock_data_ds = dai.DataSource.write_bdb(universe_df)
 
 # ========== 回测 ==========
-start_date = '2021-01-01'
-end_date = '2026-04-07'
-
 m5 = M.bigtrader.v30(
     data=stock_data_ds,
-    start_date=start_date,
-    end_date=end_date,
-    initialize=m5_initialize_bigquant_run,
-    before_trading_start=m5_before_trading_start_bigquant_run,
-    handle_tick=m5_handle_tick_bigquant_run,
-    handle_data=m5_handle_data_bigquant_run,
-    handle_trade=m5_handle_trade_bigquant_run,
-    handle_order=m5_handle_order_bigquant_run,
-    after_trading=m5_after_trading_bigquant_run,
+    start_date=BACKTEST_START_DATE,
+    end_date=BACKTEST_END_DATE,
+    initialize=bt_init,
+    before_trading_start=bt_pre,
+    handle_tick=bt_tick,
+    handle_data=bt_bar,
+    handle_trade=bt_trade,
+    handle_order=bt_order,
+    after_trading=bt_post,
     capital_base=1000000,
     frequency="daily",
     product_type="股票",

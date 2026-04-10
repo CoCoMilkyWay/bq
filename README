@@ -12,19 +12,26 @@ bq/
 │   │   │   ├── database_crawler.py    # 爬BigQuant网页元数据
 │   │   │   ├── database_puller.py     # 用dai.query拉schema
 │   │   │   └── database_formatter.py  # 格式化输出
-│   │   └── research/                  # 数据研究脚本
+│   │   ├── research/                  # 数据研究脚本
+│   │   └── doc/                       # BigQuant文档
+│   │       └── bigtrader.md           # BigTrader交易引擎API
 │   └── tushare/                       # Tushare财报披露数据
 │       ├── data/YYYY/MM/DD/*.json     # 按日期存储 (disclosure/forecast/express)
 │       ├── update_bulk.py             # 全量拉取
 │       ├── update_incre.py            # 增量更新
 │       ├── analysis.py                # 覆盖率分析 (按财季+发布偏移月统计D/F/E)
+│       ├── analysis.md                # 分析结果
 │       └── doc/                       # API文档
 │           ├── README.md              # tushare接口索引
 │           └── financial/             # 财务报表API
 ├── strategy/                          # 策略逻辑
-│   ├── filter/
-│   │   └── filter.md                  # 股票池过滤条件
+│   ├── strategy.py                    # 策略主入口
+│   ├── filter/                        # 股票池过滤
+│   │   ├── filter.md                  # 过滤条件定义
+│   │   └── forecast_2_year_loss/      # 预期连续2年亏损过滤器
+│   │       ├── indicator.py           # 指标计算逻辑
+│   │       └── indicator.json         # 指标数据缓存
 │   └── factor/
-│       └── factor.md                  # 因子池因子定义
+│       └── factor.md                  # 因子条件定义
 └── tmp/                               # 实验性策略
     └── 小市值/                        # 小市值因子策略示例
