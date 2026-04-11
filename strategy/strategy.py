@@ -63,82 +63,20 @@ CAPITAL_BASE = 1000000
 '''
 
 
-def factor_risk_warning(start_date, end_date):
-    sql = """
-    SELECT date, instrument, is_risk_warning
-    FROM cn_stock_status
-    WHERE is_risk_warning = 1
+def load_interval_filter(name: str, start_date: str, end_date: str):
     """
-    df = dai.query(sql, filters={"date": [start_date, end_date]}).df()
-    df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
-    df = df.rename(columns={"is_risk_warning": "value"})
-    return {
-        "name": "risk_warning",
-        "kind": "daily",
-        "data": df[["date", "instrument", "value"]],
-    }
-
-
-def factor_forecast_2_year_loss(start_date, end_date):
-    indicator_path = STRATEGY_DIR / "filter" / \
-        "forecast_2_year_loss" / "indicator.json"
-    raw_rows = json.loads(indicator_path.read_text())
-    assert isinstance(
-        raw_rows, list), f"invalid forecast json: {indicator_path}"
-
-    interval_rows = []
-    for item in raw_rows:
-        assert isinstance(item, dict) and len(
-            item) == 1, f"invalid forecast item: {item}"
-        instrument, intervals = next(iter(item.items()))
-        assert isinstance(
-            instrument, str) and instrument, f"invalid instrument: {item}"
-        assert isinstance(intervals, list), f"invalid intervals: {item}"
-        for interval in intervals:
-            assert isinstance(interval, list) and len(
-                interval) == 2, f"invalid interval: {interval}"
-            start_date_int, end_date_int = interval
-            assert isinstance(start_date_int, int) and isinstance(
-                end_date_int, int), f"invalid interval date: {interval}"
-            assert start_date_int <= end_date_int, f"start_date > end_date: {interval}"
-            interval_rows.append(
-                {
-                    "instrument": instrument,
-                    "start_date": start_date_int,
-                    "end_date": end_date_int,
-                }
-            )
-
-    start_int = int(start_date.replace("-", ""))
-    end_int = int(end_date.replace("-", ""))
-    state_df = pd.DataFrame(interval_rows, columns=[
-                            "instrument", "start_date", "end_date"])
-    assert not state_df.empty, "forecast_2_year_loss source is empty"
-    source_start_int = int(state_df["start_date"].min())
-    source_end_int = int(state_df["end_date"].max())
-    assert source_start_int <= start_int, f"tushare coverage start not enough: {source_start_int} > {start_int}"
-    assert source_end_int >= end_int, f"tushare coverage end not enough: {source_end_int} < {end_int}"
-    state_df = state_df[(state_df["end_date"] >= start_int) & (
-        state_df["start_date"] <= end_int)].copy()
-    assert not state_df.empty, "forecast_2_year_loss has no interval in backtest range"
-    state_df["value"] = 1
-    return {
-        "name": "forecast_2_year_loss",
-        "kind": "interval",
-        "data": state_df[["instrument", "start_date", "end_date", "value"]],
-    }
-
-
-def factor_forecast_st(start_date, end_date):
-    indicator_path = STRATEGY_DIR / "filter" / "forecast_st" / "indicator.json"
+    通用的interval类型过滤因子加载函数
+    从 filter/{name}/indicator.json 加载数据
+    """
+    indicator_path = STRATEGY_DIR / "filter" / name / "indicator.json"
     if not indicator_path.exists():
         return None
     raw_rows = json.loads(indicator_path.read_text())
-    assert isinstance(raw_rows, list), f"invalid forecast json: {indicator_path}"
+    assert isinstance(raw_rows, list), f"invalid json: {indicator_path}"
 
     interval_rows = []
     for item in raw_rows:
-        assert isinstance(item, dict) and len(item) == 1, f"invalid forecast item: {item}"
+        assert isinstance(item, dict) and len(item) == 1, f"invalid item: {item}"
         instrument, intervals = next(iter(item.items()))
         assert isinstance(instrument, str) and instrument, f"invalid instrument: {item}"
         assert isinstance(intervals, list), f"invalid intervals: {item}"
@@ -164,35 +102,36 @@ def factor_forecast_st(start_date, end_date):
         return None
     state_df["value"] = 1
     return {
-        "name": "forecast_st",
+        "name": name,
         "kind": "interval",
         "data": state_df[["instrument", "start_date", "end_date", "value"]],
     }
+
+
+FILTER_NAMES = [
+    "forecast_2_year_loss",
+    "forecast_st",
+    "risk_warning",
+]
 
 
 def prepare_filter_states(start_date, end_date, trading_dates):
     """
     trading_dates: 回测期间的交易日列表 (YYYY-MM-DD 格式)，用于展开 interval
     """
-    factor_builders = [
-        factor_forecast_2_year_loss,
-        factor_forecast_st,
-        factor_risk_warning,
-    ]
     states = []
     state_names = set()
     trading_date_ints = sorted(int(d.replace("-", "")) for d in trading_dates)
 
-    for factor_builder in factor_builders:
-        state = factor_builder(start_date, end_date)
+    for filter_name in FILTER_NAMES:
+        state = load_interval_filter(filter_name, start_date, end_date)
         if state is None:
             continue
-        assert isinstance(
-            state, dict), f"invalid state type: {factor_builder.__name__}"
+        assert isinstance(state, dict), f"invalid state type: {filter_name}"
         assert {"name", "kind", "data"}.issubset(
-            state.keys()), f"invalid state keys: {factor_builder.__name__}"
+            state.keys()), f"invalid state keys: {filter_name}"
         assert isinstance(
-            state["name"], str) and state["name"], f"invalid state name: {factor_builder.__name__}"
+            state["name"], str) and state["name"], f"invalid state name: {filter_name}"
         assert state["name"] not in state_names, f"duplicated factor name: {state['name']}"
         assert state["kind"] in {
             "interval", "daily"}, f"invalid state kind: {state['kind']}"
