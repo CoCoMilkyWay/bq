@@ -32,13 +32,13 @@ class FactorDef:
 
 
 FACTORS = {
-    'pe_ttm':       FactorDef('pe_ttm',       'pe_ttm',           -1, '市盈率TTM'),
-    'pb':           FactorDef('pb',           'pb',               -1, '市净率'),
-    'ps_ttm':       FactorDef('ps_ttm',       'ps_ttm',           -1, '市销率TTM'),
-    'pcf_ttm':      FactorDef('pcf_ttm',      'pcf_ttm',          -1, '市现率TTM'),
-    'roe_ttm':      FactorDef('roe_ttm',      'roe_avg_ttm',       1, 'ROE TTM'),
-    'roa_ttm':      FactorDef('roa_ttm',      'roa_avg_ttm',       1, 'ROA TTM'),
-    'dividend_yield': FactorDef('dividend_yield', 'dividend_yield', 1, '股息率'),
+    'pe_ttm':       FactorDef('pe_ttm',       'pe_ttm',              -1, '市盈率TTM'),
+    'pb':           FactorDef('pb',           'pb',                  -1, '市净率'),
+    'ps_ttm':       FactorDef('ps_ttm',       'ps_ttm',              -1, '市销率TTM'),
+    'pcf_ttm':      FactorDef('pcf_ttm',      'pcf_net_ttm',         -1, '市现率TTM'),
+    'roe_ttm':      FactorDef('roe_ttm',      'roe_avg_ttm',          1, 'ROE TTM'),
+    'roa_ttm':      FactorDef('roa_ttm',      'roa_avg_ttm',          1, 'ROA TTM'),
+    'dividend_yield': FactorDef('dividend_yield', 'dividend_yield_ratio', 1, '股息率'),
 }
 
 
@@ -113,15 +113,15 @@ SELECT
     total_market_cap,
     sw2021_level1,
     {fields}
-FROM cn_stock_prefactors_community
+FROM cn_stock_prefactors
 WHERE st_status = 0
   AND suspended = 0
   AND list_days > 252
   AND total_market_cap > 0
 """
 
-# 需要正值的因子字段
-_POSITIVE_FIELDS = {'pe_ttm', 'pb', 'ps_ttm', 'pcf_ttm'}
+# 需要正值的因子字段 (数据库字段名)
+_POSITIVE_FIELDS = {'pe_ttm', 'pb', 'ps_ttm', 'pcf_net_ttm'}
 
 
 def _fetch_and_ffill(sql: str, start_date: str, end_date: str, factor_fields: list) -> pd.DataFrame:
