@@ -417,8 +417,9 @@ def bt_post(context, data):
     if not closed_trades:
         print("\n交易诊断: 无已平仓交易记录")
         return
-    sorted_trades = sorted(closed_trades, key=lambda x: x["daily_excess"])
-    print(f"\n========== 交易诊断: 超额收益最差的 30 笔交易 ==========")
+    filtered_trades = [t for t in closed_trades if t["total_return"] <= -0.10]
+    sorted_trades = sorted(filtered_trades, key=lambda x: x["daily_excess"])
+    print(f"\n========== 交易诊断: 总跌幅>10%中超额最差的 30 笔交易 ==========")
     print(f"{'标的':<12} {'开仓日期':<12} {'平仓日期':<12} {'持仓天数':>8} {'总收益%':>10} {'日均收益%':>10} {'日均基准%':>10} {'日均超额%':>10}")
     print("-" * 100)
     for t in sorted_trades[:30]:
