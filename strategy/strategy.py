@@ -62,12 +62,16 @@ CAPITAL_BASE = 1000000
     - 面值退市: 连续20个交易日收盘价 < 1元
     - 市值退市: 连续20个交易日市值 < 5亿元(主板) / 3亿元(科创板/创业板)
 **分红ST** (dividend_st):
-    数据源: bigquant cn_stock_financial_income_general_pit + cn_stock_financial_cashflow_general_pit
+    数据源: bigquant cn_stock_dividend + cn_stock_capital + cn_stock_financial_income_general_pit
     `dividend_st := 三年累计分红 < 三年年均净利润*30% AND 三年累计分红 < 5000万`
-    - 分红 = cash_paid_for_dividends_profits_interests (现金流量表)
-    - 净利润 = net_profit_to_parent_shareholders (利润表)
+    - 分红 = cash_before_tax * total_shares (分红预案金额)
+    - 净利润 = 近2年年报归母净利润平均值 (cn_stock_financial_income_general_pit)
     - 仅主板适用
     - 科创板/创业板:研发投入满足条件可豁免(未实现)
+**上市天数** (list_days):
+    数据源: bigquant cn_stock_prefactors
+    `list_days := 上市天数 <= 270`
+    - 过滤上市不满270天的股票
 **风险警示** (risk_warning):
     数据源: bigquant cn_stock_status
     `risk_warning := is_risk_warning = 1`
@@ -134,6 +138,7 @@ FILTER_NAMES = [
     "risk_warning",
     "trading_st",
     "dividend_st",
+    "list_days",
 ]
 
 
