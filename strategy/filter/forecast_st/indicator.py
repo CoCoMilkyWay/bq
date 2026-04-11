@@ -45,7 +45,7 @@ def is_year_end(end_date: str) -> bool:
 
 
 def ts_code_to_instrument(ts_code: str) -> str:
-    return ts_code.replace(".", "").upper()
+    return ts_code.upper()
 
 
 def fetch_annual_revenue() -> dict[tuple[str, str], float]:
