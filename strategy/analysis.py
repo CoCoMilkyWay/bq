@@ -14,8 +14,7 @@ import dai
 
 from factor import FACTORS, get_factor_wide
 
-
-STRATEGY_DIR = Path(__file__).parent
+STRATEGY_DIR = Path.cwd()
 START_DATE = "2017-01-01"
 END_DATE = "2026-04-07"
 UNIVERSE_SIZE = 100
