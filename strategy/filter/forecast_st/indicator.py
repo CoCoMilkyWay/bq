@@ -48,27 +48,46 @@ def ts_code_to_instrument(ts_code: str) -> str:
     return ts_code.upper()
 
 
-def fetch_annual_revenue() -> dict[tuple[str, str], float]:
+def fetch_ttm_revenue() -> dict[tuple[str, str], float]:
     """
-    获取历史年报营业收入数据
-    返回: {(instrument, year): revenue}
+    获取 TTM 营收数据 (point-in-time)
+    返回: {(instrument, date_str): revenue_ttm}
+    date_str 格式: YYYYMMDD
     """
     sql = """
-    SELECT instrument, report_date, total_operating_revenue
-    FROM cn_stock_financial_income_general_pit
-    WHERE fs_quarter_index = 4
+    SELECT date, instrument, total_operating_revenue_ttm
+    FROM cn_stock_financial_ttm_shift
+    WHERE shift = 0
     """
     df = dai.query(sql, full_db_scan=True).df()
-    df["report_date"] = pd.to_datetime(df["report_date"])
-    df["year"] = df["report_date"].dt.year.astype(str)
+    df["date"] = pd.to_datetime(df["date"])
+    df["date_str"] = df["date"].dt.strftime("%Y%m%d")
     
     revenue_map = {}
     for _, row in df.iterrows():
-        key = (row["instrument"], row["year"])
-        revenue = row["total_operating_revenue"]
+        key = (row["instrument"], row["date_str"])
+        revenue = row["total_operating_revenue_ttm"]
         if pd.notna(revenue):
             revenue_map[key] = float(revenue)
     return revenue_map
+
+
+def get_latest_ttm_revenue(
+    instrument: str,
+    as_of_date: str,
+    revenue_map: dict[tuple[str, str], float],
+    all_dates: list[str],
+) -> float | None:
+    """
+    获取截至 as_of_date 的最新可用 TTM 营收
+    """
+    for d in reversed(all_dates):
+        if d > as_of_date:
+            continue
+        key = (instrument, d)
+        if key in revenue_map:
+            return revenue_map[key]
+    return None
 
 
 def fetch_sector_map() -> dict[str, int]:
@@ -95,7 +114,8 @@ def get_revenue_threshold(end_date: str, sector: int | None) -> float:
 
 def is_forecast_st_row(
     row: dict, 
-    revenue_map: dict[tuple[str, str], float],
+    ttm_revenue_map: dict[tuple[str, str], float],
+    all_ttm_dates: list[str],
     sector_map: dict[str, int]
 ) -> bool:
     ts_code = row.get("ts_code")
@@ -113,15 +133,21 @@ def is_forecast_st_row(
         return False
     
     report_year = int(end_date[:4])
+    # 21年后新规才适用: 营收<阈值 + 亏损 -> ST
     if report_year < 2021:
+        return False
+    
+    # 公告日期必须在21年1月1日之后 (新规生效后)
+    if ann_date < "20210101":
         return False
     
     if forecast_type not in LOSS_TYPES:
         return False
     
     instrument = ts_code_to_instrument(ts_code)
-    prev_year = str(report_year - 1)
-    revenue = revenue_map.get((instrument, prev_year))
+    
+    # 使用 ann_date 时可用的最新 TTM 营收
+    revenue = get_latest_ttm_revenue(instrument, ann_date, ttm_revenue_map, all_ttm_dates)
     if revenue is None:
         return False
     
@@ -139,7 +165,8 @@ def default_release_date(end_date: str) -> str:
 
 
 def scan_intervals_in_date_order(
-    revenue_map: dict[tuple[str, str], float],
+    ttm_revenue_map: dict[tuple[str, str], float],
+    all_ttm_dates: list[str],
     sector_map: dict[str, int]
 ) -> dict[str, list[list[int]]]:
     release_date_map: dict[tuple[str, str], str] = {}
@@ -182,7 +209,7 @@ def scan_intervals_in_date_order(
         if not forecast_path.exists():
             continue
         for row in load_json_rows(forecast_path):
-            if not is_forecast_st_row(row, revenue_map, sector_map):
+            if not is_forecast_st_row(row, ttm_revenue_map, all_ttm_dates, sector_map):
                 continue
 
             ts_code = row["ts_code"]
@@ -222,16 +249,17 @@ def scan_intervals_in_date_order(
 def main():
     assert DATA_DIR.exists(), f"Data dir not found: {DATA_DIR}"
     
-    print("Fetching annual revenue data from bigquant...")
-    revenue_map = fetch_annual_revenue()
-    print(f"  Loaded {len(revenue_map)} revenue records")
+    print("Fetching TTM revenue data from bigquant...")
+    ttm_revenue_map = fetch_ttm_revenue()
+    all_ttm_dates = sorted(set(d for _, d in ttm_revenue_map.keys()))
+    print(f"  Loaded {len(ttm_revenue_map)} TTM revenue records, {len(all_ttm_dates)} dates")
     
     print("Fetching sector data from bigquant...")
     sector_map = fetch_sector_map()
     print(f"  Loaded {len(sector_map)} sector records")
     
     print("Scanning forecast intervals...")
-    intervals_by_code = scan_intervals_in_date_order(revenue_map, sector_map)
+    intervals_by_code = scan_intervals_in_date_order(ttm_revenue_map, all_ttm_dates, sector_map)
     print(f"  Found {len(intervals_by_code)} instruments with forecast_st intervals")
     
     output = [{ts_code: intervals_by_code[ts_code]} for ts_code in sorted(intervals_by_code)]

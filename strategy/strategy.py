@@ -40,16 +40,24 @@ CAPITAL_BASE = 1000000
   - 涨停时不会卖出(预期第二天有超额收益)
   - 跌停时不会买入(预期第二天有超额风险)
 
-过滤因子:
-**预期连续两年亏损**:
-    数据源: strategy/filter/forecast_2_year_loss/indicator.json
+过滤因子: (统一从 filter/{name}/indicator.json 加载)
+**预期连续两年亏损** (forecast_2_year_loss):
+    数据源: tushare forecast + tushare disclosure
     `forecast_2_year_loss := 前年亏损 AND 去年预亏 AND 年报未发 AND 年报截至前(4月底)`
     - 前年亏损 = `last_parent_net < 0`
     - 去年预亏 = `type ∈ {'首亏', '续亏'}` (年报: `end_date[4:6]=='12'`)
     - 年报未发 = `date < disclosure.actual_date`
     - 年报截至 = `disclosure.actual_date ?? (end_date.year+1, 4, monthend) 次年4月月末`
-**风险警示**:
-    数据源: cn_stock_status.is_risk_warning (bigquant)
+**预期ST** (forecast_st):
+    数据源: tushare forecast + bigquant cn_stock_financial_ttm_shift + bigquant cn_stock_basic_info
+    `forecast_st := 预亏 AND TTM营收<阈值 AND 年报未发 AND 年报截至前(4月底) AND 21年后`
+    - 预亏 = `type ∈ {'首亏', '续亏'}` (年报: `end_date[4:6]=='12'`)
+    - TTM营收<阈值: 使用公告日可用的最新TTM营收, 阈值一般1亿, 24年起主板3亿
+    - 板块判断: cn_stock_basic_info.list_sector (主板=1)
+    - 年报未发/截至: 同上
+    - 21年后适用: report_year >= 2021 AND ann_date >= 20210101
+**风险警示** (risk_warning):
+    数据源: bigquant cn_stock_status
     `risk_warning := is_risk_warning = 1`
     - 风险警示公告发布后标记
 
