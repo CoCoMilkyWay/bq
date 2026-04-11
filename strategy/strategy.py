@@ -67,7 +67,7 @@ CAPITAL_BASE = 1000000
     - 分红 = cash_paid_for_dividends_profits_interests (现金流量表)
     - 净利润 = net_profit_to_parent_shareholders (利润表)
     - 仅主板适用
-    - 基于已披露年报的 point-in-time 计算
+    - 科创板/创业板:研发投入满足条件可豁免(未实现)
 **风险警示** (risk_warning):
     数据源: bigquant cn_stock_status
     `risk_warning := is_risk_warning = 1`
