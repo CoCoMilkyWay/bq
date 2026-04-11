@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from bigmodule import M, I
+from bigmodule import M, I  # pyright: ignore[reportMissingImports]
 import dai
 import pandas as pd
 from tqdm import tqdm
@@ -41,21 +41,31 @@ CAPITAL_BASE = 1000000
   - 跌停时不会买入(预期第二天有超额风险)
 
 过滤因子: (统一从 filter/{name}/indicator.json 加载)
-**预期连续两年亏损** (forecast_2_year_loss):
+**利润ST** (profit_st):
     数据源: tushare forecast + tushare disclosure
-    `forecast_2_year_loss := 前年亏损 AND 去年预亏 AND 年报未发 AND 年报截至前(4月底)`
+    `profit_st := 前年亏损 AND 去年预亏 AND 年报未发 AND 年报截至前(4月底)`
     - 前年亏损 = `last_parent_net < 0`
     - 去年预亏 = `type ∈ {'首亏', '续亏'}` (年报: `end_date[4:6]=='12'`)
     - 年报未发 = `date < disclosure.actual_date`
     - 年报截至 = `disclosure.actual_date ?? (end_date.year+1, 4, monthend) 次年4月月末`
-**预期ST** (forecast_st):
+**营收ST** (revenue_st):
     数据源: tushare forecast + bigquant cn_stock_financial_ttm_shift + bigquant cn_stock_basic_info
-    `forecast_st := 预亏 AND TTM营收<阈值 AND 年报未发 AND 年报截至前(4月底) AND 21年后`
+    `revenue_st := 预亏 AND TTM营收<阈值 AND 年报未发 AND 年报截至前(4月底) AND 21年后`
     - 预亏 = `type ∈ {'首亏', '续亏'}` (年报: `end_date[4:6]=='12'`)
     - TTM营收<阈值: 使用公告日可用的最新TTM营收, 阈值一般1亿, 24年起主板3亿
     - 板块判断: cn_stock_basic_info.list_sector (主板=1)
     - 年报未发/截至: 同上
     - 21年后适用: report_year >= 2021 AND ann_date >= 20210101
+**交易ST** (trading_st):
+    数据源: bigquant cn_stock_prefactors_community
+    `trading_st := 连续20日(收盘价<1 OR 市值<阈值)`
+    - 面值退市: 连续20个交易日收盘价 < 1元
+    - 市值退市: 连续20个交易日市值 < 5亿元(主板) / 3亿元(科创板/创业板)
+**分红ST** (dividend_st):
+    数据源: bigquant cn_stock_dividend + cn_stock_financial_ly_shift
+    `dividend_st := 三年累计分红 < 三年年均净利润*30% AND 三年累计分红 < 5000万`
+    - 仅主板适用
+    - 基于已披露年报的 point-in-time 计算
 **风险警示** (risk_warning):
     数据源: bigquant cn_stock_status
     `risk_warning := is_risk_warning = 1`
@@ -117,9 +127,11 @@ def load_interval_filter(name: str, start_date: str, end_date: str):
 
 
 FILTER_NAMES = [
-    "forecast_2_year_loss",
-    "forecast_st",
+    "profit_st",
+    "revenue_st",
     "risk_warning",
+    "trading_st",
+    "dividend_st",
 ]
 
 
@@ -192,7 +204,7 @@ def build_target_on_day(trade_date_int, instruments, market_caps, filter_sets):
 
 
 def bt_init(context):
-    from bigtrader.finance.commission import PerOrder
+    from bigtrader.finance.commission import PerOrder  # pyright: ignore[reportMissingImports]
     context.set_commission(
         PerOrder(buy_cost=0.0003, sell_cost=0.0013, min_cost=5))
     context.data["date"] = context.data["date"].dt.strftime("%Y-%m-%d")
