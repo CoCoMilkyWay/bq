@@ -1,12 +1,10 @@
 import json
 from calendar import monthrange
 from collections import defaultdict
-from datetime import datetime, timedelta
 from pathlib import Path
 
 
 LOSS_TYPES = {"首亏", "续亏"}
-BUFFER_TRADING_DAYS = 5
 ROOT_DIR = Path(__file__).resolve().parents[3]
 DATA_DIR = ROOT_DIR / "data" / "tushare" / "data"
 OUTPUT_PATH = Path(__file__).with_suffix(".json")
@@ -68,22 +66,6 @@ def default_release_date(end_date: str) -> str:
     return f"{release_year}{release_month:02d}{release_day:02d}"
 
 
-def add_trading_days(date_str: str, n: int) -> str:
-    dt = datetime.strptime(date_str, "%Y%m%d")
-    added = 0
-    while added < n:
-        dt += timedelta(days=1)
-        if dt.weekday() < 5:
-            added += 1
-    return dt.strftime("%Y%m%d")
-
-
-def calc_interval_end(release_date: str, end_date: str) -> str:
-    deadline = default_release_date(end_date)
-    buffered = add_trading_days(release_date, BUFFER_TRADING_DAYS)
-    return min(buffered, deadline)
-
-
 def scan_intervals_in_date_order() -> dict[str, list[list[int]]]:
     release_date_map: dict[tuple[str, str], str] = {}
     open_start_map: dict[tuple[str, str], str] = {}
@@ -118,8 +100,7 @@ def scan_intervals_in_date_order() -> dict[str, list[list[int]]]:
                     continue
                 release_date = release_date_map[key]
                 assert release_date >= start_date, f"release_date < start_date: {ts_code} {end_date}"
-                interval_end = calc_interval_end(release_date, end_date)
-                intervals_by_code[ts_code].append([int(start_date), int(interval_end)])
+                intervals_by_code[ts_code].append([int(start_date), int(release_date)])
                 closed_keys.add(key)
 
         forecast_path = day_dir / "forecast.json"
@@ -141,8 +122,7 @@ def scan_intervals_in_date_order() -> dict[str, list[list[int]]]:
             release_date = release_date_map.get(key)
             if release_date is not None:
                 if ann_date <= release_date:
-                    interval_end = calc_interval_end(release_date, end_date)
-                    intervals_by_code[ts_code].append([int(ann_date), int(interval_end)])
+                    intervals_by_code[ts_code].append([int(ann_date), int(release_date)])
                     closed_keys.add(key)
                 continue
 

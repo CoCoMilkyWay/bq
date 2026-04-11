@@ -43,10 +43,10 @@ CAPITAL_BASE = 1000000
 过滤因子: (统一从 filter/{name}/indicator.json 加载)
 **预期连续两年亏损** (forecast_2_year_loss):
     数据源: tushare forecast + tushare disclosure
-    `forecast_2_year_loss := 前年亏损 AND 去年预亏 AND 年报发布N交易日内 AND 年报截至前(4月底)`
+    `forecast_2_year_loss := 前年亏损 AND 去年预亏 AND 年报未发 AND 年报截至前(4月底)`
     - 前年亏损 = `last_parent_net < 0`
     - 去年预亏 = `type ∈ {'首亏', '续亏'}` (年报: `end_date[4:6]=='12'`)
-    - 年报发布N交易日内 = `date < min(disclosure.actual_date + N交易日, 4月底)`
+    - 年报未发 = `date < disclosure.actual_date`
     - 年报截至 = `disclosure.actual_date ?? (end_date.year+1, 4, monthend) 次年4月月末`
 **预期ST** (forecast_st):
     数据源: tushare forecast + bigquant cn_stock_financial_ttm_shift + bigquant cn_stock_basic_info
