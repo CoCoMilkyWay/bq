@@ -10,9 +10,9 @@ STRATEGY_DIR = Path.cwd()
 
 BACKTEST_START_DATE = "2017-01-01"
 BACKTEST_END_DATE = "2026-04-07"
-UNIVERSE_SIZE = 100
-HOLD_N = 40
-EXIT_RATIO = 1.2
+UNIVERSE_SIZE = 500
+HOLD_N = 50
+EXIT_RATIO = 1
 CAPITAL_BASE = 1000000
 
 '''
@@ -48,10 +48,6 @@ CAPITAL_BASE = 1000000
     - 去年预亏 = `type ∈ {'首亏', '续亏'}` (年报: `end_date[4:6]=='12'`)
     - 年报未发 = `date < disclosure.actual_date`
     - 年报截至 = `disclosure.actual_date ?? (end_date.year+1, 4, monthend) 次年4月月末`
-**风险警示**:
-    数据源: cn_stock_status.is_risk_warning (bigquant)
-    `risk_warning := is_risk_warning = 1`
-    - 风险警示公告发布后标记
 
 排序因子:
 **总市值**: (优先:小; 权重:100%)
@@ -61,22 +57,6 @@ CAPITAL_BASE = 1000000
 1. 回测vector mode应该和实盘incremental mode实现一致, 尽量共享代码和逻辑
 2. 每个因子的实现应该尽量独立定义在代码最前, 不要和后面的框架耦合
 '''
-
-
-def factor_risk_warning(start_date, end_date):
-    sql = """
-    SELECT date, instrument, is_risk_warning
-    FROM cn_stock_status
-    WHERE is_risk_warning = 1
-    """
-    df = dai.query(sql, filters={"date": [start_date, end_date]}).df()
-    df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
-    df = df.rename(columns={"is_risk_warning": "value"})
-    return {
-        "name": "risk_warning",
-        "kind": "daily",
-        "data": df[["date", "instrument", "value"]],
-    }
 
 
 def factor_forecast_2_year_loss(start_date, end_date):
@@ -129,55 +109,12 @@ def factor_forecast_2_year_loss(start_date, end_date):
     }
 
 
-def factor_forecast_st(start_date, end_date):
-    indicator_path = STRATEGY_DIR / "filter" / "forecast_st" / "indicator.json"
-    if not indicator_path.exists():
-        return None
-    raw_rows = json.loads(indicator_path.read_text())
-    assert isinstance(raw_rows, list), f"invalid forecast json: {indicator_path}"
-
-    interval_rows = []
-    for item in raw_rows:
-        assert isinstance(item, dict) and len(item) == 1, f"invalid forecast item: {item}"
-        instrument, intervals = next(iter(item.items()))
-        assert isinstance(instrument, str) and instrument, f"invalid instrument: {item}"
-        assert isinstance(intervals, list), f"invalid intervals: {item}"
-        for interval in intervals:
-            assert isinstance(interval, list) and len(interval) == 2, f"invalid interval: {interval}"
-            start_date_int, end_date_int = interval
-            assert isinstance(start_date_int, int) and isinstance(end_date_int, int), f"invalid interval date: {interval}"
-            assert start_date_int <= end_date_int, f"start_date > end_date: {interval}"
-            interval_rows.append({
-                "instrument": instrument,
-                "start_date": start_date_int,
-                "end_date": end_date_int,
-            })
-
-    if not interval_rows:
-        return None
-
-    start_int = int(start_date.replace("-", ""))
-    end_int = int(end_date.replace("-", ""))
-    state_df = pd.DataFrame(interval_rows, columns=["instrument", "start_date", "end_date"])
-    state_df = state_df[(state_df["end_date"] >= start_int) & (state_df["start_date"] <= end_int)].copy()
-    if state_df.empty:
-        return None
-    state_df["value"] = 1
-    return {
-        "name": "forecast_st",
-        "kind": "interval",
-        "data": state_df[["instrument", "start_date", "end_date", "value"]],
-    }
-
-
 def prepare_filter_states(start_date, end_date, trading_dates):
     """
     trading_dates: 回测期间的交易日列表 (YYYY-MM-DD 格式)，用于展开 interval
     """
     factor_builders = [
         factor_forecast_2_year_loss,
-        factor_forecast_st,
-        factor_risk_warning,
     ]
     states = []
     state_names = set()
@@ -185,8 +122,6 @@ def prepare_filter_states(start_date, end_date, trading_dates):
 
     for factor_builder in factor_builders:
         state = factor_builder(start_date, end_date)
-        if state is None:
-            continue
         assert isinstance(
             state, dict), f"invalid state type: {factor_builder.__name__}"
         assert {"name", "kind", "data"}.issubset(
@@ -301,14 +236,6 @@ def bt_init(context):
     context.progress_bar = tqdm(
         total=context.progress_total_days, desc="backtest", unit="day")
 
-    # 交易诊断初始化
-    context.trade_diag = {
-        "benchmark_daily_return": _diag_benchmark_daily,
-        "trading_dates": _diag_trading_dates,
-        "open_records": {},
-        "closed_trades": [],
-    }
-
 
 def bt_pre(context, data):
     pass
@@ -394,57 +321,7 @@ def bt_bar(context, data):
 
 
 def bt_trade(context, trade):
-    inst = trade.instrument
-    direction = trade.direction
-    diag = context.trade_diag
-
-    if direction == "1":  # BUY
-        diag["open_records"][inst] = {
-            "open_date": str(trade.trade_date),
-            "open_price": trade.filled_price,
-        }
-    elif direction == "2":  # SELL
-        open_rec = diag["open_records"].pop(inst, None)
-        if open_rec is None:
-            return
-        open_date_str = open_rec["open_date"]
-        open_date_str = f"{open_date_str[:4]}-{open_date_str[4:6]}-{open_date_str[6:8]}"
-        close_date_str = str(trade.trade_date)
-        close_date_str = f"{close_date_str[:4]}-{close_date_str[4:6]}-{close_date_str[6:8]}"
-        open_price = open_rec["open_price"]
-        close_price = trade.filled_price
-
-        trading_dates = diag["trading_dates"]
-        benchmark_daily = diag["benchmark_daily_return"]
-        try:
-            open_idx = trading_dates.index(open_date_str)
-            close_idx = trading_dates.index(close_date_str)
-        except ValueError:
-            return
-        holding_days = close_idx - open_idx
-        if holding_days <= 0:
-            return
-
-        total_return = (close_price - open_price) / open_price
-        daily_return = total_return / holding_days
-
-        benchmark_cum = 0.0
-        for i in range(open_idx + 1, close_idx + 1):
-            d = trading_dates[i]
-            benchmark_cum += benchmark_daily.get(d, 0.0)
-        daily_benchmark = benchmark_cum / holding_days
-        daily_excess = daily_return - daily_benchmark
-
-        diag["closed_trades"].append({
-            "instrument": inst,
-            "open_date": open_date_str,
-            "close_date": close_date_str,
-            "holding_days": holding_days,
-            "total_return": total_return,
-            "daily_return": daily_return,
-            "daily_benchmark": daily_benchmark,
-            "daily_excess": daily_excess,
-        })
+    pass
 
 
 def bt_order(context, order):
@@ -452,20 +329,7 @@ def bt_order(context, order):
 
 
 def bt_post(context, data):
-    if context.progress_done_days != context.progress_total_days:
-        return
-    diag = context.trade_diag
-    closed_trades = diag["closed_trades"]
-    if not closed_trades:
-        print("\n交易诊断: 无已平仓交易记录")
-        return
-    sorted_trades = sorted(closed_trades, key=lambda x: x["daily_excess"])
-    print(f"\n========== 交易诊断: 超额收益最差的 30 笔交易 ==========")
-    print(f"{'标的':<12} {'开仓日期':<12} {'平仓日期':<12} {'持仓天数':>8} {'总收益%':>10} {'日均收益%':>10} {'日均基准%':>10} {'日均超额%':>10}")
-    print("-" * 100)
-    for t in sorted_trades[:30]:
-        print(f"{t['instrument']:<12} {t['open_date']:<12} {t['close_date']:<12} {t['holding_days']:>8} {t['total_return']*100:>10.2f} {t['daily_return']*100:>10.4f} {t['daily_benchmark']*100:>10.4f} {t['daily_excess']*100:>10.4f}")
-    print(f"========== 交易诊断结束，共 {len(closed_trades)} 笔已平仓交易 ==========")
+    pass
 
 
 # ==================== 模块链 ====================
@@ -519,29 +383,6 @@ assert {"date", "instrument", "total_market_cap", "close",
 universe_df["date"] = pd.to_datetime(universe_df["date"]).dt.normalize()
 print(f"股票池记录数：{len(universe_df)}")
 stock_data_ds = dai.DataSource.write_bdb(universe_df)
-
-# ==================== 交易诊断 (独立模块，未来可删除) ====================
-# 计算 universe 每日平均收益率作为 benchmark
-# 注意: 调出股票的当日收益未计入(需额外数据), 这会导致 benchmark 略微偏低, 超额略微偏高
-_diag_df = universe_df.copy()
-_diag_df["date_str"] = _diag_df["date"].dt.strftime("%Y-%m-%d")
-_diag_trading_dates = sorted(_diag_df["date_str"].unique().tolist())
-_diag_date_to_idx = {d: i for i, d in enumerate(_diag_trading_dates)}
-
-_diag_df = _diag_df.sort_values(["instrument", "date_str"])
-_diag_df["prev_close"] = _diag_df.groupby("instrument")["close"].shift(1)
-_diag_df["prev_date_str"] = _diag_df.groupby("instrument")["date_str"].shift(1)
-
-# 只有连续两个交易日都在 universe 中才计算收益率 (避免调出后再调入导致的跨日计算错误)
-_diag_df["cur_idx"] = _diag_df["date_str"].map(_diag_date_to_idx)
-_diag_df["prev_idx"] = _diag_df["prev_date_str"].map(_diag_date_to_idx)
-_diag_df["is_consecutive"] = (_diag_df["cur_idx"] == _diag_df["prev_idx"] + 1)
-_diag_df.loc[~_diag_df["is_consecutive"], "prev_close"] = float("nan")
-
-_diag_df["daily_return"] = (_diag_df["close"] - _diag_df["prev_close"]) / _diag_df["prev_close"]
-_diag_benchmark_daily = _diag_df.groupby("date_str")["daily_return"].mean().to_dict()
-del _diag_df, _diag_date_to_idx
-print(f"交易诊断: benchmark 日收益率已计算，共 {len(_diag_benchmark_daily)} 个交易日")
 
 # ========== 回测 ==========
 m5 = M.bigtrader.v30(
