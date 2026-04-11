@@ -7,7 +7,7 @@ import pandas as pd
 
 OUTPUT_PATH = Path(__file__).with_suffix(".json")
 
-LIST_DAYS_THRESHOLD = 270
+LIST_DAYS_THRESHOLD = 60
 
 
 def fetch_list_dates() -> pd.DataFrame:
