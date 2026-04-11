@@ -32,7 +32,7 @@ CAPITAL_BASE = 1000000
 - **持仓/交易**
   - 预期持仓标的数: `HOLD_N`
   - 预期仓位: 保持100%
-  - 先卖出: 判断已持仓标的是否离开前 `HOLD_N * EXIT_RATIO` 名, 如果离开则卖出(同时服从交易限制)
+  - 先卖出: 离开前 `HOLD_N * EXIT_RATIO` 名(同时服从交易限制)
   - 再买入: 除开仍旧持仓的M只标的, 找出因子排名前 `HOLD_N - M` 只标的(同时服从交易限制), 将剩余资金均分至新买入标的(已持仓标的不调仓)
 - **交易限制**
   - 涨停时不会买入(做不到)
@@ -161,56 +161,34 @@ def prepare_filter_states(start_date, end_date, trading_dates):
     return states
 
 
-def calc_filter_on_day(trade_date, universe_today_df, states):
-    instruments = universe_today_df["instrument"].drop_duplicates().tolist()
-    trade_date_int = int(trade_date.replace("-", ""))
-
-    factor_values = {inst: {} for inst in instruments}
-
-    for state in states:
-        factor_name = state["name"]
-        state_kind = state["kind"]
-
-        if state_kind == "interval":
-            filter_set = state["filter_set"]
-            for inst in instruments:
-                factor_values[inst][factor_name] = 1 if (
-                    trade_date_int, inst) in filter_set else 0
-        else:
-            state_df = state["data"]
-            day_values = {}
-            if not state_df.empty:
-                day_df = state_df[state_df["date"] == trade_date]
-                for inst, val in zip(day_df["instrument"], day_df["value"]):
-                    day_values[inst] = max(day_values.get(inst, 0), val)
-            for inst in instruments:
-                factor_values[inst][factor_name] = day_values.get(inst, 0)
-
-    factor_df = pd.DataFrame([
-        {"instrument": inst, **vals} for inst, vals in factor_values.items()
-    ])
-    return factor_df
-
-
-def build_target_on_day(trade_date, universe_today_df, states):
+def build_target_on_day(trade_date_int, instruments, market_caps, filter_sets):
     """
+    Per-bar 计算，与实盘共享逻辑
+    参数:
+        trade_date_int: 交易日 YYYYMMDD 整数
+        instruments: np.ndarray 或 list
+        market_caps: np.ndarray 或 list
+        filter_sets: list of set[(date_int, instrument)]
     返回:
-        top_n_instruments: 前N只标的（买入目标）
-        top_exit_instruments: 前N*EXIT_RATIO只标的（退出阈值）
+        top_n_instruments: set
+        top_exit_instruments: set
+        rank_map: {instrument: rank}
     """
-    factor_df = calc_filter_on_day(trade_date, universe_today_df, states)
-    merged_df = universe_today_df.merge(factor_df, on="instrument", how="left")
-    factor_cols = [state["name"] for state in states]
-    filtered_df = merged_df[(merged_df[factor_cols] == 0).all(axis=1)].copy()
+    filtered_pairs = [
+        (inst, cap)
+        for inst, cap in zip(instruments, market_caps)
+        if not any((trade_date_int, inst) in fs for fs in filter_sets)
+    ]
 
-    if filtered_df.empty:
-        return set(), set()
+    if not filtered_pairs:
+        return set(), set(), {}
 
-    sorted_df = filtered_df.sort_values("total_market_cap", ascending=True)
-    top_n_instruments = set(sorted_df.head(HOLD_N)["instrument"])
+    filtered_pairs.sort(key=lambda x: x[1])
+    rank_map = {inst: idx + 1 for idx, (inst, _) in enumerate(filtered_pairs)}
+    top_n_instruments = {inst for inst, _ in filtered_pairs[:HOLD_N]}
     exit_threshold = int(HOLD_N * EXIT_RATIO)
-    top_exit_instruments = set(sorted_df.head(exit_threshold)["instrument"])
-    return top_n_instruments, top_exit_instruments
+    top_exit_instruments = {inst for inst, _ in filtered_pairs[:exit_threshold]}
+    return top_n_instruments, top_exit_instruments, rank_map
 
 
 def bt_init(context):
@@ -218,25 +196,33 @@ def bt_init(context):
     context.set_commission(
         PerOrder(buy_cost=0.0003, sell_cost=0.0013, min_cost=5))
     context.data["date"] = context.data["date"].dt.strftime("%Y-%m-%d")
-    context.universe_by_date = {
-        date: day_df[["instrument", "total_market_cap"]].reset_index(drop=True)
-        for date, day_df in context.data.groupby("date", sort=False)
-    }
-    context.price_limit_by_date = {
-        date: {
-            row["instrument"]: {
-                "close": row["close"],
-                "upper_limit": row["upper_limit"],
-                "lower_limit": row["lower_limit"],
-            }
-            for _, row in day_df.iterrows()
+
+    # 预处理 universe: (instruments, market_caps) 元组，避免 DataFrame 操作
+    context.universe_by_date = {}
+    for date, day_df in context.data.groupby("date", sort=False):
+        context.universe_by_date[date] = (
+            day_df["instrument"].values,
+            day_df["total_market_cap"].values,
+        )
+
+    # 预处理 price_limit: 向量化构建，避免 iterrows
+    context.price_limit_by_date = {}
+    for date, day_df in context.data.groupby("date", sort=False):
+        insts = day_df["instrument"].values
+        closes = day_df["close"].values
+        uppers = day_df["upper_limit"].values
+        lowers = day_df["lower_limit"].values
+        context.price_limit_by_date[date] = {
+            inst: (close, upper, lower)
+            for inst, close, upper, lower in zip(insts, closes, uppers, lowers)
         }
-        for date, day_df in context.data.groupby("date", sort=False)
-    }
+
     trading_dates = list(context.universe_by_date.keys())
-    context.factor_states = prepare_filter_states(
+    factor_states = prepare_filter_states(
         start_date=BACKTEST_START_DATE, end_date=BACKTEST_END_DATE, trading_dates=trading_dates
     )
+    # 提取 filter_sets 列表供 per-bar 使用
+    context.filter_sets = [s["filter_set"] for s in factor_states if s["kind"] == "interval"]
     assert len(
         context.universe_by_date) > 0, "bigquant universe is empty in backtest range"
     universe_dates = sorted(context.universe_by_date.keys())
@@ -265,6 +251,38 @@ def bt_tick(context, tick):
     pass
 
 
+def decide_trades_on_day(
+    holding_instruments,
+    top_n_instruments,
+    top_exit_instruments,
+    is_tradable,
+):
+    """
+    Per-day 交易决策，回测与实盘共享
+    参数:
+        holding_instruments: set, 当前持仓标的
+        top_n_instruments: set, 排名前 HOLD_N 的标的
+        top_exit_instruments: set, 排名前 HOLD_N * EXIT_RATIO 的标的
+        is_tradable: Callable(inst) -> bool, 判断是否可交易（非涨跌停）
+    返回:
+        to_sell: list, 需要卖出的标的
+        to_buy: list, 需要买入的标的
+    """
+    to_sell = [
+        inst for inst in holding_instruments
+        if inst not in top_exit_instruments and is_tradable(inst)
+    ]
+    remaining_holding = holding_instruments - set(to_sell)
+    slots_available = HOLD_N - len(remaining_holding)
+    if slots_available > 0:
+        candidates = top_n_instruments - remaining_holding
+        candidates = [inst for inst in candidates if is_tradable(inst)]
+        to_buy = sorted(candidates)[:slots_available]
+    else:
+        to_buy = []
+    return sorted(to_sell), to_buy
+
+
 def bt_bar(context, data):
     trade_date = data.current_dt.strftime("%Y-%m-%d")
     context.progress_done_days += 1
@@ -276,58 +294,32 @@ def bt_bar(context, data):
     if not context.rebalance_period.is_signal_date(data.current_dt.date()):
         return
 
-    universe_today_df = context.universe_by_date.get(trade_date)
-    if universe_today_df is None:
-        universe_today_df = context.data[context.data["date"] == trade_date][[
-            "instrument", "total_market_cap"]].copy()
+    universe_today = context.universe_by_date.get(trade_date)
+    assert universe_today is not None, f"no universe for {trade_date}"
+    instruments, market_caps = universe_today
     price_limit_today = context.price_limit_by_date.get(trade_date, {})
 
-    def is_limit_up(inst):
+    def is_tradable(inst):
         info = price_limit_today.get(inst)
         if info is None:
-            return False
-        return info["close"] >= info["upper_limit"]
+            return True  # 不在 universe 中（如已持仓标的被调出），允许交易
+        close, upper, lower = info
+        return close < upper and close > lower
 
-    def is_limit_down(inst):
-        info = price_limit_today.get(inst)
-        if info is None:
-            return False
-        return info["close"] <= info["lower_limit"]
-
-    top_n_instruments, top_exit_instruments = build_target_on_day(
-        trade_date, universe_today_df, context.factor_states)
+    trade_date_int = int(trade_date.replace("-", ""))
+    top_n_instruments, top_exit_instruments, _ = build_target_on_day(
+        trade_date_int, instruments, market_caps, context.filter_sets)
     holding_instruments = set(context.get_account_positions().keys())
 
-    # 先卖出: 离开退出阈值的持仓（跌停不卖，涨停也不卖）
-    to_sell = []
-    for inst in holding_instruments:
-        if inst not in top_exit_instruments:
-            if is_limit_down(inst):
-                continue  # 跌停不卖
-            if is_limit_up(inst):
-                continue  # 涨停不卖（预期次日有超额收益）
-            to_sell.append(inst)
+    to_sell, to_buy = decide_trades_on_day(
+        holding_instruments, top_n_instruments, top_exit_instruments, is_tradable)
 
-    for inst in sorted(to_sell):
+    for inst in to_sell:
         context.order_target_percent(inst, 0)
 
-    # 再买入: 计算目标持仓
-    remaining_holding = holding_instruments - set(to_sell)
-    slots_available = HOLD_N - len(remaining_holding)
-
-    if slots_available > 0:
-        # 从top_n中找出不在持仓中的标的
-        candidates = top_n_instruments - remaining_holding
-        # 排除涨停和跌停的
-        candidates = {inst for inst in candidates if not is_limit_up(
-            inst) and not is_limit_down(inst)}
-        to_buy = sorted(candidates)[:slots_available]
-    else:
-        to_buy = []
-
-    # 只对新买入标的分配剩余资金，已持仓标的不动
     if to_buy:
         positions = context.get_account_positions()
+        remaining_holding = holding_instruments - set(to_sell)
         used_value = sum(
             positions[inst].market_value
             for inst in remaining_holding
