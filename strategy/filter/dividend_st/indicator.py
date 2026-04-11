@@ -92,6 +92,9 @@ def compute_warning_intervals(
                 else:
                     end_date = start_date + pd.Timedelta(days=365)
                 
+                if end_date < start_date:
+                    continue
+                
                 start_int = int(start_date.strftime("%Y%m%d"))
                 end_int = int(end_date.strftime("%Y%m%d"))
                 
