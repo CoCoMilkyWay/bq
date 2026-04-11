@@ -68,10 +68,6 @@ CAPITAL_BASE = 1000000
     - 净利润 = 近2年年报归母净利润平均值 (cn_stock_financial_income_general_pit)
     - 仅主板适用
     - 科创板/创业板:研发投入满足条件可豁免(未实现)
-**上市天数** (list_days):
-    数据源: bigquant cn_stock_prefactors
-    `list_days := 上市天数 <= 270`
-    - 过滤上市不满270天的股票
 **风险警示** (risk_warning):
     数据源: bigquant cn_stock_status
     `risk_warning := is_risk_warning = 1`
@@ -138,7 +134,6 @@ FILTER_NAMES = [
     "risk_warning",
     "trading_st",
     "dividend_st",
-    "list_days",
 ]
 
 
