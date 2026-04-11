@@ -58,7 +58,7 @@ def fetch_annual_revenue() -> dict[tuple[str, str], float]:
     FROM cn_stock_financial_income_general_pit
     WHERE fs_quarter_index = 4
     """
-    df = dai.query(sql).df()
+    df = dai.query(sql, full_db_scan=True).df()
     df["report_date"] = pd.to_datetime(df["report_date"])
     df["year"] = df["report_date"].dt.year.astype(str)
     
@@ -80,7 +80,7 @@ def fetch_sector_map() -> dict[str, int]:
     SELECT instrument, list_sector
     FROM cn_stock_basic_info
     """
-    df = dai.query(sql).df()
+    df = dai.query(sql, full_db_scan=True).df()
     return {row["instrument"]: int(row["list_sector"]) 
             for _, row in df.iterrows() if pd.notna(row["list_sector"])}
 
