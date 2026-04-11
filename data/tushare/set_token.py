@@ -1,2 +1,2 @@
 import tushare as ts
-ts.set_token('042b931e57b6baa4f9a1e1fc2fcd20ce6e3976c0b2af0fb4ae1e1ea6')
+ts.set_token('439b79afc0af96f0abb32a3be27df99b9e8fe9fa83f8d555d66fba72')
