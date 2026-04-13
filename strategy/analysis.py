@@ -13,7 +13,7 @@ import pandas as pd
 import dai
 import bigcharts  # pyright: ignore[reportMissingImports]
 
-from factor import FACTORS, build_pool_factors
+from factor import FACTOR_NAMES, build_pool_factors
 
 STRATEGY_DIR = Path.cwd()
 START_DATE = "2025-01-01"
@@ -143,7 +143,7 @@ def get_universe_pool(start_date: str, end_date: str) -> pd.DataFrame:
 
 def get_factors_in_pool(pool_df: pd.DataFrame) -> pd.DataFrame:
     """获取股票池内的因子数据"""
-    factor_names = list(FACTORS.keys())
+    factor_names = FACTOR_NAMES
     start_date = pool_df["date"].min().strftime("%Y-%m-%d")
     end_date = pool_df["date"].max().strftime("%Y-%m-%d")
     factors_df = build_pool_factors(
@@ -243,7 +243,7 @@ def calc_benchmark_returns(df: pd.DataFrame) -> pd.Series:
 
 def analyze_all_factors(df: pd.DataFrame) -> dict:
     """分析所有因子"""
-    factor_names = list(FACTORS.keys())
+    factor_names = FACTOR_NAMES
     results = {}
 
     benchmark = calc_benchmark_returns(df)
@@ -287,7 +287,7 @@ def print_summary(results: dict):
 
 def calc_factor_correlation(df: pd.DataFrame) -> pd.DataFrame:
     """计算因子间相关性矩阵"""
-    factor_names = list(FACTORS.keys())
+    factor_names = FACTOR_NAMES
     factor_cols = [c for c in factor_names if c in df.columns]
 
     corr_matrix = df[factor_cols].corr(method="spearman")
