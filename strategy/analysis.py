@@ -11,13 +11,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import dai
+import bigcharts  # pyright: ignore[reportMissingImports]
 
-from factor import FACTORS, get_factor_wide
+from factor import FACTORS, process_cross_section
 
 STRATEGY_DIR = Path.cwd()
-START_DATE = "2017-01-01"
+START_DATE = "2025-01-01"
 END_DATE = "2026-04-07"
-UNIVERSE_SIZE = 100
+UNIVERSE_SIZE = 400
 GROUP_NUM = 10
 
 FILTER_NAMES = [
@@ -82,7 +83,8 @@ def apply_filter_intervals(df: pd.DataFrame, intervals_by_inst: dict) -> pd.Data
         if not inst_mask.any():
             continue
         for s, e in intervals:
-            interval_mask = inst_mask & (df["date_int"] >= s) & (df["date_int"] <= e)
+            interval_mask = inst_mask & (
+                df["date_int"] >= s) & (df["date_int"] <= e)
             df.loc[interval_mask, "filtered"] = True
 
     result = df[~df["filtered"]].drop(columns=["date_int", "filtered"])
@@ -138,20 +140,86 @@ def get_universe_pool(start_date: str, end_date: str) -> pd.DataFrame:
 
 # ==================== 因子数据获取 ====================
 
-def get_factors_in_pool(pool_df: pd.DataFrame, start_date: str, end_date: str) -> pd.DataFrame:
-    """
-    获取股票池内的因子数据
-    返回: DataFrame[date, instrument, pe_ttm, pb, ...]
-    """
+# 估值类字段：需要 1/x 变换
+INVERSE_FIELDS = {'pe_ttm', 'pb', 'ps_ttm', 'pcf_net_ttm'}
+
+
+def _fetch_raw_data(pool_df: pd.DataFrame) -> pd.DataFrame:
+    """Step 1: 获取原始数据"""
     factor_names = list(FACTORS.keys())
-    factors_df = get_factor_wide(start_date, end_date, freq="daily", factor_names=factor_names)
-    factors_df["date"] = pd.to_datetime(factors_df["date"]).dt.normalize()
+    fields = list({FACTORS[n].field for n in factor_names})
+
+    instruments = pool_df["instrument"].unique().tolist()
+    print(f"涉及标的数: {len(instruments)}")
+    inst_list = "', '".join(instruments)
+
+    start_year = pool_df["date"].min().year
+    end_year = pool_df["date"].max().year
+
+    dfs = []
+    for year in range(start_year, end_year + 1):
+        sql = f"""
+        SELECT date, instrument, total_market_cap, sw2021_level1, {', '.join(fields)}
+        FROM cn_stock_prefactors
+        WHERE instrument IN ('{inst_list}')
+          AND total_market_cap > 0
+        """
+        batch_df = dai.query(sql, filters={"date": [f"{year}-01-01", f"{year}-12-31"]}).df()
+        dfs.append(batch_df)
+        print(f"  {year} 年完成")
+
+    df = pd.concat(dfs, ignore_index=True)
+    df["date"] = pd.to_datetime(df["date"]).dt.normalize()
+    return df.sort_values(["instrument", "date"])
+
+
+def _clean_data(df: pd.DataFrame, pool_df: pd.DataFrame) -> pd.DataFrame:
+    """Step 2: 数据清洗 - ffill、变换、过滤，确保无 nan"""
+    fields = list({FACTORS[n].field for n in FACTORS.keys()})
+
+    for field in fields:
+        df[field] = df.groupby("instrument")[field].ffill()
+        if field in INVERSE_FIELDS:
+            df[field] = 1.0 / df[field].replace(0, np.nan)
 
     pool_keys = pool_df[["date", "instrument"]].drop_duplicates()
-    factors_in_pool = factors_df.merge(pool_keys, on=["date", "instrument"], how="inner")
+    df = df.merge(pool_keys, on=["date", "instrument"], how="inner")
 
-    print(f"股票池内因子记录数: {len(factors_in_pool)}")
-    return factors_in_pool
+    # 删除任何字段有 nan 的行
+    before = len(df)
+    df = df.dropna(subset=fields)
+    after = len(df)
+    print(f"清洗后记录数: {after} (删除 {before - after} 条含 nan 记录)")
+
+    return df
+
+
+def _compute_factors(df: pd.DataFrame) -> pd.DataFrame:
+    """Step 3: 计算因子值（去极值、中性化、标准化）"""
+    factor_names = list(FACTORS.keys())
+    results = []
+
+    for date, group in df.groupby("date"):
+        assert len(group) >= 10, f"{date} 样本数不足"
+        row = {"date": date, "instrument": group["instrument"].values}
+        for name in factor_names:
+            fdef = FACTORS[name]
+            values = process_cross_section(group, fdef.field)
+            direction = 1 if fdef.field in INVERSE_FIELDS else fdef.direction
+            row[name] = (values * direction).values
+        results.append(pd.DataFrame(row))
+
+    factors_df = pd.concat(results, ignore_index=True)
+    return factors_df
+
+
+def get_factors_in_pool(pool_df: pd.DataFrame) -> pd.DataFrame:
+    """获取股票池内的因子数据"""
+    df = _fetch_raw_data(pool_df)
+    df = _clean_data(df, pool_df)
+    factors_df = _compute_factors(df)
+    print(f"因子记录数: {len(factors_df)}")
+    return factors_df
 
 
 # ==================== 收益率计算 ====================
@@ -184,7 +252,7 @@ def calc_ic(group_df: pd.DataFrame, factor_col: str) -> float:
     valid = group_df[[factor_col, "fwd_ret"]].dropna()
     if len(valid) < 10:
         return np.nan
-    return valid[factor_col].corr(valid["fwd_ret"], method="spearman")
+    return valid[[factor_col, "fwd_ret"]].corr(method="spearman").iloc[0, 1]
 
 
 def calc_group_returns(group_df: pd.DataFrame, factor_col: str, group_num: int) -> pd.Series:
@@ -192,7 +260,8 @@ def calc_group_returns(group_df: pd.DataFrame, factor_col: str, group_num: int) 
     valid = group_df[[factor_col, "fwd_ret"]].dropna()
     if len(valid) < group_num:
         return pd.Series(dtype=float)
-    valid["group"] = pd.qcut(valid[factor_col], q=group_num, labels=False, duplicates="drop")
+    valid["group"] = pd.qcut(
+        valid[factor_col], q=group_num, labels=False, duplicates="drop")
     return valid.groupby("group")["fwd_ret"].mean()
 
 
@@ -302,6 +371,36 @@ def print_correlation_matrix(corr_df: pd.DataFrame):
     print("=" * 80)
 
 
+def plot_factor_layers(results: dict):
+    """为每个因子绘制分层累积收益曲线"""
+    from bigcharts import opts  # pyright: ignore[reportMissingImports]
+
+    charts = []
+    for factor_name, r in results.items():
+        group_ret_df = r["group_ret_df"]
+        if group_ret_df.empty:
+            continue
+        group_cumret = group_ret_df.cumsum()
+        group_cumret.columns = [f"G{c}" for c in group_cumret.columns]
+        group_cumret = group_cumret.reset_index()
+        c = bigcharts.Chart(
+            data=group_cumret,
+            type_="line",
+            x="date",
+            y=[col for col in group_cumret.columns if col != "date"],
+            chart_options=dict(
+                title_opts=opts.TitleOpts(
+                    title=f"{factor_name} 分层收益", pos_left="center"),
+            ),
+        )
+        charts.append(c)
+
+    if charts:
+        page = bigcharts.Chart(charts, type_="page", init_opts={"height": "400px"}).render(display=False)
+        from IPython.display import display    # pyright: ignore
+        display(page)
+
+
 # ==================== 主流程 ====================
 
 def main():
@@ -315,7 +414,7 @@ def main():
     pool_df = get_universe_pool(START_DATE, END_DATE)
 
     print("\n[2/4] 获取因子数据...")
-    factors_df = get_factors_in_pool(pool_df, START_DATE, END_DATE)
+    factors_df = get_factors_in_pool(pool_df)
 
     print("\n[3/4] 获取收益率数据...")
     ret_df = get_forward_returns(pool_df)
@@ -329,6 +428,9 @@ def main():
     print("\n[5/5] 因子相关性...")
     corr_df = calc_factor_correlation(df)
     print_correlation_matrix(corr_df)
+
+    print("\n[6/6] 绘制分层图...")
+    plot_factor_layers(results)
 
     return results, corr_df
 
