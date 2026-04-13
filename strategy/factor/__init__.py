@@ -304,6 +304,15 @@ def ensure_pool_factors(
 
         if not path.exists():
             assert pool_by_date is not None, f"新建缓存 {pool_name}/{factor_name} 必须提供 pool_df"
+            pool_min_date, pool_max_date = min(pool_by_date.keys()), max(pool_by_date.keys())
+            assert pool_min_date <= CACHE_BASE_START, (
+                f"pool_df 起始日期 {pool_min_date} 晚于缓存起始 {CACHE_BASE_START}，"
+                f"需提供 {CACHE_BASE_START}~{req_end} 的完整 pool_df"
+            )
+            assert pool_max_date >= req_end, (
+                f"pool_df 结束日期 {pool_max_date} 早于请求结束 {req_end}，"
+                f"需提供 {CACHE_BASE_START}~{req_end} 的完整 pool_df"
+            )
             t0 = time.time()
             print(f"  [{pool_name}/{factor_name}] 新建 {CACHE_BASE_START}~{req_end} ", end="", flush=True)
             tmp = Path(str(path) + ".tmp")
@@ -331,11 +340,21 @@ def ensure_pool_factors(
             continue
 
         assert pool_by_date is not None, f"扩展缓存 {pool_name}/{factor_name} 必须提供 pool_df"
+        extend_start = _next_day(range_end)
+        pool_min_date, pool_max_date = min(pool_by_date.keys()), max(pool_by_date.keys())
+        assert pool_min_date <= extend_start, (
+            f"pool_df 起始日期 {pool_min_date} 晚于扩展起始 {extend_start}，"
+            f"需提供 {extend_start}~{req_end} 的完整 pool_df"
+        )
+        assert pool_max_date >= req_end, (
+            f"pool_df 结束日期 {pool_max_date} 早于请求结束 {req_end}，"
+            f"需提供 {extend_start}~{req_end} 的完整 pool_df"
+        )
         t0 = time.time()
-        print(f"  [{pool_name}/{factor_name}] 扩展 {_next_day(range_end)}~{req_end} ", end="", flush=True)
+        print(f"  [{pool_name}/{factor_name}] 扩展 {extend_start}~{req_end} ", end="", flush=True)
         conn.commit()
 
-        df = _compute_pool_factor_data(pool_name, factor_name, _next_day(range_end), req_end, pool_by_date)
+        df = _compute_pool_factor_data(pool_name, factor_name, extend_start, req_end, pool_by_date)
         print(f" 写入 {len(df)} 行...", end="", flush=True)
         _insert_data(conn, df)
         conn.execute("UPDATE meta SET range_end = ?", (req_end,))
