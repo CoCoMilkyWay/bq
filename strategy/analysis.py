@@ -13,7 +13,7 @@ import pandas as pd
 import dai
 import bigcharts  # pyright: ignore[reportMissingImports]
 
-from factor import FACTORS, process_cross_section
+from factor import FACTORS, build_pool_factors
 
 STRATEGY_DIR = Path.cwd()
 START_DATE = "2025-01-01"
@@ -140,84 +140,19 @@ def get_universe_pool(start_date: str, end_date: str) -> pd.DataFrame:
 
 # ==================== 因子数据获取 ====================
 
-# 估值类字段：需要 1/x 变换
-INVERSE_FIELDS = {'pe_ttm', 'pb', 'ps_ttm', 'pcf_net_ttm'}
-
-
-def _fetch_raw_data(pool_df: pd.DataFrame) -> pd.DataFrame:
-    """Step 1: 获取原始数据"""
-    factor_names = list(FACTORS.keys())
-    fields = list({FACTORS[n].field for n in factor_names})
-
-    instruments = pool_df["instrument"].unique().tolist()
-    print(f"涉及标的数: {len(instruments)}")
-    inst_list = "', '".join(instruments)
-
-    start_year = pool_df["date"].min().year
-    end_year = pool_df["date"].max().year
-
-    dfs = []
-    for year in range(start_year, end_year + 1):
-        sql = f"""
-        SELECT date, instrument, total_market_cap, sw2021_level1, {', '.join(fields)}
-        FROM cn_stock_prefactors
-        WHERE instrument IN ('{inst_list}')
-          AND total_market_cap > 0
-        """
-        batch_df = dai.query(sql, filters={"date": [f"{year}-01-01", f"{year}-12-31"]}).df()
-        dfs.append(batch_df)
-        print(f"  {year} 年完成")
-
-    df = pd.concat(dfs, ignore_index=True)
-    df["date"] = pd.to_datetime(df["date"]).dt.normalize()
-    return df.sort_values(["instrument", "date"])
-
-
-def _clean_data(df: pd.DataFrame, pool_df: pd.DataFrame) -> pd.DataFrame:
-    """Step 2: 数据清洗 - ffill、变换、过滤，确保无 nan"""
-    fields = list({FACTORS[n].field for n in FACTORS.keys()})
-
-    for field in fields:
-        df[field] = df.groupby("instrument")[field].ffill()
-        if field in INVERSE_FIELDS:
-            df[field] = 1.0 / df[field].replace(0, np.nan)
-
-    pool_keys = pool_df[["date", "instrument"]].drop_duplicates()
-    df = df.merge(pool_keys, on=["date", "instrument"], how="inner")
-
-    # 删除任何字段有 nan 的行
-    before = len(df)
-    df = df.dropna(subset=fields)
-    after = len(df)
-    print(f"清洗后记录数: {after} (删除 {before - after} 条含 nan 记录)")
-
-    return df
-
-
-def _compute_factors(df: pd.DataFrame) -> pd.DataFrame:
-    """Step 3: 计算因子值（去极值、中性化、标准化）"""
-    factor_names = list(FACTORS.keys())
-    results = []
-
-    for date, group in df.groupby("date"):
-        assert len(group) >= 10, f"{date} 样本数不足"
-        row = {"date": date, "instrument": group["instrument"].values}
-        for name in factor_names:
-            fdef = FACTORS[name]
-            values = process_cross_section(group, fdef.field)
-            direction = 1 if fdef.field in INVERSE_FIELDS else fdef.direction
-            row[name] = (values * direction).values
-        results.append(pd.DataFrame(row))
-
-    factors_df = pd.concat(results, ignore_index=True)
-    return factors_df
-
 
 def get_factors_in_pool(pool_df: pd.DataFrame) -> pd.DataFrame:
     """获取股票池内的因子数据"""
-    df = _fetch_raw_data(pool_df)
-    df = _clean_data(df, pool_df)
-    factors_df = _compute_factors(df)
+    factor_names = list(FACTORS.keys())
+    start_date = pool_df["date"].min().strftime("%Y-%m-%d")
+    end_date = pool_df["date"].max().strftime("%Y-%m-%d")
+    factors_df = build_pool_factors(
+        pool_df=pool_df[["date", "instrument"]],
+        start_date=start_date,
+        end_date=end_date,
+        factor_names=factor_names,
+    )
+    assert len(factors_df) > 0, "factor result is empty"
     print(f"因子记录数: {len(factors_df)}")
     return factors_df
 

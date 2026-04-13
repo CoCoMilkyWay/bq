@@ -1,259 +1,352 @@
 """
-因子库：市值行业中性化因子
+因子框架
 
-使用方式:
-    from factor import FACTORS, get_factor, get_all_factors
+设计要点:
+- 缓存层: 每个字段独立 sqlite，统一由 CACHE_TABLE 定义
+- 因子层: 每个因子独立定义计算函数，由 FACTOR_TABLE 注册
+- 工具函数: 提供 winsorize_mad / neutralize / process_cs 供因子复用
 
-    # 获取单个因子
-    df = get_factor('pe_ttm', '2020-01-01', '2024-12-31')
-
-    # 获取所有因子
-    df = get_all_factors('2020-01-01', '2024-12-31')
-
-输出格式 (标准因子格式，兼容因子分析和bigquant看板):
-    date, instrument, factor_name, factor_value (中性化后)
+入口: build_pool_factors(...)
 """
 
-from dataclasses import dataclass
-from typing import Optional
+import os
+from pathlib import Path
+import sqlite3
+from typing import Callable, Optional
+
 import numpy as np
 import pandas as pd
 import dai
 
 
-# ==================== 因子定义 ====================
+# ==================== 配置 ====================
 
-@dataclass(frozen=True)
-class FactorDef:
-    name: str           # 因子名称
-    field: str          # 数据库字段
-    direction: int      # 1=越大越好, -1=越小越好
-    desc: str           # 描述
+RAW_TABLE = "cn_stock_prefactors"
+CACHE_DIR = Path(__file__).resolve().parent / ".cache"
+CACHE_BASE_START = 20170101
+CACHE_MMAP_SIZE = 268435456  # 256MB
+MIN_CS_SAMPLE = 10
 
 
-FACTORS = {
-    'pe_ttm':       FactorDef('pe_ttm',       'pe_ttm',              -1, '市盈率TTM'),
-    'pb':           FactorDef('pb',           'pb',                  -1, '市净率'),
-    'ps_ttm':       FactorDef('ps_ttm',       'ps_ttm',              -1, '市销率TTM'),
-    'pcf_ttm':      FactorDef('pcf_ttm',      'pcf_net_ttm',         -1, '市现率TTM'),
-    'roe_ttm':      FactorDef('roe_ttm',      'roe_avg_ttm',          1, 'ROE TTM'),
-    'roa_ttm':      FactorDef('roa_ttm',      'roa_avg_ttm',          1, 'ROA TTM'),
-    'dividend_yield': FactorDef('dividend_yield', 'dividend_yield_ratio', 1, '股息率'),
+# ==================== 缓存表 ====================
+# name -> source_field (来自 RAW_TABLE)
+# 每个缓存项生成独立的 .cache/{name}.sqlite
+
+CACHE_TABLE: dict[str, str] = {
+    # 中间数据
+    'total_market_cap': 'total_market_cap',
+    'sw2021_level1': 'sw2021_level1',
+    # 原始估值字段
+    'pe_ttm': 'pe_ttm',
+    'pb': 'pb',
+    'ps_ttm': 'ps_ttm',
+    'pcf_net_ttm': 'pcf_net_ttm',
+    'roe_avg_ttm': 'roe_avg_ttm',
+    'roa_avg_ttm': 'roa_avg_ttm',
+    'dividend_yield_ratio': 'dividend_yield_ratio',
 }
 
 
-# ==================== 预处理函数 ====================
+def _to_int(d: str) -> int:
+    return int(d.replace("-", ""))
+
+
+def _to_str(d: int) -> str:
+    s = str(d)
+    return f"{s[:4]}-{s[4:6]}-{s[6:8]}"
+
+
+def _next_day(d: int) -> int:
+    return int((pd.Timestamp(str(d)) + pd.Timedelta(days=1)).strftime("%Y%m%d"))
+
+
+# ==================== 缓存层 ====================
+
+def cache_path(name: str) -> Path:
+    assert name in CACHE_TABLE, f"未知缓存: {name}"
+    return CACHE_DIR / f"{name}.sqlite"
+
+
+def _create_cache_schema(conn: sqlite3.Connection, end: int, is_text: bool):
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    val_type = "TEXT" if is_text else "REAL"
+    conn.execute(f"""
+        CREATE TABLE data (
+            date_int INTEGER NOT NULL,
+            instrument TEXT NOT NULL,
+            value {val_type},
+            PRIMARY KEY (date_int, instrument)
+        )
+    """)
+    conn.execute("CREATE INDEX idx_date ON data(date_int)")
+    conn.execute("""
+        CREATE TABLE meta (
+            range_start INTEGER NOT NULL,
+            range_end INTEGER NOT NULL
+        )
+    """)
+    conn.execute("INSERT INTO meta VALUES (?, ?)", (CACHE_BASE_START, end))
+
+
+def _query_cache_raw(field: str, start: int, end: int) -> pd.DataFrame:
+    sql = f"SELECT date, instrument, {field} AS value FROM {RAW_TABLE} ORDER BY date, instrument"
+    df = dai.query(sql, filters={"date": [_to_str(start), _to_str(end)]}).df()
+    assert len(df) > 0, f"no data for {field} in [{start}, {end}]"
+    df["date_int"] = pd.to_datetime(df["date"]).dt.strftime("%Y%m%d").astype(int)
+    return df[["date_int", "instrument", "value"]].sort_values(["date_int", "instrument"]).reset_index(drop=True)
+
+
+def _insert_cache_rows(conn: sqlite3.Connection, df: pd.DataFrame):
+    if df.empty:
+        return
+    conn.executemany(
+        "INSERT OR REPLACE INTO data (date_int, instrument, value) VALUES (?, ?, ?)",
+        df[["date_int", "instrument", "value"]].itertuples(index=False, name=None),
+    )
+
+
+def ensure_cache(name: str, end_date: str) -> Path:
+    assert name in CACHE_TABLE, f"未知缓存: {name}"
+    field = CACHE_TABLE[name]
+    is_text = name == "sw2021_level1"
+    req_end = _to_int(end_date)
+    path = cache_path(name)
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+    if not path.exists():
+        tmp = Path(str(path) + ".tmp")
+        tmp.unlink(missing_ok=True)
+        conn = sqlite3.connect(tmp)
+        _create_cache_schema(conn, req_end, is_text)
+        df = _query_cache_raw(field, CACHE_BASE_START, req_end)
+        conn.execute("BEGIN IMMEDIATE")
+        _insert_cache_rows(conn, df)
+        conn.commit()
+        conn.close()
+        os.replace(tmp, path)
+        return path
+
+    conn = sqlite3.connect(path)
+    row = conn.execute("SELECT range_start, range_end FROM meta").fetchone()
+    assert row, "meta missing"
+    range_start, range_end = row
+    assert range_start == CACHE_BASE_START
+
+    if req_end <= range_end:
+        conn.close()
+        return path
+
+    df = _query_cache_raw(field, _next_day(range_end), req_end)
+    conn.execute("BEGIN IMMEDIATE")
+    _insert_cache_rows(conn, df)
+    conn.execute("UPDATE meta SET range_end = ?", (req_end,))
+    conn.commit()
+    conn.close()
+    return path
+
+
+def read_cache(
+    name: str,
+    start_date: str,
+    end_date: str,
+    instruments: Optional[list] = None,
+) -> pd.DataFrame:
+    path = cache_path(name)
+    assert path.exists(), f"缓存不存在: {name}"
+    start, end = _to_int(start_date), _to_int(end_date)
+    conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    conn.execute(f"PRAGMA mmap_size={CACHE_MMAP_SIZE}")
+
+    if instruments:
+        conn.execute("CREATE TEMP TABLE tmp_inst(instrument TEXT PRIMARY KEY)")
+        conn.executemany("INSERT INTO tmp_inst VALUES (?)", [(i,) for i in set(instruments)])
+        sql = """
+            SELECT d.date_int, d.instrument, d.value FROM data d
+            INNER JOIN tmp_inst t ON d.instrument = t.instrument
+            WHERE d.date_int BETWEEN ? AND ?
+            ORDER BY d.date_int, d.instrument
+        """
+    else:
+        sql = """
+            SELECT date_int, instrument, value FROM data
+            WHERE date_int BETWEEN ? AND ?
+            ORDER BY date_int, instrument
+        """
+    df = pd.read_sql_query(sql, conn, params=[start, end])
+    conn.close()
+    df["date"] = pd.to_datetime(df["date_int"].astype(str))
+    return df.drop(columns=["date_int"])
+
+
+# ==================== 工具函数 ====================
 
 def winsorize_mad(s: pd.Series, n: float = 3) -> pd.Series:
-    """MAD去极值"""
-    valid = s.dropna()
-    if len(valid) < 10:
-        return s
-    med = valid.median()
-    mad = (valid - med).abs().median()
+    med = s.median()
+    mad = (s - med).abs().median()
     if mad == 0:
-        mad = valid.std() * 0.6745
+        mad = s.std() * 0.6745
     return s.clip(med - n * mad, med + n * mad)
 
 
-def zscore(s: pd.Series) -> pd.Series:
-    """Z-score标准化"""
-    valid = s.dropna()
-    if len(valid) < 10:
-        return s
-    mu, sigma = valid.mean(), valid.std()
-    if sigma == 0:
-        return s - mu
-    return (s - mu) / sigma
+def neutralize(factor: np.ndarray, industry: pd.Series, log_cap: np.ndarray) -> np.ndarray:
+    dummies = pd.get_dummies(industry, dtype=float).values
+    X = np.column_stack([dummies, log_cap])
+    beta, *_ = np.linalg.lstsq(X, factor, rcond=None)
+    return factor - X @ beta
 
 
-def neutralize(factor: pd.Series, industry: pd.Series, log_mktcap: pd.Series) -> pd.Series:
-    """行业+市值中性化: OLS回归取残差"""
-    df = pd.DataFrame({
-        'factor': factor.values,
-        'industry': industry.values,
-        'log_mktcap': log_mktcap.values,
-    }, index=factor.index).dropna()
+def process_cs(values: pd.Series, industry: pd.Series, mktcap: pd.Series) -> pd.Series:
+    mask = values.notna() & industry.notna() & (mktcap > 0)
+    if mask.sum() < MIN_CS_SAMPLE or industry[mask].nunique() < 2:
+        return pd.Series(np.nan, index=values.index)
 
-    if len(df) < 10 or df['industry'].nunique() < 2:
-        return factor
+    v = winsorize_mad(values[mask])
+    v = neutralize(v.values, industry[mask], np.log(mktcap[mask].values))
+    mu, std = v.mean(), v.std()
+    if std > 0:
+        v = (v - mu) / std
 
-    dummies = pd.get_dummies(df['industry'], prefix='ind', dtype=float)
-    X = np.hstack([dummies.values, df[['log_mktcap']].values])
-    y = df['factor'].values
-
-    beta, _, _, _ = np.linalg.lstsq(X, y, rcond=None)
-    residuals = y - X @ beta
-
-    result = factor.copy()
-    result.loc[df.index] = residuals
-    return result
+    out = pd.Series(np.nan, index=values.index)
+    out.loc[mask] = v
+    return out
 
 
-def process_cross_section(
-    df: pd.DataFrame,
-    factor_col: str,
-    industry_col: str = 'sw2021_level1',
-    mktcap_col: str = 'total_market_cap',
-) -> pd.Series:
-    """单截面因子处理: 去极值 -> 中性化 -> 标准化"""
-    factor = df[factor_col].copy()
-    factor = winsorize_mad(factor)
-    factor = neutralize(factor, df[industry_col], np.log(df[mktcap_col]))
-    factor = zscore(factor)
-    return factor
+# ==================== 因子表 ====================
+
+def _make_inverse_neutralized_factor(raw_field: str, direction: int = 1) -> Callable:
+    def compute(data: dict[str, pd.DataFrame]) -> pd.Series:
+        raw = data[raw_field]["value"]
+        mktcap = data["total_market_cap"]["value"]
+        industry = data["sw2021_level1"]["value"]
+        values = 1.0 / raw.replace(0, np.nan)
+        return process_cs(values, industry, mktcap) * direction
+    return compute
 
 
-# ==================== 数据获取 ====================
-
-_BASE_SQL = """
-SELECT
-    date,
-    instrument,
-    total_market_cap,
-    sw2021_level1,
-    {fields}
-FROM cn_stock_prefactors
-WHERE st_status = 0
-  AND suspended = 0
-  AND list_days > 252
-  AND total_market_cap > 0
-"""
-
-# 需要正值的因子字段 (数据库字段名)
-_POSITIVE_FIELDS = {'pe_ttm', 'pb', 'ps_ttm', 'pcf_net_ttm'}
+def _make_identity_neutralized_factor(raw_field: str, direction: int = 1) -> Callable:
+    def compute(data: dict[str, pd.DataFrame]) -> pd.Series:
+        raw = data[raw_field]["value"]
+        mktcap = data["total_market_cap"]["value"]
+        industry = data["sw2021_level1"]["value"]
+        return process_cs(raw, industry, mktcap) * direction
+    return compute
 
 
-def _fetch_and_ffill(sql: str, start_date: str, end_date: str, factor_fields: list) -> pd.DataFrame:
-    """获取数据并按股票 ffill"""
-    df = dai.query(sql, filters={'date': [start_date, end_date]}).df()
-    df['date'] = pd.to_datetime(df['date']).dt.normalize()
-    df = df.sort_values(['instrument', 'date'])
+FACTOR_TABLE: dict[str, dict] = {
+    'pe_ttm': {
+        'depends': ['pe_ttm', 'total_market_cap', 'sw2021_level1'],
+        'compute': _make_inverse_neutralized_factor('pe_ttm', 1),
+    },
+    'pb': {
+        'depends': ['pb', 'total_market_cap', 'sw2021_level1'],
+        'compute': _make_inverse_neutralized_factor('pb', 1),
+    },
+    'ps_ttm': {
+        'depends': ['ps_ttm', 'total_market_cap', 'sw2021_level1'],
+        'compute': _make_inverse_neutralized_factor('ps_ttm', 1),
+    },
+    'pcf_ttm': {
+        'depends': ['pcf_net_ttm', 'total_market_cap', 'sw2021_level1'],
+        'compute': _make_inverse_neutralized_factor('pcf_net_ttm', 1),
+    },
+    'roe_ttm': {
+        'depends': ['roe_avg_ttm', 'total_market_cap', 'sw2021_level1'],
+        'compute': _make_identity_neutralized_factor('roe_avg_ttm', 1),
+    },
+    'roa_ttm': {
+        'depends': ['roa_avg_ttm', 'total_market_cap', 'sw2021_level1'],
+        'compute': _make_identity_neutralized_factor('roa_avg_ttm', 1),
+    },
+    'dividend_yield': {
+        'depends': ['dividend_yield_ratio', 'total_market_cap', 'sw2021_level1'],
+        'compute': _make_identity_neutralized_factor('dividend_yield_ratio', 1),
+    },
+}
 
-    for field in factor_fields:
-        df[field] = df.groupby('instrument')[field].ffill()
-
-    return df
-
-
-def _filter_monthly(df: pd.DataFrame) -> pd.DataFrame:
-    """筛选月末数据"""
-    df['ym'] = df['date'].dt.to_period('M')
-    month_end = df.groupby('ym')['date'].transform('max')
-    return df[df['date'] == month_end].drop(columns='ym')
-
-
-def _process_factor_by_date(
-    df: pd.DataFrame,
-    factor_field: str,
-    factor_name: str,
-    direction: int,
-) -> pd.DataFrame:
-    """按日期处理因子：去极值 -> 中性化 -> 标准化"""
-    results = []
-    for date, group in df.groupby('date'):
-        group = group.copy()
-        if factor_field in _POSITIVE_FIELDS:
-            group = group[group[factor_field] > 0]
-        if len(group) < 10:
-            continue
-        group['factor_value'] = process_cross_section(group, factor_field)
-        group['factor_value'] *= direction
-        results.append(group[['date', 'instrument', 'factor_value']])
-
-    if not results:
-        return pd.DataFrame(columns=['date', 'instrument', 'factor_name', 'factor_value'])
-    out = pd.concat(results, ignore_index=True)
-    out['factor_name'] = factor_name
-    return out[['date', 'instrument', 'factor_name', 'factor_value']]
+FACTORS = FACTOR_TABLE  # 兼容旧接口
 
 
-def get_factor(
-    factor_name: str,
+# ==================== API ====================
+
+def _get_all_depends(names: list[str]) -> set[str]:
+    deps = set()
+    for n in names:
+        deps.update(FACTOR_TABLE[n]["depends"])
+    return deps
+
+
+def _load_cache_data(
+    names: list[str],
     start_date: str,
     end_date: str,
-    freq: str = 'daily',
+    instruments: Optional[list] = None,
+) -> dict[str, pd.DataFrame]:
+    deps = _get_all_depends(names)
+    for dep in deps:
+        ensure_cache(dep, end_date)
+    return {dep: read_cache(dep, start_date, end_date, instruments) for dep in deps}
+
+
+def _compute_factors_by_day(
+    day_data: dict[str, pd.DataFrame],
+    names: list[str],
 ) -> pd.DataFrame:
-    """
-    获取单个中性化因子
-
-    返回: DataFrame[date, instrument, factor_name, factor_value]
-    """
-    assert factor_name in FACTORS, f"未知因子: {factor_name}"
-    fdef = FACTORS[factor_name]
-
-    sql = _BASE_SQL.format(fields=fdef.field)
-    df = _fetch_and_ffill(sql, start_date, end_date, [fdef.field])
-
-    if freq == 'monthly':
-        df = _filter_monthly(df)
-
-    return _process_factor_by_date(df, fdef.field, factor_name, fdef.direction)
-
-
-def get_all_factors(
-    start_date: str,
-    end_date: str,
-    freq: str = 'daily',
-    factor_names: Optional[list] = None,
-) -> pd.DataFrame:
-    """
-    获取多个中性化因子
-
-    返回: DataFrame[date, instrument, factor_name, factor_value]
-    """
-    names = factor_names or list(FACTORS.keys())
-    fields = list({FACTORS[n].field for n in names})
-
-    sql = _BASE_SQL.format(fields=', '.join(fields))
-    df = _fetch_and_ffill(sql, start_date, end_date, fields)
-
-    if freq == 'monthly':
-        df = _filter_monthly(df)
-
-    all_results = []
+    first_df = next(iter(day_data.values()))
+    out = first_df[["date", "instrument"]].copy()
     for name in names:
-        fdef = FACTORS[name]
-        result = _process_factor_by_date(df.copy(), fdef.field, name, fdef.direction)
-        all_results.append(result)
-
-    return pd.concat(all_results, ignore_index=True)
+        factor_def = FACTOR_TABLE[name]
+        out[name] = factor_def["compute"](day_data)
+    return out
 
 
-def get_factor_wide(
+def compute_factors(
     start_date: str,
     end_date: str,
-    freq: str = 'daily',
     factor_names: Optional[list] = None,
+    instruments: Optional[list] = None,
 ) -> pd.DataFrame:
-    """
-    获取宽表格式因子 (用于策略排序)
+    names = factor_names or list(FACTOR_TABLE.keys())
+    for n in names:
+        assert n in FACTOR_TABLE, f"未知因子: {n}"
 
-    返回: DataFrame[date, instrument, pe_ttm, pb, ...]
-    """
-    names = factor_names or list(FACTORS.keys())
-    fields = list({FACTORS[n].field for n in names})
+    cache_data = _load_cache_data(names, start_date, end_date, instruments)
 
-    sql = _BASE_SQL.format(fields=', '.join(fields))
-    df = _fetch_and_ffill(sql, start_date, end_date, fields)
+    frames = []
+    first_dep = next(iter(cache_data.keys()))
+    for date, _ in cache_data[first_dep].groupby("date", sort=True):
+        day_data = {k: v[v["date"] == date].reset_index(drop=True) for k, v in cache_data.items()}
+        frames.append(_compute_factors_by_day(day_data, names))
 
-    if freq == 'monthly':
-        df = _filter_monthly(df)
+    if not frames:
+        return pd.DataFrame(columns=["date", "instrument"] + names)
+    return pd.concat(frames, ignore_index=True).sort_values(["date", "instrument"]).reset_index(drop=True)
 
-    results = []
-    for date, group in df.groupby('date'):
-        group = group.copy()
-        for name in names:
-            fdef = FACTORS[name]
-            valid_mask = pd.Series(True, index=group.index)
-            if fdef.field in _POSITIVE_FIELDS:
-                valid_mask = group[fdef.field] > 0
-            group[name] = np.nan
-            if valid_mask.sum() >= 10:
-                valid_group = group.loc[valid_mask].copy()
-                valid_group[name] = process_cross_section(valid_group, fdef.field)
-                valid_group[name] *= fdef.direction
-                group.loc[valid_mask, name] = valid_group[name]
-        results.append(group[['date', 'instrument'] + names])
 
-    return pd.concat(results, ignore_index=True)
+def build_pool_factors(
+    pool_df: pd.DataFrame,
+    start_date: str,
+    end_date: str,
+    factor_names: Optional[list] = None,
+    factor_weights: Optional[dict] = None,
+    score_col: str = "factor_score",
+) -> pd.DataFrame:
+    names = factor_names or list(FACTOR_TABLE.keys())
+    for n in names:
+        assert n in FACTOR_TABLE, f"未知因子: {n}"
+
+    pool_keys = pool_df[["date", "instrument"]].drop_duplicates()
+    pool_keys = pool_keys.assign(date=pd.to_datetime(pool_keys["date"]))
+    instruments = pool_keys["instrument"].unique().tolist()
+
+    factor_df = compute_factors(start_date, end_date, names, instruments)
+    factor_df = factor_df.merge(pool_keys, on=["date", "instrument"], how="inner")
+    factor_df = factor_df.sort_values(["date", "instrument"]).reset_index(drop=True)
+
+    if factor_weights:
+        cols = list(factor_weights.keys())
+        valid = factor_df[["date", "instrument"] + cols].dropna()
+        valid[score_col] = sum(valid[c] * w for c, w in factor_weights.items())
+        factor_df = factor_df.merge(valid[["date", "instrument", score_col]], on=["date", "instrument"], how="left")
+
+    return factor_df

@@ -6,6 +6,8 @@ import dai
 import pandas as pd
 from tqdm import tqdm
 
+from factor import build_pool_factors
+
 STRATEGY_DIR = Path.cwd()
 
 BACKTEST_START_DATE = "2017-01-01"
@@ -14,6 +16,15 @@ UNIVERSE_SIZE = 100
 HOLD_N = 40
 EXIT_RATIO = 1.2
 CAPITAL_BASE = 1000000
+RANK_FACTOR_WEIGHTS = {
+    "pe_ttm": 1.0,
+    "pb": 1.0,
+    "ps_ttm": 1.0,
+    "pcf_ttm": 1.0,
+    "roe_ttm": 1.0,
+    "roa_ttm": 1.0,
+    "dividend_yield": 1.0,
+}
 
 '''
 ## 策略配置
@@ -78,7 +89,7 @@ CAPITAL_BASE = 1000000
     数据源: cn_stock_prefactors_community.total_market_cap
 
 代码编写原则:
-1. 回测vector mode应该和实盘incremental mode实现一致, 尽量共享代码和逻辑
+1. 回测和实盘统一使用incremental实现, 尽量共享代码和逻辑
 2. 每个因子的实现应该尽量独立定义在代码最前, 不要和后面的框架耦合
 '''
 
@@ -175,13 +186,13 @@ def prepare_filter_states(start_date, end_date, trading_dates):
     return states
 
 
-def build_target_on_day(trade_date_int, instruments, market_caps, filter_sets):
+def build_target_on_day(trade_date_int, instruments, ranking_scores, filter_sets):
     """
     Per-bar 计算，与实盘共享逻辑
     参数:
         trade_date_int: 交易日 YYYYMMDD 整数
         instruments: np.ndarray 或 list
-        market_caps: np.ndarray 或 list
+        ranking_scores: np.ndarray 或 list, 分数越大越优
         filter_sets: list of set[(date_int, instrument)]
     返回:
         top_n_instruments: set
@@ -189,15 +200,15 @@ def build_target_on_day(trade_date_int, instruments, market_caps, filter_sets):
         rank_map: {instrument: rank}
     """
     filtered_pairs = [
-        (inst, cap)
-        for inst, cap in zip(instruments, market_caps)
+        (inst, score)
+        for inst, score in zip(instruments, ranking_scores)
         if not any((trade_date_int, inst) in fs for fs in filter_sets)
     ]
 
     if not filtered_pairs:
         return set(), set(), {}
 
-    filtered_pairs.sort(key=lambda x: x[1])
+    filtered_pairs.sort(key=lambda x: x[1], reverse=True)
     rank_map = {inst: idx + 1 for idx, (inst, _) in enumerate(filtered_pairs)}
     top_n_instruments = {inst for inst, _ in filtered_pairs[:HOLD_N]}
     exit_threshold = int(HOLD_N * EXIT_RATIO)
@@ -211,12 +222,13 @@ def bt_init(context):
         PerOrder(buy_cost=0.0003, sell_cost=0.0013, min_cost=5))
     context.data["date"] = context.data["date"].dt.strftime("%Y-%m-%d")
 
-    # 预处理 universe: (instruments, market_caps) 元组，避免 DataFrame 操作
+    # 预处理 universe: (instruments, ranking_scores) 元组，避免 DataFrame 操作
     context.universe_by_date = {}
     for date, day_df in context.data.groupby("date", sort=False):
+        valid_day_df = day_df.loc[day_df["factor_score"].notna()]
         context.universe_by_date[date] = (
-            day_df["instrument"].values,
-            day_df["total_market_cap"].values,
+            valid_day_df["instrument"].values,
+            valid_day_df["factor_score"].values,
         )
 
     # 预处理 price_limit: 向量化构建，避免 iterrows
@@ -269,6 +281,7 @@ def decide_trades_on_day(
     holding_instruments,
     top_n_instruments,
     top_exit_instruments,
+    rank_map,
     is_tradable,
 ):
     """
@@ -277,6 +290,7 @@ def decide_trades_on_day(
         holding_instruments: set, 当前持仓标的
         top_n_instruments: set, 排名前 HOLD_N 的标的
         top_exit_instruments: set, 排名前 HOLD_N * EXIT_RATIO 的标的
+        rank_map: {instrument: rank}, 排名越小越优
         is_tradable: Callable(inst) -> bool, 判断是否可交易（非涨跌停）
     返回:
         to_sell: list, 需要卖出的标的
@@ -291,7 +305,8 @@ def decide_trades_on_day(
     if slots_available > 0:
         candidates = top_n_instruments - remaining_holding
         candidates = [inst for inst in candidates if is_tradable(inst)]
-        to_buy = sorted(candidates)[:slots_available]
+        candidates.sort(key=lambda inst: rank_map[inst])
+        to_buy = candidates[:slots_available]
     else:
         to_buy = []
     return sorted(to_sell), to_buy
@@ -310,7 +325,7 @@ def bt_bar(context, data):
 
     universe_today = context.universe_by_date.get(trade_date)
     assert universe_today is not None, f"no universe for {trade_date}"
-    instruments, market_caps = universe_today
+    instruments, ranking_scores = universe_today
     price_limit_today = context.price_limit_by_date.get(trade_date, {})
 
     def is_tradable(inst):
@@ -321,12 +336,12 @@ def bt_bar(context, data):
         return close < upper and close > lower
 
     trade_date_int = int(trade_date.replace("-", ""))
-    top_n_instruments, top_exit_instruments, _ = build_target_on_day(
-        trade_date_int, instruments, market_caps, context.filter_sets)
+    top_n_instruments, top_exit_instruments, rank_map = build_target_on_day(
+        trade_date_int, instruments, ranking_scores, context.filter_sets)
     holding_instruments = set(context.get_account_positions().keys())
 
     to_sell, to_buy = decide_trades_on_day(
-        holding_instruments, top_n_instruments, top_exit_instruments, is_tradable)
+        holding_instruments, top_n_instruments, top_exit_instruments, rank_map, is_tradable)
 
     for inst in to_sell:
         context.order_target_percent(inst, 0)
@@ -472,6 +487,20 @@ assert {"date", "instrument", "total_market_cap", "close",
         "upper_limit", "lower_limit"}.issubset(universe_df.columns)
 universe_df["date"] = pd.to_datetime(universe_df["date"]).dt.normalize()
 print(f"股票池记录数：{len(universe_df)}")
+
+factor_df = build_pool_factors(
+    pool_df=universe_df[["date", "instrument"]],
+    start_date=BACKTEST_START_DATE,
+    end_date=BACKTEST_END_DATE,
+    factor_names=list(RANK_FACTOR_WEIGHTS.keys()),
+    factor_weights=RANK_FACTOR_WEIGHTS,
+)
+factor_score_df = factor_df[["date", "instrument", "factor_score"]].dropna()
+universe_df = universe_df.merge(factor_score_df, on=["date", "instrument"], how="left")
+score_coverage = universe_df["factor_score"].notna().mean()
+print(f"因子分数覆盖率：{score_coverage:.2%}")
+assert score_coverage > 0, "factor_score coverage is zero"
+
 stock_data_ds = dai.DataSource.write_bdb(universe_df)
 
 # ==================== 交易诊断 (独立模块，未来可删除) ====================
