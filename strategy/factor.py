@@ -119,6 +119,7 @@ def ensure_cache(name: str, end_date: str) -> Path:
         tmp.unlink(missing_ok=True)
         conn = sqlite3.connect(tmp)
         _create_cache_schema(conn, req_end, is_text)
+        conn.commit()
         df = _query_cache_raw(field, CACHE_BASE_START, req_end)
         conn.execute("BEGIN IMMEDIATE")
         _insert_cache_rows(conn, df)
@@ -137,6 +138,7 @@ def ensure_cache(name: str, end_date: str) -> Path:
         conn.close()
         return path
 
+    conn.commit()
     df = _query_cache_raw(field, _next_day(range_end), req_end)
     conn.execute("BEGIN IMMEDIATE")
     _insert_cache_rows(conn, df)
