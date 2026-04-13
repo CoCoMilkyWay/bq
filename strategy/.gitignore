@@ -1,2 +1,4 @@
 strategy.ipynb
-factor/*
+**.sqlite
+**.sqlite-shm
+**.sqlite-wal
