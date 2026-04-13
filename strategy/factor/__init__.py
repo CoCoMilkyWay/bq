@@ -1,15 +1,11 @@
 """
-因子框架 - 统一缓存系统
+因子框架 - 基于动态股票池的缓存系统
 
-CACHE_TABLE 定义所有可缓存项:
-- source='sql': 从数据库拉取原始字段
-- source='compute': 依赖其他缓存项计算
+原始字段（source='sql'）: 全标的缓存
+因子（source='compute'）: 基于 pool 计算，截面处理只在 pool 内进行
 
 API:
-- ensure_cache(name, end_date) - 确保缓存存在
-- read_cache(name, start_date, end_date) - 读取缓存
-- compute_factors(start_date, end_date, factor_names) - 计算多个因子
-- build_pool_factors(pool_df, start_date, end_date) - 在股票池上计算因子
+- compute_pool_factors(pool_name, pool_df, ...) - 计算 pool 因子（主要接口）
 """
 
 import os
@@ -25,7 +21,7 @@ import dai
 # ==================== 配置 ====================
 
 RAW_TABLE = "cn_stock_prefactors"
-CACHE_DIR = Path(__file__).resolve().parent / ".cache"
+FACTOR_DIR = Path(__file__).resolve().parent
 CACHE_BASE_START = 20170101
 MIN_CS_SAMPLE = 10
 
@@ -119,7 +115,13 @@ FACTOR_NAMES = [k for k, v in CACHE_TABLE.items() if v['source'] == 'compute']
 # ==================== 缓存层 ====================
 
 def _cache_path(name: str) -> Path:
-    return CACHE_DIR / f"{name}.sqlite"
+    """原始字段缓存路径: factor/{name}.sqlite"""
+    return FACTOR_DIR / f"{name}.sqlite"
+
+
+def _pool_factor_cache_path(pool_name: str, factor_name: str) -> Path:
+    """pool 因子缓存路径: factor/{pool_name}/{factor_name}.sqlite"""
+    return FACTOR_DIR / pool_name / f"{factor_name}.sqlite"
 
 
 def _create_schema(conn: sqlite3.Connection, end: int, is_text: bool = False):
@@ -134,6 +136,17 @@ def _create_schema(conn: sqlite3.Connection, end: int, is_text: bool = False):
     conn.execute("INSERT INTO meta VALUES (?, ?)", (CACHE_BASE_START, end))
 
 
+def _create_pool_factor_schema(conn: sqlite3.Connection, pool_name: str, end: int):
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute(
+        "CREATE TABLE data (date_int INTEGER NOT NULL, instrument TEXT NOT NULL, value REAL, PRIMARY KEY (date_int, instrument))")
+    conn.execute("CREATE INDEX idx_date ON data(date_int)")
+    conn.execute(
+        "CREATE TABLE meta (pool_name TEXT NOT NULL, range_start INTEGER NOT NULL, range_end INTEGER NOT NULL)")
+    conn.execute("INSERT INTO meta VALUES (?, ?, ?)", (pool_name, CACHE_BASE_START, end))
+
+
 def _query_sql(field: str, start: int, end: int) -> pd.DataFrame:
     sql = f"SELECT date, instrument, {field} AS value FROM {RAW_TABLE} ORDER BY date, instrument"
     df = dai.query(sql, filters={"date": [_to_str(start), _to_str(end)]}).df()
@@ -143,28 +156,40 @@ def _query_sql(field: str, start: int, end: int) -> pd.DataFrame:
     return df[["date_int", "instrument", "value"]]
 
 
-def _compute_data(name: str, start: int, end: int) -> pd.DataFrame:
-    spec = CACHE_TABLE[name]
+def _compute_pool_factor_data(
+    pool_name: str, factor_name: str, start: int, end: int, pool_by_date: dict[int, set[str]]
+) -> pd.DataFrame:
+    """
+    计算 pool 因子数据，截面处理只在 pool 内进行
+    pool_by_date: {date_int: set(instruments)}
+    """
+    spec = CACHE_TABLE[factor_name]
+    assert spec['source'] == 'compute', f"{factor_name} 不是计算型因子"
     deps, compute = spec['depends'], spec['compute']
 
-    dep_data = {dep: read_cache(dep, _to_str(
-        start), _to_str(end)) for dep in deps}
+    dep_data = {dep: read_cache(dep, _to_str(start), _to_str(end)) for dep in deps}
     base_df = dep_data[deps[0]][["date", "instrument"]].copy()
     for dep in deps:
         base_df[dep] = dep_data[dep]["value"].values
-    base_df["date_int"] = pd.to_datetime(
-        base_df["date"]).dt.strftime("%Y%m%d").astype(int)
+    base_df["date_int"] = pd.to_datetime(base_df["date"]).dt.strftime("%Y%m%d").astype(int)
 
-    grouped = base_df.groupby("date_int", sort=True)
-    total = len(grouped)
     date_ints, instruments, values = [], [], []
-    for i, (date_int, g) in enumerate(grouped):
-        v = compute(g)
-        date_ints.extend([date_int] * len(g))
-        instruments.extend(g["instrument"].values)
+    dates_to_compute = sorted(set(base_df["date_int"]) & set(pool_by_date.keys()))
+    total = len(dates_to_compute)
+
+    for i, date_int in enumerate(dates_to_compute):
+        pool_insts = pool_by_date[date_int]
+        day_df = base_df[base_df["date_int"] == date_int]
+        day_df = day_df[day_df["instrument"].isin(pool_insts)]
+        if day_df.empty:
+            continue
+        v = compute(day_df)
+        date_ints.extend([date_int] * len(day_df))
+        instruments.extend(day_df["instrument"].values)
         values.extend(v.values)
-        print(f"\r  [{name}] 计算 {i+1}/{total} ({(i+1)*100//total}%)",
+        print(f"\r  [{pool_name}/{factor_name}] 计算 {i+1}/{total} ({(i+1)*100//total}%)",
               end="", flush=True)
+
     return pd.DataFrame({"date_int": date_ints, "instrument": instruments, "value": values})
 
 
@@ -175,31 +200,24 @@ def _insert_data(conn: sqlite3.Connection, df: pd.DataFrame):
 
 
 def ensure_cache(name: str, end_date: str) -> Path:
+    """确保原始字段缓存（仅 source='sql' 类型）"""
     assert name in CACHE_TABLE, f"未知缓存项: {name}"
     spec = CACHE_TABLE[name]
+    assert spec['source'] == 'sql', f"{name} 不是 sql 类型，因子请用 ensure_pool_factors"
     req_end = _to_int(end_date)
     path = _cache_path(name)
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-
-    if spec['source'] == 'compute':
-        for dep in spec['depends']:
-            ensure_cache(dep, end_date)
+    FACTOR_DIR.mkdir(parents=True, exist_ok=True)
 
     if not path.exists():
         t0 = time.time()
-        print(f"  [{name}] 新建 {CACHE_BASE_START}~{req_end} ",
-              end="", flush=True)
+        print(f"  [{name}] 新建 {CACHE_BASE_START}~{req_end} ", end="", flush=True)
         tmp = Path(str(path) + ".tmp")
         tmp.unlink(missing_ok=True)
         conn = sqlite3.connect(tmp)
         _create_schema(conn, req_end, spec.get('is_text', False))
         conn.commit()
-
-        if spec['source'] == 'sql':
-            print("查询中...", end="", flush=True)
-            df = _query_sql(spec['field'], CACHE_BASE_START, req_end)
-        else:
-            df = _compute_data(name, CACHE_BASE_START, req_end)
+        print("查询中...", end="", flush=True)
+        df = _query_sql(spec['field'], CACHE_BASE_START, req_end)
         print(f" 写入 {len(df)} 行...", end="", flush=True)
         _insert_data(conn, df)
         conn.close()
@@ -218,15 +236,10 @@ def ensure_cache(name: str, end_date: str) -> Path:
         return path
 
     t0 = time.time()
-    print(f"  [{name}] 扩展 {_next_day(range_end)}~{req_end} ",
-          end="", flush=True)
+    print(f"  [{name}] 扩展 {_next_day(range_end)}~{req_end} ", end="", flush=True)
     conn.commit()
-
-    if spec['source'] == 'sql':
-        print("查询中...", end="", flush=True)
-        df = _query_sql(spec['field'], _next_day(range_end), req_end)
-    else:
-        df = _compute_data(name, _next_day(range_end), req_end)
+    print("查询中...", end="", flush=True)
+    df = _query_sql(spec['field'], _next_day(range_end), req_end)
     print(f" 写入 {len(df)} 行...", end="", flush=True)
     _insert_data(conn, df)
     conn.execute("UPDATE meta SET range_end = ?", (req_end,))
@@ -256,18 +269,104 @@ def read_cache(name: str, start_date: str, end_date: str, instruments: Optional[
     return df.drop(columns=["date_int"])
 
 
-# ==================== API ====================
+# ==================== Pool 因子缓存 ====================
 
-def compute_factors(start_date: str, end_date: str, factor_names: Optional[list] = None, instruments: Optional[list] = None) -> pd.DataFrame:
-    names = factor_names or FACTOR_NAMES
-    for n in names:
-        assert n in FACTOR_NAMES, f"未知因子: {n}"
-        ensure_cache(n, end_date)
+def _pool_df_to_dict(pool_df: pd.DataFrame) -> dict[int, set[str]]:
+    """将 pool_df 转换为 {date_int: set(instruments)} 格式"""
+    pool_df = pool_df.copy()
+    pool_df["date_int"] = pd.to_datetime(pool_df["date"]).dt.strftime("%Y%m%d").astype(int)
+    return pool_df.groupby("date_int")["instrument"].apply(set).to_dict()
 
-    frames = [read_cache(n, start_date, end_date, instruments).rename(
-        columns={"value": n}) for n in names]
+
+def ensure_pool_factors(
+    pool_name: str,
+    end_date: str,
+    factor_names: list[str],
+    pool_df: Optional[pd.DataFrame] = None,
+) -> None:
+    """
+    确保 pool 的因子缓存到 end_date
+    - pool_df: (date, instrument) DataFrame，扩展缓存时必须提供
+    """
+    req_end = _to_int(end_date)
+    pool_dir = FACTOR_DIR / pool_name
+    pool_dir.mkdir(parents=True, exist_ok=True)
+
+    pool_by_date = _pool_df_to_dict(pool_df) if pool_df is not None else None
+
+    for factor_name in factor_names:
+        assert factor_name in FACTOR_NAMES, f"未知因子: {factor_name}"
+        spec = CACHE_TABLE[factor_name]
+        for dep in spec['depends']:
+            ensure_cache(dep, end_date)
+
+        path = _pool_factor_cache_path(pool_name, factor_name)
+
+        if not path.exists():
+            assert pool_by_date is not None, f"新建缓存 {pool_name}/{factor_name} 必须提供 pool_df"
+            t0 = time.time()
+            print(f"  [{pool_name}/{factor_name}] 新建 {CACHE_BASE_START}~{req_end} ", end="", flush=True)
+            tmp = Path(str(path) + ".tmp")
+            tmp.unlink(missing_ok=True)
+            conn = sqlite3.connect(tmp)
+            _create_pool_factor_schema(conn, pool_name, req_end)
+            conn.commit()
+
+            df = _compute_pool_factor_data(pool_name, factor_name, CACHE_BASE_START, req_end, pool_by_date)
+            print(f" 写入 {len(df)} 行...", end="", flush=True)
+            _insert_data(conn, df)
+            conn.close()
+            os.replace(tmp, path)
+            print(f" [{time.time() - t0:.1f}s]")
+            continue
+
+        conn = sqlite3.connect(path)
+        row = conn.execute("SELECT pool_name, range_start, range_end FROM meta").fetchone()
+        assert row and row[0] == pool_name and row[1] == CACHE_BASE_START, f"meta invalid for {pool_name}/{factor_name}"
+        range_end = row[2]
+
+        if req_end <= range_end:
+            conn.close()
+            print(f"  [{pool_name}/{factor_name}] 已缓存")
+            continue
+
+        assert pool_by_date is not None, f"扩展缓存 {pool_name}/{factor_name} 必须提供 pool_df"
+        t0 = time.time()
+        print(f"  [{pool_name}/{factor_name}] 扩展 {_next_day(range_end)}~{req_end} ", end="", flush=True)
+        conn.commit()
+
+        df = _compute_pool_factor_data(pool_name, factor_name, _next_day(range_end), req_end, pool_by_date)
+        print(f" 写入 {len(df)} 行...", end="", flush=True)
+        _insert_data(conn, df)
+        conn.execute("UPDATE meta SET range_end = ?", (req_end,))
+        conn.commit()
+        conn.close()
+        print(f" [{time.time() - t0:.1f}s]")
+
+
+def read_pool_factors(
+    pool_name: str,
+    start_date: str,
+    end_date: str,
+    factor_names: list[str],
+) -> pd.DataFrame:
+    """读取已缓存的 pool 因子数据"""
+    start, end = _to_int(start_date), _to_int(end_date)
+    frames = []
+
+    for factor_name in factor_names:
+        path = _pool_factor_cache_path(pool_name, factor_name)
+        assert path.exists(), f"缓存不存在: {pool_name}/{factor_name}"
+        conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        sql = "SELECT date_int, instrument, value FROM data WHERE date_int BETWEEN ? AND ? ORDER BY date_int, instrument"
+        df = pd.read_sql_query(sql, conn, params=[start, end])
+        conn.close()
+        df["date"] = pd.to_datetime(df["date_int"].astype(str))
+        df = df.drop(columns=["date_int"]).rename(columns={"value": factor_name})
+        frames.append(df)
+
     if not frames:
-        return pd.DataFrame(columns=["date", "instrument"] + names)
+        return pd.DataFrame(columns=["date", "instrument"] + factor_names)
 
     result = frames[0]
     for df in frames[1:]:
@@ -275,23 +374,41 @@ def compute_factors(start_date: str, end_date: str, factor_names: Optional[list]
     return result.sort_values(["date", "instrument"]).reset_index(drop=True)
 
 
-def build_pool_factors(pool_df: pd.DataFrame, start_date: str, end_date: str, factor_names: Optional[list] = None, factor_weights: Optional[dict] = None, score_col: str = "factor_score") -> pd.DataFrame:
-    names = factor_names or FACTOR_NAMES
-    pool_keys = pool_df[["date", "instrument"]].drop_duplicates()
-    pool_keys = pool_keys.assign(date=pd.to_datetime(pool_keys["date"]))
-    instruments = pool_keys["instrument"].unique().tolist()
+# ==================== API ====================
 
-    factor_df = compute_factors(start_date, end_date, names, instruments)
-    factor_df = factor_df.merge(
-        pool_keys, on=["date", "instrument"], how="inner")
-    factor_df = factor_df.sort_values(
-        ["date", "instrument"]).reset_index(drop=True)
+def compute_pool_factors(
+    pool_name: str,
+    pool_df: pd.DataFrame,
+    start_date: str,
+    end_date: str,
+    factor_names: Optional[list] = None,
+    factor_weights: Optional[dict] = None,
+    score_col: str = "factor_score",
+) -> pd.DataFrame:
+    """
+    计算 pool 因子（基于动态股票池，截面处理只在 pool 内进行）
+
+    参数:
+        pool_name: 股票池名称（用于缓存命名，如 'smallcap200'）
+        pool_df: (date, instrument) DataFrame，动态股票池
+        start_date: 开始日期
+        end_date: 结束日期
+        factor_names: 因子列表，默认全部
+        factor_weights: 因子权重（用于计算加权得分）
+        score_col: 得分列名
+    """
+    names = factor_names or FACTOR_NAMES
+    ensure_pool_factors(pool_name, end_date, names, pool_df)
+    factor_df = read_pool_factors(pool_name, start_date, end_date, names)
 
     if factor_weights:
         cols = list(factor_weights.keys())
         valid = factor_df[["date", "instrument"] + cols].dropna()
         valid[score_col] = sum(valid[c] * w for c, w in factor_weights.items())
-        factor_df = factor_df.merge(valid[["date", "instrument", score_col]], on=[
-                                    "date", "instrument"], how="left")
+        factor_df = factor_df.merge(
+            valid[["date", "instrument", score_col]],
+            on=["date", "instrument"],
+            how="left",
+        )
 
     return factor_df

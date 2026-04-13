@@ -5,148 +5,29 @@
     python analysis.py
 """
 
-import json
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import dai
 import bigcharts  # pyright: ignore[reportMissingImports]
 
-from factor import FACTOR_NAMES, build_pool_factors
+from factor import FACTOR_NAMES, compute_pool_factors
+from filter import get_universe_pool, UNIVERSE_SIZE
 
-STRATEGY_DIR = Path.cwd()
 START_DATE = "2025-01-01"
 END_DATE = "2026-04-07"
-UNIVERSE_SIZE = 400
-GROUP_NUM = 10
-
-FILTER_NAMES = [
-    "profit_st",
-    "revenue_st",
-    "risk_warning",
-    "trading_st",
-    "dividend_st",
-]
-
-SW2021_ALL_INDUSTRIES = [
-    "基础化工", "有色金属", "建筑材料", "建筑装饰",
-    "机械设备", "电子", "汽车", "家用电器", "食品饮料", "纺织服饰",
-    "轻工制造", "医药生物", "公用事业", "商贸零售",
-    "社会服务", "非银金融", "综合", "电力设备", "国防军工",
-    "计算机", "传媒", "通信", "煤炭", "石油石化", "美容护理",
-    "农林牧渔", "钢铁", "银行",
-]
-
-
-# ==================== 股票池构建 ====================
-
-def load_all_filter_intervals(start_date: str, end_date: str) -> dict:
-    """
-    加载所有过滤因子的 interval
-    返回: {instrument: [(start_int, end_int), ...]}
-    """
-    start_int = int(start_date.replace("-", ""))
-    end_int = int(end_date.replace("-", ""))
-    intervals_by_inst = {}
-
-    for name in FILTER_NAMES:
-        indicator_path = STRATEGY_DIR / "filter" / name / "indicator.json"
-        if not indicator_path.exists():
-            continue
-
-        raw_rows = json.loads(indicator_path.read_text())
-        assert isinstance(raw_rows, list)
-
-        for item in raw_rows:
-            assert isinstance(item, dict) and len(item) == 1
-            instrument, intervals = next(iter(item.items()))
-            for interval in intervals:
-                s, e = interval
-                if e < start_int or s > end_int:
-                    continue
-                if instrument not in intervals_by_inst:
-                    intervals_by_inst[instrument] = []
-                intervals_by_inst[instrument].append((s, e))
-
-    return intervals_by_inst
-
-
-def apply_filter_intervals(df: pd.DataFrame, intervals_by_inst: dict) -> pd.DataFrame:
-    """向量化应用过滤区间"""
-    df = df.copy()
-    df["date_int"] = df["date"].dt.strftime("%Y%m%d").astype(int)
-    df["filtered"] = False
-
-    for inst, intervals in intervals_by_inst.items():
-        inst_mask = df["instrument"] == inst
-        if not inst_mask.any():
-            continue
-        for s, e in intervals:
-            interval_mask = inst_mask & (
-                df["date_int"] >= s) & (df["date_int"] <= e)
-            df.loc[interval_mask, "filtered"] = True
-
-    result = df[~df["filtered"]].drop(columns=["date_int", "filtered"])
-    return result
-
-
-def get_universe_pool(start_date: str, end_date: str) -> pd.DataFrame:
-    """
-    获取每日股票池（过滤后的干净池）
-    返回: DataFrame[date, instrument, total_market_cap, close]
-    """
-    from bigmodule import M  # pyright: ignore[reportMissingImports]
-
-    m1 = M.cn_stock_basic_selector.v7(
-        exchanges=["上交所", "深交所"],
-        list_sectors=["主板", "创业板", "科创板"],
-        indexes=[],
-        st_statuses=["正常"],
-        margin_tradings=["两融标的", "非两融标的"],
-        sw2021_industries=SW2021_ALL_INDUSTRIES,
-        drop_suspended=True,
-        m_name="m1"
-    )
-    basic_pool_sql = m1.data.read()["sql"]
-    basic_pool_sql = basic_pool_sql.replace("AND ()", "")
-
-    universe_sql = f"""
-    WITH basic_pool AS (
-        {basic_pool_sql}
-    )
-    SELECT
-        date,
-        instrument,
-        total_market_cap,
-        close
-    FROM cn_stock_prefactors_community
-    WHERE (date, instrument) IN (SELECT date, instrument FROM basic_pool)
-    QUALIFY ROW_NUMBER() OVER (PARTITION BY date ORDER BY total_market_cap ASC) <= {UNIVERSE_SIZE}
-    ORDER BY date, instrument
-    """
-
-    df = dai.query(universe_sql, filters={"date": [start_date, end_date]}).df()
-    df["date"] = pd.to_datetime(df["date"]).dt.normalize()
-    print(f"基础股票池记录数: {len(df)}")
-
-    intervals_by_inst = load_all_filter_intervals(start_date, end_date)
-    if intervals_by_inst:
-        df = apply_filter_intervals(df, intervals_by_inst)
-        print(f"过滤后股票池记录数: {len(df)}")
-
-    return df
+GROUP_NUM = 5
 
 
 # ==================== 因子数据获取 ====================
 
 
-def get_factors_in_pool(pool_df: pd.DataFrame) -> pd.DataFrame:
+def get_factors_in_pool(pool_df: pd.DataFrame, pool_name: str = f"smallcap{UNIVERSE_SIZE}") -> pd.DataFrame:
     """获取股票池内的因子数据"""
     factor_names = FACTOR_NAMES
     start_date = pool_df["date"].min().strftime("%Y-%m-%d")
     end_date = pool_df["date"].max().strftime("%Y-%m-%d")
-    factors_df = build_pool_factors(
+    factors_df = compute_pool_factors(
+        pool_name=pool_name,
         pool_df=pool_df[["date", "instrument"]],
         start_date=start_date,
         end_date=end_date,
@@ -191,19 +72,20 @@ def calc_ic(group_df: pd.DataFrame, factor_col: str) -> float:
 
 
 def calc_group_returns(group_df: pd.DataFrame, factor_col: str, group_num: int) -> pd.Series:
-    """计算单日分组收益，返回 Series[group_id] = mean_ret"""
+    """计算单日分组收益，返回 Series[Q1..Q5] = mean_ret"""
     valid = group_df[[factor_col, "fwd_ret"]].dropna()
     if len(valid) < group_num:
         return pd.Series(dtype=float)
+    labels = [f"Q{i+1}" for i in range(group_num)]
     valid["group"] = pd.qcut(
-        valid[factor_col], q=group_num, labels=False, duplicates="drop")
+        valid[factor_col], q=group_num, labels=labels, duplicates="drop")
     return valid.groupby("group")["fwd_ret"].mean()
 
 
 def analyze_factor(df: pd.DataFrame, factor_col: str, group_num: int = GROUP_NUM) -> dict:
     """
     单因子分析
-    返回: {ic_mean, ic_std, ir, group_returns_df, ic_series}
+    返回: {ic_mean, ic_std, icir, t_stat, ic_positive_ratio, group_ret_df, ic_df, rolling_ic}
     """
     ic_list = []
     group_ret_list = []
@@ -218,20 +100,37 @@ def analyze_factor(df: pd.DataFrame, factor_col: str, group_num: int = GROUP_NUM
             gret_dict.update(gret.to_dict())
             group_ret_list.append(gret_dict)
 
-    ic_df = pd.DataFrame(ic_list).dropna()
-    ic_mean = ic_df["ic"].mean()
-    ic_std = ic_df["ic"].std()
-    ir = ic_mean / ic_std if ic_std > 0 else 0
+    ic_df = pd.DataFrame(ic_list).dropna().set_index("date")
+    ic_series = ic_df["ic"]
+    n = len(ic_series)
+
+    ic_mean = ic_series.mean()
+    ic_std = ic_series.std()
+    icir = ic_mean / ic_std if ic_std > 0 else 0
+    t_stat = ic_mean / (ic_std / np.sqrt(n)) if ic_std > 0 and n > 0 else 0
+    ic_positive_ratio = (ic_series > 0).mean()
+
+    rolling_ic = pd.DataFrame(index=ic_series.index)
+    rolling_ic["ic"] = ic_series
+    rolling_ic["rolling_6"] = ic_series.rolling(6, min_periods=1).mean()
+    rolling_ic["rolling_12"] = ic_series.rolling(12, min_periods=1).mean()
+    rolling_ic_std_12 = ic_series.rolling(12, min_periods=1).std()
+    rolling_ic["rolling_icir_12"] = rolling_ic["rolling_12"] / rolling_ic_std_12.replace(0, np.nan)
 
     group_ret_df = pd.DataFrame(group_ret_list)
     if not group_ret_df.empty:
         group_ret_df = group_ret_df.set_index("date").sort_index()
+        if f"Q{group_num}" in group_ret_df.columns and "Q1" in group_ret_df.columns:
+            group_ret_df[f"Q{group_num}-Q1"] = group_ret_df[f"Q{group_num}"] - group_ret_df["Q1"]
 
     return {
         "ic_mean": ic_mean,
         "ic_std": ic_std,
-        "ir": ir,
-        "ic_df": ic_df.set_index("date"),
+        "icir": icir,
+        "t_stat": t_stat,
+        "ic_positive_ratio": ic_positive_ratio,
+        "ic_df": ic_df,
+        "rolling_ic": rolling_ic,
         "group_ret_df": group_ret_df,
     }
 
@@ -253,34 +152,74 @@ def analyze_all_factors(df: pd.DataFrame) -> dict:
         result = analyze_factor(df, factor_name)
 
         if not result["group_ret_df"].empty:
-            top_group = result["group_ret_df"].columns.max()
-            top_ret = result["group_ret_df"][top_group]
-            aligned_bm = benchmark.reindex(top_ret.index)
-            excess_ret = (top_ret - aligned_bm).mean() * 252
-            result["top_group_excess_annual"] = excess_ret
-            result["top_group_annual"] = top_ret.mean() * 252
+            top_col = f"Q{GROUP_NUM}"
+            if top_col in result["group_ret_df"].columns:
+                top_ret = result["group_ret_df"][top_col]
+                aligned_bm = benchmark.reindex(top_ret.index)
+                excess_ret = (top_ret - aligned_bm).mean() * 252
+                result["top_group_excess_annual"] = excess_ret
+                result["top_group_annual"] = top_ret.mean() * 252
+            else:
+                result["top_group_excess_annual"] = np.nan
+                result["top_group_annual"] = np.nan
+
+            long_short_col = f"Q{GROUP_NUM}-Q1"
+            if long_short_col in result["group_ret_df"].columns:
+                result["long_short_annual"] = result["group_ret_df"][long_short_col].mean() * 252
+            else:
+                result["long_short_annual"] = np.nan
         else:
             result["top_group_excess_annual"] = np.nan
             result["top_group_annual"] = np.nan
+            result["long_short_annual"] = np.nan
 
         results[factor_name] = result
 
     return results
 
 
+def calc_comprehensive_score(r: dict) -> float:
+    """计算综合评分: ICIR × 10 + IC>0占比 × 5"""
+    return r["icir"] * 10 + r["ic_positive_ratio"] * 5
+
+
+def judge_factor_validity(r: dict) -> str:
+    """判定因子有效性"""
+    if abs(r["t_stat"]) >= 2 and abs(r["icir"]) >= 0.3:
+        return "有效"
+    elif abs(r["t_stat"]) >= 2 or abs(r["icir"]) >= 0.3:
+        return "弱效"
+    else:
+        return "无效"
+
+
 def print_summary(results: dict):
-    """打印因子分析汇总"""
-    print("\n" + "=" * 80)
+    """打印因子分析汇总（含综合评分排名）"""
+    print("\n" + "=" * 120)
     print("因子分析汇总")
-    print("=" * 80)
-    print(f"{'因子':<15} {'IC均值':>10} {'IC标准差':>10} {'IR':>10} {'多头年化':>12} {'超额年化':>12}")
-    print("-" * 80)
+    print("=" * 120)
+    print(f"{'因子':<15} {'IC均值':>8} {'ICIR':>8} {'IC>0%':>8} {'t统计量':>8} "
+          f"{'多头年化':>10} {'多空年化':>10} {'综合评分':>10} {'判定':>6}")
+    print("-" * 120)
 
+    scored = []
     for name, r in results.items():
-        print(f"{name:<15} {r['ic_mean']:>10.4f} {r['ic_std']:>10.4f} {r['ir']:>10.4f} "
-              f"{r['top_group_annual']:>12.2%} {r['top_group_excess_annual']:>12.2%}")
+        score = calc_comprehensive_score(r)
+        validity = judge_factor_validity(r)
+        scored.append((name, r, score, validity))
 
-    print("=" * 80)
+    scored.sort(key=lambda x: x[2], reverse=True)
+
+    for name, r, score, validity in scored:
+        top_annual = r.get("top_group_annual", np.nan)
+        long_short = r.get("long_short_annual", np.nan)
+        top_str = f"{top_annual:>10.2%}" if not np.isnan(top_annual) else f"{'N/A':>10}"
+        ls_str = f"{long_short:>10.2%}" if not np.isnan(long_short) else f"{'N/A':>10}"
+        print(f"{name:<15} {r['ic_mean']:>8.4f} {r['icir']:>8.4f} {r['ic_positive_ratio']:>8.1%} {r['t_stat']:>8.2f} "
+              f"{top_str} {ls_str} {score:>10.2f} {validity:>6}")
+
+    print("=" * 120)
+    print("判定标准: |t|>=2 且 |ICIR|>=0.3 为有效; 满足其一为弱效; 均不满足为无效")
 
 
 # ==================== 因子相关性 ====================
@@ -307,7 +246,7 @@ def print_correlation_matrix(corr_df: pd.DataFrame):
 
 
 def plot_factor_layers(results: dict):
-    """为每个因子绘制分层累积收益曲线"""
+    """为每个因子绘制分层累积净值曲线 (Q1-Q5 + 多空)"""
     from bigcharts import opts  # pyright: ignore[reportMissingImports]
 
     charts = []
@@ -315,24 +254,54 @@ def plot_factor_layers(results: dict):
         group_ret_df = r["group_ret_df"]
         if group_ret_df.empty:
             continue
-        group_cumret = group_ret_df.cumsum()
-        group_cumret.columns = [f"G{c}" for c in group_cumret.columns]
-        group_cumret = group_cumret.reset_index()
+        nav_df = (1 + group_ret_df.fillna(0)).cumprod()
+        nav_df = nav_df.reset_index()
+        y_cols = [col for col in nav_df.columns if col != "date"]
         c = bigcharts.Chart(
-            data=group_cumret,
+            data=nav_df,
             type_="line",
             x="date",
-            y=[col for col in group_cumret.columns if col != "date"],
+            y=y_cols,
             chart_options=dict(
                 title_opts=opts.TitleOpts(
-                    title=f"{factor_name} 分层收益", pos_left="center"),
+                    title=f"{factor_name} 分层净值", pos_left="center"),
             ),
         )
         charts.append(c)
 
     if charts:
         page = bigcharts.Chart(charts, type_="page", init_opts={"height": "400px"}).render(display=False)
-        from IPython.display import display    # pyright: ignore
+        from IPython.display import display  # pyright: ignore
+        display(page)
+
+
+def plot_ic_rolling(results: dict):
+    """为每个因子绘制IC滚动分析图（IC序列 + 滚动均值）"""
+    from bigcharts import opts  # pyright: ignore[reportMissingImports]
+
+    charts = []
+    for factor_name, r in results.items():
+        rolling_ic = r.get("rolling_ic")
+        if rolling_ic is None or rolling_ic.empty:
+            continue
+
+        plot_df = rolling_ic[["ic", "rolling_6", "rolling_12"]].reset_index()
+
+        c = bigcharts.Chart(
+            data=plot_df,
+            type_="line",
+            x="date",
+            y=["ic", "rolling_6", "rolling_12"],
+            chart_options=dict(
+                title_opts=opts.TitleOpts(
+                    title=f"{factor_name} IC滚动分析", pos_left="center"),
+            ),
+        )
+        charts.append(c)
+
+    if charts:
+        page = bigcharts.Chart(charts, type_="page", init_opts={"height": "400px"}).render(display=False)
+        from IPython.display import display  # pyright: ignore
         display(page)
 
 
@@ -345,18 +314,18 @@ def main():
     print(f"股票池大小: {UNIVERSE_SIZE}, 分组数: {GROUP_NUM}")
     print("=" * 80)
 
-    print("\n[1/4] 构建股票池...")
-    pool_df = get_universe_pool(START_DATE, END_DATE)
+    print("\n[1/5] 构建股票池...")
+    pool_df = get_universe_pool(START_DATE, END_DATE, UNIVERSE_SIZE)
 
-    print("\n[2/4] 获取因子数据...")
+    print("\n[2/5] 获取因子数据...")
     factors_df = get_factors_in_pool(pool_df)
 
-    print("\n[3/4] 获取收益率数据...")
+    print("\n[3/5] 获取收益率数据...")
     ret_df = get_forward_returns(pool_df)
     df = factors_df.merge(ret_df, on=["date", "instrument"], how="left")
     print(f"合并后记录数: {len(df)}")
 
-    print("\n[4/4] 因子分析...")
+    print("\n[4/5] 因子分析...")
     results = analyze_all_factors(df)
     print_summary(results)
 
@@ -364,8 +333,11 @@ def main():
     corr_df = calc_factor_correlation(df)
     print_correlation_matrix(corr_df)
 
-    print("\n[6/6] 绘制分层图...")
+    print("\n绘制分层净值图...")
     plot_factor_layers(results)
+
+    print("\n绘制IC滚动图...")
+    plot_ic_rolling(results)
 
     return results, corr_df
 

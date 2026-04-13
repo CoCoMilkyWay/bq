@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 from bigmodule import M, I  # pyright: ignore[reportMissingImports]
@@ -6,13 +5,13 @@ import dai
 import pandas as pd
 from tqdm import tqdm
 
-from factor import build_pool_factors
+from factor import compute_pool_factors
+from filter import get_universe_pool, UNIVERSE_SIZE
 
 STRATEGY_DIR = Path.cwd()
 
 BACKTEST_START_DATE = "2017-01-01"
 BACKTEST_END_DATE = "2026-04-07"
-UNIVERSE_SIZE = 100
 HOLD_N = 40
 EXIT_RATIO = 1.2
 CAPITAL_BASE = 1000000
@@ -94,125 +93,28 @@ RANK_FACTOR_WEIGHTS = {
 '''
 
 
-def load_interval_filter(name: str, start_date: str, end_date: str):
-    """
-    通用的interval类型过滤因子加载函数
-    从 filter/{name}/indicator.json 加载数据
-    """
-    indicator_path = STRATEGY_DIR / "filter" / name / "indicator.json"
-    if not indicator_path.exists():
-        return None
-    raw_rows = json.loads(indicator_path.read_text())
-    assert isinstance(raw_rows, list), f"invalid json: {indicator_path}"
-
-    interval_rows = []
-    for item in raw_rows:
-        assert isinstance(item, dict) and len(item) == 1, f"invalid item: {item}"
-        instrument, intervals = next(iter(item.items()))
-        assert isinstance(instrument, str) and instrument, f"invalid instrument: {item}"
-        assert isinstance(intervals, list), f"invalid intervals: {item}"
-        for interval in intervals:
-            assert isinstance(interval, list) and len(interval) == 2, f"invalid interval: {interval}"
-            start_date_int, end_date_int = interval
-            assert isinstance(start_date_int, int) and isinstance(end_date_int, int), f"invalid interval date: {interval}"
-            assert start_date_int <= end_date_int, f"start_date > end_date: {interval}"
-            interval_rows.append({
-                "instrument": instrument,
-                "start_date": start_date_int,
-                "end_date": end_date_int,
-            })
-
-    if not interval_rows:
-        return None
-
-    start_int = int(start_date.replace("-", ""))
-    end_int = int(end_date.replace("-", ""))
-    state_df = pd.DataFrame(interval_rows, columns=["instrument", "start_date", "end_date"])
-    state_df = state_df[(state_df["end_date"] >= start_int) & (state_df["start_date"] <= end_int)].copy()
-    if state_df.empty:
-        return None
-    state_df["value"] = 1
-    return {
-        "name": name,
-        "kind": "interval",
-        "data": state_df[["instrument", "start_date", "end_date", "value"]],
-    }
 
 
-FILTER_NAMES = [
-    "profit_st",
-    "revenue_st",
-    "risk_warning",
-    "trading_st",
-    "dividend_st",
-]
-
-
-def prepare_filter_states(start_date, end_date, trading_dates):
-    """
-    trading_dates: 回测期间的交易日列表 (YYYY-MM-DD 格式)，用于展开 interval
-    """
-    states = []
-    state_names = set()
-    trading_date_ints = sorted(int(d.replace("-", "")) for d in trading_dates)
-
-    for filter_name in FILTER_NAMES:
-        state = load_interval_filter(filter_name, start_date, end_date)
-        if state is None:
-            continue
-        assert isinstance(state, dict), f"invalid state type: {filter_name}"
-        assert {"name", "kind", "data"}.issubset(
-            state.keys()), f"invalid state keys: {filter_name}"
-        assert isinstance(
-            state["name"], str) and state["name"], f"invalid state name: {filter_name}"
-        assert state["name"] not in state_names, f"duplicated factor name: {state['name']}"
-        assert state["kind"] in {
-            "interval", "daily"}, f"invalid state kind: {state['kind']}"
-        assert isinstance(
-            state["data"], pd.DataFrame), f"invalid state data: {state['name']}"
-
-        if state["kind"] == "interval":
-            filter_set = set()
-            for _, row in state["data"].iterrows():
-                inst = row["instrument"]
-                start_int, end_int = row["start_date"], row["end_date"]
-                for d_int in trading_date_ints:
-                    if start_int <= d_int <= end_int:
-                        filter_set.add((d_int, inst))
-            state["filter_set"] = filter_set
-
-        states.append(state)
-        state_names.add(state["name"])
-    return states
-
-
-def build_target_on_day(trade_date_int, instruments, ranking_scores, filter_sets):
+def build_target_on_day(instruments, ranking_scores):
     """
     Per-bar 计算，与实盘共享逻辑
     参数:
-        trade_date_int: 交易日 YYYYMMDD 整数
         instruments: np.ndarray 或 list
         ranking_scores: np.ndarray 或 list, 分数越大越优
-        filter_sets: list of set[(date_int, instrument)]
     返回:
         top_n_instruments: set
         top_exit_instruments: set
         rank_map: {instrument: rank}
     """
-    filtered_pairs = [
-        (inst, score)
-        for inst, score in zip(instruments, ranking_scores)
-        if not any((trade_date_int, inst) in fs for fs in filter_sets)
-    ]
-
-    if not filtered_pairs:
+    pairs = list(zip(instruments, ranking_scores))
+    if not pairs:
         return set(), set(), {}
 
-    filtered_pairs.sort(key=lambda x: x[1], reverse=True)
-    rank_map = {inst: idx + 1 for idx, (inst, _) in enumerate(filtered_pairs)}
-    top_n_instruments = {inst for inst, _ in filtered_pairs[:HOLD_N]}
+    pairs.sort(key=lambda x: x[1], reverse=True)
+    rank_map = {inst: idx + 1 for idx, (inst, _) in enumerate(pairs)}
+    top_n_instruments = {inst for inst, _ in pairs[:HOLD_N]}
     exit_threshold = int(HOLD_N * EXIT_RATIO)
-    top_exit_instruments = {inst for inst, _ in filtered_pairs[:exit_threshold]}
+    top_exit_instruments = {inst for inst, _ in pairs[:exit_threshold]}
     return top_n_instruments, top_exit_instruments, rank_map
 
 
@@ -243,12 +145,6 @@ def bt_init(context):
             for inst, close, upper, lower in zip(insts, closes, uppers, lowers)
         }
 
-    trading_dates = list(context.universe_by_date.keys())
-    factor_states = prepare_filter_states(
-        start_date=BACKTEST_START_DATE, end_date=BACKTEST_END_DATE, trading_dates=trading_dates
-    )
-    # 提取 filter_sets 列表供 per-bar 使用
-    context.filter_sets = [s["filter_set"] for s in factor_states if s["kind"] == "interval"]
     assert len(
         context.universe_by_date) > 0, "bigquant universe is empty in backtest range"
     universe_dates = sorted(context.universe_by_date.keys())
@@ -335,9 +231,8 @@ def bt_bar(context, data):
         close, upper, lower = info
         return close < upper and close > lower
 
-    trade_date_int = int(trade_date.replace("-", ""))
     top_n_instruments, top_exit_instruments, rank_map = build_target_on_day(
-        trade_date_int, instruments, ranking_scores, context.filter_sets)
+        instruments, ranking_scores)
     holding_instruments = set(context.get_account_positions().keys())
 
     to_sell, to_buy = decide_trades_on_day(
@@ -438,57 +333,18 @@ def bt_post(context, data):
 
 
 # ==================== 模块链 ====================
-# 1. 基础股票池过滤（交易所、板块、ST、停牌）
-SW2021_ALL_INDUSTRIES = [
-    "基础化工", "有色金属", "建筑材料", "建筑装饰",
-    "机械设备", "电子", "汽车", "家用电器", "食品饮料", "纺织服饰",
-    "轻工制造", "医药生物", "公用事业", "商贸零售",
-    "社会服务", "非银金融", "综合", "电力设备", "国防军工",
-    "计算机", "传媒", "通信", "煤炭", "石油石化", "美容护理",
-    "农林牧渔", "钢铁", "银行",
-    # 过滤弹性差的行业(在市值底部存在过久)
-    # "环保", "交通运输", "房地产",
-]
-m1 = M.cn_stock_basic_selector.v7(
-    exchanges=["上交所", "深交所"],
-    list_sectors=["主板", "创业板", "科创板"],
-    indexes=[],
-    st_statuses=["正常"],
-    margin_tradings=["两融标的", "非两融标的"],
-    sw2021_industries=SW2021_ALL_INDUSTRIES,
-    drop_suspended=True,
-    m_name="m1"
+# 1. 获取股票池（不应用过滤因子，过滤在回测时动态应用）
+universe_df = get_universe_pool(
+    start_date=BACKTEST_START_DATE,
+    end_date=BACKTEST_END_DATE,
+    universe_size=UNIVERSE_SIZE,
+    extra_fields=["upper_limit", "lower_limit"],
 )
-
-# 2. 用基础股票池SQL过滤，加市值排序取前 UNIVERSE_SIZE + 涨跌停字段
-basic_pool_sql = m1.data.read()["sql"]
-basic_pool_sql = basic_pool_sql.replace("AND ()", "")  # 修复 indexes=[] 导致的空条件
-
-universe_sql = f"""
-WITH basic_pool AS (
-    {basic_pool_sql}
-)
-SELECT
-    date,
-    instrument,
-    total_market_cap,
-    close,
-    upper_limit,
-    lower_limit
-FROM cn_stock_prefactors_community
-WHERE (date, instrument) IN (SELECT date, instrument FROM basic_pool)
-QUALIFY ROW_NUMBER() OVER (PARTITION BY date ORDER BY total_market_cap ASC) <= {UNIVERSE_SIZE}
-ORDER BY date, instrument
-"""
-
-universe_df = dai.query(universe_sql, filters={
-                        "date": [BACKTEST_START_DATE, BACKTEST_END_DATE]}).df()
 assert {"date", "instrument", "total_market_cap", "close",
         "upper_limit", "lower_limit"}.issubset(universe_df.columns)
-universe_df["date"] = pd.to_datetime(universe_df["date"]).dt.normalize()
-print(f"股票池记录数：{len(universe_df)}")
 
-factor_df = build_pool_factors(
+factor_df = compute_pool_factors(
+    pool_name=f"smallcap{UNIVERSE_SIZE}",
     pool_df=universe_df[["date", "instrument"]],
     start_date=BACKTEST_START_DATE,
     end_date=BACKTEST_END_DATE,
