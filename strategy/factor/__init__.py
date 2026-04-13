@@ -22,7 +22,7 @@ import dai
 
 RAW_TABLE = "cn_stock_prefactors"
 FACTOR_DIR = Path(__file__).resolve().parent
-CACHE_BASE_START = 20170101
+CACHE_BASE_START = 20170103
 MIN_CS_SAMPLE = 10
 
 
