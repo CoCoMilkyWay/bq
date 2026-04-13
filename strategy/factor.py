@@ -26,7 +26,7 @@ import dai
 
 RAW_TABLE = "cn_stock_prefactors"
 CACHE_DIR = Path(__file__).resolve().parent / ".cache"
-CACHE_BASE_START = 20250101
+CACHE_BASE_START = 20170101
 MIN_CS_SAMPLE = 10
 
 
