@@ -22,7 +22,7 @@ import dai
 
 RAW_TABLE = "cn_stock_prefactors"
 FACTOR_DIR = Path(__file__).resolve().parent
-CACHE_BASE_START = 20170103
+CACHE_BASE_START = 20170101
 MIN_CS_SAMPLE = 10
 
 
@@ -75,13 +75,29 @@ def process_cs(values: pd.Series, industry: pd.Series, mktcap: pd.Series) -> pd.
 def _inverse_factor(raw_field: str) -> Callable:
     def compute(df: pd.DataFrame) -> pd.Series:
         values = 1.0 / df[raw_field].replace(0, np.nan)
-        return process_cs(values, df["sw2021_level1"], df["total_market_cap"])
+        return process_cs(values, df["sw2021_level1"], df["total_market_cap_raw"])
     return compute
 
 
 def _identity_factor(raw_field: str) -> Callable:
     def compute(df: pd.DataFrame) -> pd.Series:
-        return process_cs(df[raw_field], df["sw2021_level1"], df["total_market_cap"])
+        return process_cs(df[raw_field], df["sw2021_level1"], df["total_market_cap_raw"])
+    return compute
+
+
+def _inverse_zscore_factor(raw_field: str) -> Callable:
+    def compute(df: pd.DataFrame) -> pd.Series:
+        values = 1.0 / df[raw_field].replace(0, np.nan)
+        mask = values.notna()
+        if mask.sum() < MIN_CS_SAMPLE:
+            return pd.Series(np.nan, index=values.index)
+        v = winsorize_mad(values[mask])
+        mu, std = v.mean(), v.std()
+        if std > 0:
+            v = (v - mu) / std
+        out = pd.Series(np.nan, index=values.index)
+        out.loc[mask] = v
+        return out
     return compute
 
 
@@ -89,7 +105,9 @@ def _identity_factor(raw_field: str) -> Callable:
 
 CACHE_TABLE: dict[str, dict] = {
     # 公共依赖
-    'total_market_cap': {'source': 'sql', 'field': 'total_market_cap'},
+    'total_market_cap_raw': {'source': 'sql', 'field': 'total_market_cap'},
+    'float_market_cap_raw': {'source': 'sql', 'field': 'float_market_cap'},
+    'close_raw': {'source': 'sql', 'field': 'close'},
     'sw2021_level1': {'source': 'sql', 'field': 'sw2021_level1', 'is_text': True},
     # 原始字段
     'pe_ttm_raw': {'source': 'sql', 'field': 'pe_ttm'},
@@ -100,13 +118,16 @@ CACHE_TABLE: dict[str, dict] = {
     'roa_avg_ttm_raw': {'source': 'sql', 'field': 'roa_avg_ttm'},
     'dividend_yield_ratio_raw': {'source': 'sql', 'field': 'dividend_yield_ratio'},
     # 因子
-    'pe_ttm': {'source': 'compute', 'depends': ['pe_ttm_raw', 'total_market_cap', 'sw2021_level1'], 'compute': _inverse_factor('pe_ttm_raw')},
-    'pb': {'source': 'compute', 'depends': ['pb_raw', 'total_market_cap', 'sw2021_level1'], 'compute': _inverse_factor('pb_raw')},
-    'ps_ttm': {'source': 'compute', 'depends': ['ps_ttm_raw', 'total_market_cap', 'sw2021_level1'], 'compute': _inverse_factor('ps_ttm_raw')},
-    'pcf_ttm': {'source': 'compute', 'depends': ['pcf_net_ttm_raw', 'total_market_cap', 'sw2021_level1'], 'compute': _inverse_factor('pcf_net_ttm_raw')},
-    'roe_ttm': {'source': 'compute', 'depends': ['roe_avg_ttm_raw', 'total_market_cap', 'sw2021_level1'], 'compute': _identity_factor('roe_avg_ttm_raw')},
-    'roa_ttm': {'source': 'compute', 'depends': ['roa_avg_ttm_raw', 'total_market_cap', 'sw2021_level1'], 'compute': _identity_factor('roa_avg_ttm_raw')},
-    'dividend_yield': {'source': 'compute', 'depends': ['dividend_yield_ratio_raw', 'total_market_cap', 'sw2021_level1'], 'compute': _identity_factor('dividend_yield_ratio_raw')},
+    'pe_ttm': {'source': 'compute', 'depends': ['pe_ttm_raw', 'total_market_cap_raw', 'sw2021_level1'], 'compute': _inverse_factor('pe_ttm_raw')},
+    'pb': {'source': 'compute', 'depends': ['pb_raw', 'total_market_cap_raw', 'sw2021_level1'], 'compute': _inverse_factor('pb_raw')},
+    'ps_ttm': {'source': 'compute', 'depends': ['ps_ttm_raw', 'total_market_cap_raw', 'sw2021_level1'], 'compute': _inverse_factor('ps_ttm_raw')},
+    'pcf_ttm': {'source': 'compute', 'depends': ['pcf_net_ttm_raw', 'total_market_cap_raw', 'sw2021_level1'], 'compute': _inverse_factor('pcf_net_ttm_raw')},
+    'roe_ttm': {'source': 'compute', 'depends': ['roe_avg_ttm_raw', 'total_market_cap_raw', 'sw2021_level1'], 'compute': _identity_factor('roe_avg_ttm_raw')},
+    'roa_ttm': {'source': 'compute', 'depends': ['roa_avg_ttm_raw', 'total_market_cap_raw', 'sw2021_level1'], 'compute': _identity_factor('roa_avg_ttm_raw')},
+    'dividend_yield': {'source': 'compute', 'depends': ['dividend_yield_ratio_raw', 'total_market_cap_raw', 'sw2021_level1'], 'compute': _identity_factor('dividend_yield_ratio_raw')},
+    'total_market_cap': {'source': 'compute', 'depends': ['total_market_cap_raw'], 'compute': _inverse_zscore_factor('total_market_cap_raw')},
+    'float_market_cap': {'source': 'compute', 'depends': ['float_market_cap_raw'], 'compute': _inverse_zscore_factor('float_market_cap_raw')},
+    'close': {'source': 'compute', 'depends': ['close_raw'], 'compute': _inverse_zscore_factor('close_raw')},
 }
 
 FACTOR_NAMES = [k for k, v in CACHE_TABLE.items() if v['source'] == 'compute']

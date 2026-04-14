@@ -23,6 +23,9 @@ RANK_FACTOR_WEIGHTS = {
     "roe_ttm": 1.0,
     "roa_ttm": 1.0,
     "dividend_yield": 1.0,
+    "total_market_cap": 1.0,
+    "float_market_cap": 1.0,
+    "close": 1.0,
 }
 
 '''
@@ -84,8 +87,26 @@ RANK_FACTOR_WEIGHTS = {
     - 风险警示公告发布后标记
 
 排序因子:
-**总市值**: (优先:小; 权重:100%)
+**PE(TTM)** (`pe_ttm`): (优先:小)
+    数据源: cn_stock_prefactors_community.pe_ttm
+**PB** (`pb`): (优先:小)
+    数据源: cn_stock_prefactors_community.pb
+**PS(TTM)** (`ps_ttm`): (优先:小)
+    数据源: cn_stock_prefactors_community.ps_ttm
+**PCF(TTM)** (`pcf_ttm`): (优先:小)
+    数据源: cn_stock_prefactors_community.pcf_net_ttm
+**ROE(TTM)** (`roe_ttm`): (优先:大)
+    数据源: cn_stock_prefactors_community.roe_avg_ttm
+**ROA(TTM)** (`roa_ttm`): (优先:大)
+    数据源: cn_stock_prefactors_community.roa_avg_ttm
+**股息率** (`dividend_yield`): (优先:大)
+    数据源: cn_stock_prefactors_community.dividend_yield_ratio
+**总市值**: (优先:小)
     数据源: cn_stock_prefactors_community.total_market_cap
+**流通市值**: (优先:小)
+    数据源: cn_stock_prefactors_community.float_market_cap
+**收盘价**: (优先:小)
+    数据源: cn_stock_prefactors_community.close
 
 代码编写原则:
 1. 回测和实盘统一使用incremental实现, 尽量共享代码和逻辑

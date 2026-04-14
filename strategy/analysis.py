@@ -49,15 +49,20 @@ def get_forward_returns(pool_df: pd.DataFrame) -> pd.DataFrame:
     SELECT
         date,
         instrument,
-        (m_lead(open, 2) / m_lead(open, 1) - 1) AS fwd_ret
+        CASE
+            WHEN m_lead(open, 1) IS NULL OR m_lead(open, 2) IS NULL THEN 0
+            ELSE (m_lead(open, 2) / m_lead(open, 1) - 1)
+        END AS fwd_ret
     FROM cn_stock_bar1d
     ORDER BY instrument, date
     """
     start_date = pool_df["date"].min().strftime("%Y-%m-%d")
-    end_date = pool_df["date"].max().strftime("%Y-%m-%d")
+    pool_end_date = pool_df["date"].max().strftime("%Y-%m-%d")
+    end_date = (pool_df["date"].max() + pd.Timedelta(days=10)).strftime("%Y-%m-%d")
 
     ret_df = dai.query(sql, filters={"date": [start_date, end_date]}).df()
     ret_df["date"] = pd.to_datetime(ret_df["date"]).dt.normalize()
+    ret_df = ret_df.loc[ret_df["date"] <= pd.to_datetime(pool_end_date)]
     return ret_df
 
 
@@ -73,13 +78,21 @@ def calc_ic(group_df: pd.DataFrame, factor_col: str) -> float:
 
 def calc_group_returns(group_df: pd.DataFrame, factor_col: str, group_num: int) -> pd.Series:
     """计算单日分组收益，返回 Series[Q1..Q5] = mean_ret"""
-    valid = group_df[[factor_col, "fwd_ret"]].dropna()
+    valid = group_df[[factor_col, "fwd_ret"]].dropna(subset=[factor_col]).copy()
     if len(valid) < group_num:
         return pd.Series(dtype=float)
+
+    # 不可交易/缺失收益按惩罚收益处理: gross return=1, 即净收益率=0
+    valid["fwd_ret"] = valid["fwd_ret"].fillna(0.0)
+
+    # 用截面排序分桶，避免 qcut 在重复边界时丢层或报错
+    rank_asc = valid[factor_col].rank(method="first", ascending=True)
+    group_idx = ((rank_asc - 1) * group_num / len(valid)).astype(int).clip(upper=group_num - 1)
+    valid["group"] = "Q" + (group_idx + 1).astype(str)
+
     labels = [f"Q{i+1}" for i in range(group_num)]
-    valid["group"] = pd.qcut(
-        valid[factor_col], q=group_num, labels=labels, duplicates="drop")
-    return valid.groupby("group")["fwd_ret"].mean()
+    grouped = valid.groupby("group")["fwd_ret"].mean().reindex(labels)
+    return grouped
 
 
 def analyze_factor(df: pd.DataFrame, factor_col: str, group_num: int = GROUP_NUM) -> dict:
