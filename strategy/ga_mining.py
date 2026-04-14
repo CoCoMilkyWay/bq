@@ -1,14 +1,16 @@
 """
-遗传算法因子挖掘 - 极限优化版
+网格搜索因子挖掘
 
 优化目标: 5档多空收益 (Q5/Q1)
 因子处理: 截面排序 -> [0,1] 分位数 -> 加权求和 -> 再排序分档
 
+流程:
+    1. 单因子测试，筛选 top N 因子
+    2. 粗粒度网格搜索 (0.3 间隔)
+    3. 热点附近细粒度搜索
+
 使用方式:
     python ga_mining.py
-    
-    第一次运行: 生成数据文件 ga_mining_data.npz
-    后续运行: 直接加载数据文件做挖掘
 """
 
 import numpy as np
@@ -23,12 +25,11 @@ START_DATE = "2017-01-01"
 END_DATE = "2026-04-07"
 GROUP_NUM = 5  # 分档数
 
-GA_POP_SIZE = 100
-GA_GENERATIONS = 100
-GA_MUTATION_RATE = 0.1
-GA_MUTATION_SIGMA = 0.3
-GA_CROSSOVER_RATE = 0.7
-GA_TOURNAMENT_SIZE = 3
+TOP_N_FACTORS = 5  # 筛选因子数
+COARSE_STEP = 0.3  # 粗搜步长
+FINE_STEP = 0.1    # 细搜步长
+FINE_RADIUS = 0.2  # 细搜范围 (热点 ± radius)
+TOP_K_HOTSPOTS = 10  # 保留多少热点做细搜
 
 FACTOR_NAMES_TO_USE = [
     "pe_ttm",
@@ -253,96 +254,122 @@ def evaluate_batch(pop: np.ndarray, factor_ranks: np.ndarray, returns: np.ndarra
     return fitness
 
 
-# ==================== 遗传算法 ====================
+# ==================== 网格搜索 ====================
 
-def init_population(n_pop: int, n_factors: int) -> np.ndarray:
-    return np.random.uniform(-1, 1, (n_pop, n_factors)).astype(np.float32)
-
-
-def tournament_select(pop: np.ndarray, fitness: np.ndarray, n_select: int, tournament_size: int) -> np.ndarray:
-    n_pop = pop.shape[0]
-    selected_idx = np.empty(n_select, dtype=np.int32)
-    for i in range(n_select):
-        candidates = np.random.choice(n_pop, tournament_size, replace=False)
-        best = candidates[np.argmax(fitness[candidates])]
-        selected_idx[i] = best
-    return pop[selected_idx].copy()
-
-
-def crossover(parents: np.ndarray, crossover_rate: float) -> np.ndarray:
-    n_pop = parents.shape[0]
-    n_factors = parents.shape[1]
-    children = parents.copy()
-    for i in range(0, n_pop - 1, 2):
-        if np.random.rand() < crossover_rate:
-            mask = np.random.rand(n_factors) < 0.5
-            temp = children[i, mask].copy()
-            children[i, mask] = children[i + 1, mask]
-            children[i + 1, mask] = temp
-    return children
-
-
-def mutate(pop: np.ndarray, mutation_rate: float, mutation_sigma: float) -> np.ndarray:
-    n_pop, n_factors = pop.shape
-    mutation_mask = np.random.rand(n_pop, n_factors) < mutation_rate
-    mutations = np.random.randn(n_pop, n_factors).astype(np.float32) * mutation_sigma
-    pop = pop + mutations * mutation_mask
-    return np.clip(pop, -1, 1)
-
-
-def run_ga(factor_ranks: np.ndarray, returns: np.ndarray, factor_names: list[str]) -> tuple[np.ndarray, float]:
-    """运行遗传算法"""
+def test_single_factors(factor_ranks: np.ndarray, returns: np.ndarray, factor_names: list[str]) -> list[tuple[str, int, float]]:
+    """
+    单因子测试，返回 [(因子名, 因子索引, 多空比), ...]
+    """
     n_factors = len(factor_names)
+    results = []
+    
+    for f_idx in range(n_factors):
+        weights = np.zeros(n_factors, dtype=np.float32)
+        weights[f_idx] = 1.0
+        fitness = _eval_single(weights, factor_ranks, returns, GROUP_NUM)
+        results.append((factor_names[f_idx], f_idx, fitness))
+    
+    results.sort(key=lambda x: x[2], reverse=True)
+    return results
 
-    print(f"\n开始遗传算法优化...")
-    print(f"种群大小: {GA_POP_SIZE}, 代数: {GA_GENERATIONS}")
-    print(f"因子数: {n_factors}, 分档数: {GROUP_NUM}")
-    print(f"优化目标: Q{GROUP_NUM}/Q1 多空比")
 
-    print("预热 JIT 编译...")
-    _dummy_pop = np.random.randn(2, n_factors).astype(np.float32)
-    _ = evaluate_batch(_dummy_pop, factor_ranks, returns, GROUP_NUM)
+def generate_grid(n_factors: int, step: float) -> np.ndarray:
+    """生成网格点"""
+    from itertools import product
+    values = np.arange(0, 1.0 + step / 2, step)
+    grid = list(product(values, repeat=n_factors))
+    return np.array(grid, dtype=np.float32)
 
-    pop = init_population(GA_POP_SIZE, n_factors)
-    fitness = evaluate_batch(pop, factor_ranks, returns, GROUP_NUM)
-    best_idx = np.argmax(fitness)
-    best_weights = pop[best_idx].copy()
-    best_fitness = fitness[best_idx]
 
-    print(f"初始最优多空比: {best_fitness:.4f}")
+def generate_fine_grid(center: np.ndarray, radius: float, step: float) -> np.ndarray:
+    """在热点周围生成细粒度网格"""
+    from itertools import product
+    n_factors = len(center)
+    ranges = []
+    for c in center:
+        lo = max(0.0, c - radius)
+        hi = min(1.0, c + radius)
+        vals = np.arange(lo, hi + step / 2, step)
+        ranges.append(vals)
+    grid = list(product(*ranges))
+    return np.array(grid, dtype=np.float32)
 
-    for gen in range(GA_GENERATIONS):
-        parents = tournament_select(pop, fitness, GA_POP_SIZE, GA_TOURNAMENT_SIZE)
-        children = crossover(parents, GA_CROSSOVER_RATE)
-        children = mutate(children, GA_MUTATION_RATE, GA_MUTATION_SIGMA)
-        fitness = evaluate_batch(children, factor_ranks, returns, GROUP_NUM)
 
-        worst_idx = np.argmin(fitness)
-        children[worst_idx] = best_weights
-        fitness[worst_idx] = best_fitness
-
-        gen_best_idx = np.argmax(fitness)
-        if fitness[gen_best_idx] > best_fitness:
-            best_fitness = fitness[gen_best_idx]
-            best_weights = children[gen_best_idx].copy()
-
-        pop = children
-
-        if (gen + 1) % 10 == 0:
-            print(f"Gen {gen + 1:3d}: best={best_fitness:.4f}, mean={fitness.mean():.4f}")
-
-    return best_weights, best_fitness
+def run_grid_search(factor_ranks: np.ndarray, returns: np.ndarray, factor_names: list[str]) -> tuple[np.ndarray, float, list[str]]:
+    """
+    多轮网格搜索
+    返回: (最优权重, 最优多空比, 选中的因子名列表)
+    """
+    n_all_factors = len(factor_names)
+    
+    # Step 1: 单因子测试
+    print(f"\n[Step 1] 单因子测试...")
+    single_results = test_single_factors(factor_ranks, returns, factor_names)
+    
+    print(f"单因子多空比排名:")
+    for name, idx, fitness in single_results:
+        print(f"  {name:20s}: {fitness:.4f}")
+    
+    # 筛选 top N
+    selected = single_results[:TOP_N_FACTORS]
+    selected_names = [x[0] for x in selected]
+    selected_indices = [x[1] for x in selected]
+    
+    print(f"\n选中因子: {selected_names}")
+    
+    # 提取选中因子的数据
+    selected_ranks = factor_ranks[:, :, selected_indices]
+    
+    # Step 2: 粗粒度搜索
+    print(f"\n[Step 2] 粗粒度网格搜索 (step={COARSE_STEP})...")
+    coarse_grid = generate_grid(TOP_N_FACTORS, COARSE_STEP)
+    print(f"搜索点数: {len(coarse_grid)}")
+    
+    coarse_fitness = evaluate_batch(coarse_grid, selected_ranks, returns, GROUP_NUM)
+    
+    # 找热点
+    top_k_idx = np.argsort(coarse_fitness)[-TOP_K_HOTSPOTS:][::-1]
+    hotspots = coarse_grid[top_k_idx]
+    hotspot_fitness = coarse_fitness[top_k_idx]
+    
+    print(f"Top {TOP_K_HOTSPOTS} 热点:")
+    for i, (w, f) in enumerate(zip(hotspots, hotspot_fitness)):
+        w_str = ", ".join(f"{v:.1f}" for v in w)
+        print(f"  #{i+1}: [{w_str}] -> {f:.4f}")
+    
+    # Step 3: 细粒度搜索
+    print(f"\n[Step 3] 细粒度搜索 (step={FINE_STEP}, radius={FINE_RADIUS})...")
+    
+    best_weights = hotspots[0]
+    best_fitness = hotspot_fitness[0]
+    
+    for i, center in enumerate(hotspots):
+        fine_grid = generate_fine_grid(center, FINE_RADIUS, FINE_STEP)
+        fine_fitness = evaluate_batch(fine_grid, selected_ranks, returns, GROUP_NUM)
+        
+        local_best_idx = np.argmax(fine_fitness)
+        if fine_fitness[local_best_idx] > best_fitness:
+            best_fitness = fine_fitness[local_best_idx]
+            best_weights = fine_grid[local_best_idx].copy()
+    
+    print(f"细搜后最优: {best_fitness:.4f}")
+    
+    # 转换回全因子权重
+    full_weights = np.zeros(n_all_factors, dtype=np.float32)
+    for i, idx in enumerate(selected_indices):
+        full_weights[idx] = best_weights[i]
+    
+    return full_weights, best_fitness, selected_names
 
 
 # ==================== 主程序 ====================
 
 def main():
     print("=" * 60)
-    print("遗传算法因子挖掘")
+    print("网格搜索因子挖掘")
     print("优化目标: 5档多空收益比 (Q5/Q1)")
     print("=" * 60)
 
-    # 自动分阶段: 数据文件不存在则生成
     if not DATA_FILE.exists():
         print(f"数据文件不存在，开始生成...")
         export_data()
@@ -350,30 +377,35 @@ def main():
 
     factor_ranks, returns, factor_names = load_data_from_file()
 
-    best_weights, best_fitness = run_ga(factor_ranks, returns, factor_names)
+    print("预热 JIT...")
+    _dummy = np.random.randn(2, len(factor_names)).astype(np.float32)
+    _ = evaluate_batch(_dummy, factor_ranks, returns, GROUP_NUM)
+
+    best_weights, best_fitness, selected_names = run_grid_search(factor_ranks, returns, factor_names)
 
     print("\n" + "=" * 60)
-    print("优化结果")
+    print("最终结果")
     print("=" * 60)
     print(f"最优多空比 (Q5/Q1): {best_fitness:.4f}")
 
-    print(f"\n最优因子权重:")
+    print(f"\n选中因子及权重:")
     for name, w in zip(factor_names, best_weights):
-        print(f"  {name:20s}: {w:+.4f}")
+        if w > 0:
+            print(f"  {name:20s}: {w:.2f}")
 
-    norm_weights = best_weights / np.abs(best_weights).sum()
-    print(f"\n归一化权重 (|w|之和=1):")
-    for name, w in zip(factor_names, norm_weights):
-        print(f"  {name:20s}: {w:+.4f}")
+    weight_sum = best_weights.sum()
+    if weight_sum > 0:
+        norm_weights = best_weights / weight_sum
+        print(f"\n归一化权重:")
+        for name, w in zip(factor_names, norm_weights):
+            if w > 0:
+                print(f"  {name:20s}: {w:.2f}")
 
-    result = {
-        "weights": {name: float(w) for name, w in zip(factor_names, best_weights)},
-        "norm_weights": {name: float(w) for name, w in zip(factor_names, norm_weights)},
+    return {
+        "selected_factors": selected_names,
+        "weights": {name: float(w) for name, w in zip(factor_names, best_weights) if w > 0},
         "long_short_ratio": float(best_fitness),
     }
-    print(f"\n结果字典: {result}")
-
-    return result
 
 
 if __name__ == "__main__":
