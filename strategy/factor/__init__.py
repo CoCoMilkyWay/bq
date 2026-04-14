@@ -166,7 +166,7 @@ def _create_schema(conn: sqlite3.Connection, end: int, is_text: bool = False):
     conn.execute("INSERT INTO meta VALUES (?, ?)", (CACHE_BASE_START, end))
 
 
-def _create_pool_factor_schema(conn: sqlite3.Connection, pool_name: str, end: int):
+def _create_pool_factor_schema(conn: sqlite3.Connection, pool_name: str, start: int, end: int):
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
     conn.execute(
@@ -174,7 +174,7 @@ def _create_pool_factor_schema(conn: sqlite3.Connection, pool_name: str, end: in
     conn.execute("CREATE INDEX idx_date ON data(date_int)")
     conn.execute(
         "CREATE TABLE meta (pool_name TEXT NOT NULL, range_start INTEGER NOT NULL, range_end INTEGER NOT NULL)")
-    conn.execute("INSERT INTO meta VALUES (?, ?, ?)", (pool_name, CACHE_BASE_START, end))
+    conn.execute("INSERT INTO meta VALUES (?, ?, ?)", (pool_name, start, end))
 
 
 def _query_sql(field: str, start: int, end: int) -> pd.DataFrame:
@@ -338,23 +338,20 @@ def ensure_pool_factors(
         if not path.exists():
             assert pool_by_date is not None, f"新建缓存 {pool_name}/{factor_name} 必须提供 pool_df"
             pool_min_date, pool_max_date = min(pool_by_date.keys()), max(pool_by_date.keys())
-            assert pool_min_date <= CACHE_BASE_START, (
-                f"pool_df 起始日期 {pool_min_date} 晚于缓存起始 {CACHE_BASE_START}，"
-                f"需提供 {CACHE_BASE_START}~{req_end} 的完整 pool_df"
-            )
+            create_start = max(CACHE_BASE_START, pool_min_date)
             assert pool_max_date >= req_end, (
                 f"pool_df 结束日期 {pool_max_date} 早于请求结束 {req_end}，"
-                f"需提供 {CACHE_BASE_START}~{req_end} 的完整 pool_df"
+                f"需提供 {create_start}~{req_end} 的完整 pool_df"
             )
             t0 = time.time()
-            print(f"  [{pool_name}/{factor_name}] 新建 {CACHE_BASE_START}~{req_end} ", end="", flush=True)
+            print(f"  [{pool_name}/{factor_name}] 新建 {create_start}~{req_end} ", end="", flush=True)
             tmp = Path(str(path) + ".tmp")
             tmp.unlink(missing_ok=True)
             conn = sqlite3.connect(tmp)
-            _create_pool_factor_schema(conn, pool_name, req_end)
+            _create_pool_factor_schema(conn, pool_name, create_start, req_end)
             conn.commit()
 
-            df = _compute_pool_factor_data(pool_name, factor_name, CACHE_BASE_START, req_end, pool_by_date)
+            df = _compute_pool_factor_data(pool_name, factor_name, create_start, req_end, pool_by_date)
             print(f" 写入 {len(df)} 行...", end="", flush=True)
             _insert_data(conn, df)
             conn.close()
@@ -364,8 +361,9 @@ def ensure_pool_factors(
 
         conn = sqlite3.connect(path)
         row = conn.execute("SELECT pool_name, range_start, range_end FROM meta").fetchone()
-        assert row and row[0] == pool_name and row[1] == CACHE_BASE_START, f"meta invalid for {pool_name}/{factor_name}"
-        range_end = row[2]
+        assert row and row[0] == pool_name, f"meta invalid for {pool_name}/{factor_name}"
+        range_start, range_end = row[1], row[2]
+        assert range_start <= range_end, f"meta invalid for {pool_name}/{factor_name}"
 
         if req_end <= range_end:
             conn.close()

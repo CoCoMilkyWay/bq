@@ -13,7 +13,7 @@ import bigcharts  # pyright: ignore[reportMissingImports]
 from factor import FACTOR_NAMES, compute_pool_factors
 from filter import get_universe_pool, UNIVERSE_SIZE
 
-START_DATE = "2025-01-01"
+START_DATE = "2017-01-01"
 END_DATE = "2026-04-07"
 GROUP_NUM = 5
 ANALYSIS_FACTOR_NAMES = [
