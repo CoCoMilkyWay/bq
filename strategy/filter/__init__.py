@@ -51,7 +51,7 @@ import pandas as pd
 
 FILTER_DIR = Path(__file__).resolve().parent
 
-UNIVERSE_SIZE = 200
+UNIVERSE_SIZE = 80
 
 FILTER_NAMES = [
     "profit_st",

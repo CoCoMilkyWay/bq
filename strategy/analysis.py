@@ -8,7 +8,6 @@
 import numpy as np
 import pandas as pd
 import dai
-import bigcharts  # pyright: ignore[reportMissingImports]
 
 from factor import FACTOR_NAMES, compute_pool_factors
 from filter import get_universe_pool, UNIVERSE_SIZE
@@ -251,11 +250,12 @@ def print_summary(results: dict):
 # ==================== 因子相关性 ====================
 
 def calc_factor_correlation(df: pd.DataFrame) -> pd.DataFrame:
-    """计算因子间相关性矩阵"""
+    """计算因子间相关性矩阵（截面内排序标准化到[0,1]后计算）"""
     factor_names = ANALYSIS_FACTOR_NAMES
     factor_cols = [c for c in factor_names if c in df.columns]
 
-    corr_matrix = df[factor_cols].corr(method="spearman")
+    ranked = df.groupby("date")[factor_cols].rank(pct=True)
+    corr_matrix = ranked.corr(method="spearman")
     return corr_matrix
 
 
@@ -273,107 +273,73 @@ def print_correlation_matrix(corr_df: pd.DataFrame):
 
 def plot_correlation_heatmap(corr_df: pd.DataFrame):
     """绘制相关性矩阵热力图（颜色按绝对值，标注数值）"""
-    from bigcharts import opts  # pyright: ignore[reportMissingImports]
+    import plotly.graph_objects as go  # pyright: ignore[reportMissingImports]
 
     factors = corr_df.columns.tolist()
-    data = []
-    for i, row_name in enumerate(factors):
-        for j, col_name in enumerate(factors):
-            val = corr_df.loc[row_name, col_name]
-            abs_val = abs(val)
-            data.append([j, i, round(val, 2), round(abs_val, 2)])
+    z = corr_df.values
+    text = [[f"{v:.2f}" for v in row] for row in z]
 
-    chart = bigcharts.Chart(
-        data=data,
-        type_="heatmap",
-        chart_options=dict(
-            title_opts=opts.TitleOpts(title="因子相关性矩阵 (Spearman)", pos_left="center"),
-            xaxis_opts=opts.AxisOpts(
-                type_="category",
-                data=factors,
-                axislabel_opts=opts.LabelOpts(rotate=45),
-            ),
-            yaxis_opts=opts.AxisOpts(
-                type_="category",
-                data=factors,
-            ),
-            visualmap_opts=opts.VisualMapOpts(
-                min_=0,
-                max_=1,
-                is_calculable=True,
-                orient="horizontal",
-                pos_left="center",
-                pos_bottom="0%",
-                dimension=3,
-            ),
-        ),
-        series_options=dict(
-            label_opts=opts.LabelOpts(is_show=True, position="inside", formatter="{@[2]}"),
-        ),
+    fig = go.Figure(data=go.Heatmap(
+        z=z,
+        x=factors,
+        y=factors,
+        text=text,
+        texttemplate="%{text}",
+        colorscale="RdBu_r",
+        zmid=0,
+        zmin=-1,
+        zmax=1,
+    ))
+    fig.update_layout(
+        title="因子相关性矩阵 (Spearman)",
+        xaxis=dict(tickangle=45),
+        width=700,
+        height=600,
     )
-
-    from IPython.display import display  # pyright: ignore
-    display(chart.render(display=False))
+    fig.show()
 
 
 def plot_factor_layers(results: dict):
     """为每个因子绘制分层累积净值曲线 (Q1-Q5 + 多空)"""
-    from bigcharts import opts  # pyright: ignore[reportMissingImports]
+    import plotly.graph_objects as go  # pyright: ignore[reportMissingImports]
+    from plotly.subplots import make_subplots  # pyright: ignore[reportMissingImports]
 
-    charts = []
-    for factor_name, r in results.items():
-        group_ret_df = r["group_ret_df"]
-        if group_ret_df.empty:
-            continue
+    factor_names = [k for k, r in results.items() if not r["group_ret_df"].empty]
+    if not factor_names:
+        return
+
+    n = len(factor_names)
+    fig = make_subplots(rows=n, cols=1, subplot_titles=factor_names, vertical_spacing=0.05)
+
+    for i, factor_name in enumerate(factor_names, 1):
+        group_ret_df = results[factor_name]["group_ret_df"]
         nav_df = (1 + group_ret_df.fillna(0)).cumprod()
-        nav_df = nav_df.reset_index()
-        y_cols = [col for col in nav_df.columns if col != "date"]
-        c = bigcharts.Chart(
-            data=nav_df,
-            type_="line",
-            x="date",
-            y=y_cols,
-            chart_options=dict(
-                title_opts=opts.TitleOpts(
-                    title=f"{factor_name} 分层净值", pos_left="center"),
-            ),
-        )
-        charts.append(c)
+        for col in nav_df.columns:
+            fig.add_trace(go.Scatter(x=nav_df.index, y=nav_df[col], mode="lines", name=col, showlegend=(i == 1)), row=i, col=1)
 
-    if charts:
-        page = bigcharts.Chart(charts, type_="page", init_opts={"height": "400px"}).render(display=False)
-        from IPython.display import display  # pyright: ignore
-        display(page)
+    fig.update_layout(height=300 * n, title_text="因子分层净值")
+    fig.show()
 
 
 def plot_ic_rolling(results: dict):
     """为每个因子绘制IC滚动分析图（IC序列 + 滚动均值）"""
-    from bigcharts import opts  # pyright: ignore[reportMissingImports]
+    import plotly.graph_objects as go  # pyright: ignore[reportMissingImports]
+    from plotly.subplots import make_subplots  # pyright: ignore[reportMissingImports]
 
-    charts = []
-    for factor_name, r in results.items():
-        rolling_ic = r.get("rolling_ic")
-        if rolling_ic is None or rolling_ic.empty:
-            continue
+    factor_names = [k for k, r in results.items() if r.get("rolling_ic") is not None and not r["rolling_ic"].empty]
+    if not factor_names:
+        return
 
-        plot_df = rolling_ic[["ic", "rolling_6", "rolling_12"]].reset_index()
+    n = len(factor_names)
+    fig = make_subplots(rows=n, cols=1, subplot_titles=factor_names, vertical_spacing=0.05)
 
-        c = bigcharts.Chart(
-            data=plot_df,
-            type_="line",
-            x="date",
-            y=["ic", "rolling_6", "rolling_12"],
-            chart_options=dict(
-                title_opts=opts.TitleOpts(
-                    title=f"{factor_name} IC滚动分析", pos_left="center"),
-            ),
-        )
-        charts.append(c)
+    for i, factor_name in enumerate(factor_names, 1):
+        rolling_ic = results[factor_name]["rolling_ic"]
+        for col in ["ic", "rolling_6", "rolling_12"]:
+            fig.add_trace(go.Scatter(x=rolling_ic.index, y=rolling_ic[col], mode="lines", name=col, showlegend=(i == 1)), row=i, col=1)
 
-    if charts:
-        page = bigcharts.Chart(charts, type_="page", init_opts={"height": "400px"}).render(display=False)
-        from IPython.display import display  # pyright: ignore
-        display(page)
+    fig.update_layout(height=300 * n, title_text="IC滚动分析")
+    fig.show()
 
 
 # ==================== 主流程 ====================
