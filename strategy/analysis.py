@@ -54,18 +54,15 @@ def get_factors_in_pool(pool_df: pd.DataFrame, pool_name: str = f"smallcap{UNIVE
 
 def get_forward_returns(pool_df: pd.DataFrame) -> pd.DataFrame:
     """
-    计算 T+1 开盘买入 T+2 开盘卖出的收益率
+    获取 T+1 日收益率（使用预计算的 daily_return，已复权）
     返回: DataFrame[date, instrument, fwd_ret]
     """
     sql = """
     SELECT
         date,
         instrument,
-        CASE
-            WHEN m_lead(open, 1) IS NULL OR m_lead(open, 2) IS NULL THEN 0
-            ELSE (m_lead(open, 2) / m_lead(open, 1) - 1)
-        END AS fwd_ret
-    FROM cn_stock_bar1d
+        m_lead(daily_return, 1) AS fwd_ret
+    FROM cn_stock_prefactors_community
     ORDER BY instrument, date
     """
     start_date = pool_df["date"].min().strftime("%Y-%m-%d")
@@ -344,15 +341,24 @@ def main():
     daily_count = pool_df.groupby("date").size()
     print(f"每日标的数: 平均={daily_count.mean():.1f}, 最小={daily_count.min()}, 最大={daily_count.max()}")
 
-    print("\n[2/5] 获取因子数据...")
-    factors_df = get_factors_in_pool(pool_df)
-
-    print("\n[3/5] 获取收益率数据...")
+    print("\n[2/5] 获取收益率数据...")
     ret_df = get_forward_returns(pool_df)
-    df = factors_df.merge(ret_df, on=["date", "instrument"], how="left")
+    pool_ret = pool_df.merge(ret_df, on=["date", "instrument"], how="left")
+    pool_ret["year"] = pool_ret["date"].dt.year
+    yearly_stats = pool_ret.groupby("year")["fwd_ret"].agg(["mean", "std", "min", "max", "count"])
+    yearly_stats["mean"] = yearly_stats["mean"] * 100
+    yearly_stats["std"] = yearly_stats["std"] * 100
+    yearly_stats["min"] = yearly_stats["min"] * 100
+    yearly_stats["max"] = yearly_stats["max"] * 100
+    yearly_stats["annual"] = yearly_stats["mean"] * 252
+    print("\n按年收益率统计 (%):")
+    print(yearly_stats.round(2))
+    daily_ret = pool_ret.groupby("date")["fwd_ret"].mean()
+    print(f"\n总体: 日均={daily_ret.mean()*100:.3f}%, 累计净值={(1+daily_ret).prod():.1f}倍")
 
-    print("\n数据分布检查:")
-    print(df[ANALYSIS_FACTOR_NAMES + ["fwd_ret"]].describe().T[["count", "mean", "std", "min", "50%", "max"]])
+    print("\n[3/5] 获取因子数据...")
+    factors_df = get_factors_in_pool(pool_df)
+    df = factors_df.merge(ret_df, on=["date", "instrument"], how="left")
 
     print("\n[4/5] 因子分析...")
     results = analyze_all_factors(df)

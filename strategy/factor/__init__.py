@@ -58,30 +58,36 @@ def winsorize_mad(s: pd.Series, n: float = 3) -> pd.Series:
     return s.clip(med - n * mad, med + n * mad)
 
 
+def z_score(s: pd.Series) -> pd.Series:
+    std = s.std()
+    assert std > 0, "z_score: std is zero"
+    return (s - s.mean()) / std
+
+
 # ==================== 因子计算函数 ====================
 
 def _inverse_factor(raw_field: str) -> Callable:
-    """取倒数 + winsorize，用于 PE/PB/PS/PCF 等越小越便宜的因子"""
+    """取倒数 + winsorize + z-score，用于 PE/PB/PS/PCF 等越小越便宜的因子"""
     def compute(df: pd.DataFrame) -> pd.Series:
         values = 1.0 / df[raw_field].replace(0, np.nan)
         mask = values.notna()
         if mask.sum() < MIN_CS_SAMPLE:
             return pd.Series(np.nan, index=values.index)
         out = pd.Series(np.nan, index=values.index)
-        out.loc[mask] = winsorize_mad(values[mask])
+        out.loc[mask] = z_score(winsorize_mad(values[mask]))
         return out
     return compute
 
 
 def _identity_factor(raw_field: str) -> Callable:
-    """直接 winsorize，用于 ROE/ROA 等越大越好的因子"""
+    """直接 winsorize + z-score，用于 ROE/ROA 等越大越好的因子"""
     def compute(df: pd.DataFrame) -> pd.Series:
         values = df[raw_field]
         mask = values.notna()
         if mask.sum() < MIN_CS_SAMPLE:
             return pd.Series(np.nan, index=values.index)
         out = pd.Series(np.nan, index=values.index)
-        out.loc[mask] = winsorize_mad(values[mask])
+        out.loc[mask] = z_score(winsorize_mad(values[mask]))
         return out
     return compute
 
