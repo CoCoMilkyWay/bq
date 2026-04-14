@@ -271,6 +271,51 @@ def print_correlation_matrix(corr_df: pd.DataFrame):
     print("=" * 80)
 
 
+def plot_correlation_heatmap(corr_df: pd.DataFrame):
+    """绘制相关性矩阵热力图（颜色按绝对值，标注数值）"""
+    from bigcharts import opts  # pyright: ignore[reportMissingImports]
+
+    factors = corr_df.columns.tolist()
+    data = []
+    for i, row_name in enumerate(factors):
+        for j, col_name in enumerate(factors):
+            val = corr_df.loc[row_name, col_name]
+            abs_val = abs(val)
+            data.append([j, i, round(val, 2), round(abs_val, 2)])
+
+    chart = bigcharts.Chart(
+        data=data,
+        type_="heatmap",
+        chart_options=dict(
+            title_opts=opts.TitleOpts(title="因子相关性矩阵 (Spearman)", pos_left="center"),
+            xaxis_opts=opts.AxisOpts(
+                type_="category",
+                data=factors,
+                axislabel_opts=opts.LabelOpts(rotate=45),
+            ),
+            yaxis_opts=opts.AxisOpts(
+                type_="category",
+                data=factors,
+            ),
+            visualmap_opts=opts.VisualMapOpts(
+                min_=0,
+                max_=1,
+                is_calculable=True,
+                orient="horizontal",
+                pos_left="center",
+                pos_bottom="0%",
+                dimension=3,
+            ),
+        ),
+        series_options=dict(
+            label_opts=opts.LabelOpts(is_show=True, position="inside", formatter="{@[2]}"),
+        ),
+    )
+
+    from IPython.display import display  # pyright: ignore
+    display(chart.render(display=False))
+
+
 def plot_factor_layers(results: dict):
     """为每个因子绘制分层累积净值曲线 (Q1-Q5 + 多空)"""
     from bigcharts import opts  # pyright: ignore[reportMissingImports]
@@ -358,6 +403,7 @@ def main():
     print("\n[5/5] 因子相关性...")
     corr_df = calc_factor_correlation(df)
     print_correlation_matrix(corr_df)
+    plot_correlation_heatmap(corr_df)
 
     print("\n绘制分层净值图...")
     plot_factor_layers(results)
