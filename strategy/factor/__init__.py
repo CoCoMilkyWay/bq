@@ -36,7 +36,16 @@ def _to_str(d: int) -> str:
 
 
 def _next_day(d: int) -> int:
-    return int((pd.Timestamp(str(d)) + pd.Timedelta(days=1)).strftime("%Y%m%d"))
+    return int((pd.to_datetime(str(d), format="%Y%m%d") + pd.Timedelta(days=1)).strftime("%Y%m%d"))
+
+
+def _date_to_int_series(s: pd.Series) -> pd.Series:
+    dt = pd.to_datetime(s)
+    return (dt.dt.year * 10000 + dt.dt.month * 100 + dt.dt.day).astype(int)
+
+
+def _int_to_date_series(s: pd.Series) -> pd.Series:
+    return pd.to_datetime(s.astype(str), format="%Y%m%d")
 
 
 # ==================== 截面处理 ====================
@@ -172,8 +181,7 @@ def _query_sql(field: str, start: int, end: int) -> pd.DataFrame:
     sql = f"SELECT date, instrument, {field} AS value FROM {RAW_TABLE} ORDER BY date, instrument"
     df = dai.query(sql, filters={"date": [_to_str(start), _to_str(end)]}).df()
     assert len(df) > 0, f"no data for {field} in [{start}, {end}]"
-    df["date_int"] = pd.to_datetime(
-        df["date"]).dt.strftime("%Y%m%d").astype(int)
+    df["date_int"] = _date_to_int_series(df["date"])
     return df[["date_int", "instrument", "value"]]
 
 
@@ -191,16 +199,20 @@ def _compute_pool_factor_data(
     dep_data = {dep: read_cache(dep, _to_str(start), _to_str(end)) for dep in deps}
     base_df = dep_data[deps[0]][["date", "instrument"]].copy()
     for dep in deps:
-        base_df[dep] = dep_data[dep]["value"].values
-    base_df["date_int"] = pd.to_datetime(base_df["date"]).dt.strftime("%Y%m%d").astype(int)
+        # 依赖数据必须按 (date, instrument) 严格对齐，避免静默错位
+        aligned = dep_data[dep][["date", "instrument"]]
+        assert aligned.equals(base_df[["date", "instrument"]]), f"{factor_name} 依赖 {dep} 对齐失败"
+        base_df[dep] = dep_data[dep]["value"]
+    base_df["date_int"] = _date_to_int_series(base_df["date"])
 
     date_ints, instruments, values = [], [], []
-    dates_to_compute = sorted(set(base_df["date_int"]) & set(pool_by_date.keys()))
+    day_groups = {date_int: g for date_int, g in base_df.groupby("date_int", sort=False)}
+    dates_to_compute = sorted(set(day_groups) & set(pool_by_date))
     total = len(dates_to_compute)
 
     for i, date_int in enumerate(dates_to_compute):
         pool_insts = pool_by_date[date_int]
-        day_df = base_df[base_df["date_int"] == date_int]
+        day_df = day_groups[date_int]
         day_df = day_df[day_df["instrument"].isin(pool_insts)]
         if day_df.empty:
             continue
@@ -286,7 +298,7 @@ def read_cache(name: str, start_date: str, end_date: str, instruments: Optional[
 
     df = pd.read_sql_query(sql, conn, params=[start, end])
     conn.close()
-    df["date"] = pd.to_datetime(df["date_int"].astype(str))
+    df["date"] = _int_to_date_series(df["date_int"])
     return df.drop(columns=["date_int"])
 
 
@@ -295,7 +307,7 @@ def read_cache(name: str, start_date: str, end_date: str, instruments: Optional[
 def _pool_df_to_dict(pool_df: pd.DataFrame) -> dict[int, set[str]]:
     """将 pool_df 转换为 {date_int: set(instruments)} 格式"""
     pool_df = pool_df.copy()
-    pool_df["date_int"] = pd.to_datetime(pool_df["date"]).dt.strftime("%Y%m%d").astype(int)
+    pool_df["date_int"] = _date_to_int_series(pool_df["date"])
     return pool_df.groupby("date_int")["instrument"].apply(set).to_dict()
 
 
@@ -392,7 +404,7 @@ def read_pool_factors(
 ) -> pd.DataFrame:
     """读取已缓存的 pool 因子数据"""
     start, end = _to_int(start_date), _to_int(end_date)
-    frames = []
+    series_list = []
 
     for factor_name in factor_names:
         path = _pool_factor_cache_path(pool_name, factor_name)
@@ -401,16 +413,16 @@ def read_pool_factors(
         sql = "SELECT date_int, instrument, value FROM data WHERE date_int BETWEEN ? AND ? ORDER BY date_int, instrument"
         df = pd.read_sql_query(sql, conn, params=[start, end])
         conn.close()
-        df["date"] = pd.to_datetime(df["date_int"].astype(str))
-        df = df.drop(columns=["date_int"]).rename(columns={"value": factor_name})
-        frames.append(df)
+        if df.empty:
+            continue
+        df["date"] = _int_to_date_series(df["date_int"])
+        s = df.set_index(["date", "instrument"])["value"].rename(factor_name)
+        series_list.append(s)
 
-    if not frames:
+    if not series_list:
         return pd.DataFrame(columns=["date", "instrument"] + factor_names)
 
-    result = frames[0]
-    for df in frames[1:]:
-        result = result.merge(df, on=["date", "instrument"], how="outer")
+    result = pd.concat(series_list, axis=1, join="outer").reset_index()
     return result.sort_values(["date", "instrument"]).reset_index(drop=True)
 
 

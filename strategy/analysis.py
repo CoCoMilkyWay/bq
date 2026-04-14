@@ -16,6 +16,19 @@ from filter import get_universe_pool, UNIVERSE_SIZE
 START_DATE = "2025-01-01"
 END_DATE = "2026-04-07"
 GROUP_NUM = 5
+ANALYSIS_FACTOR_NAMES = [
+    "pe_ttm",
+    "pb",
+    "ps_ttm",
+    "pcf_ttm",
+    "roe_ttm",
+    "roa_ttm",
+    "dividend_yield",
+    "total_market_cap",
+    "float_market_cap",
+    "close",
+]
+assert set(ANALYSIS_FACTOR_NAMES).issubset(set(FACTOR_NAMES)), "analysis factors not in FACTOR_NAMES"
 
 
 # ==================== 因子数据获取 ====================
@@ -23,7 +36,7 @@ GROUP_NUM = 5
 
 def get_factors_in_pool(pool_df: pd.DataFrame, pool_name: str = f"smallcap{UNIVERSE_SIZE}") -> pd.DataFrame:
     """获取股票池内的因子数据"""
-    factor_names = FACTOR_NAMES
+    factor_names = ANALYSIS_FACTOR_NAMES
     start_date = pool_df["date"].min().strftime("%Y-%m-%d")
     end_date = pool_df["date"].max().strftime("%Y-%m-%d")
     factors_df = compute_pool_factors(
@@ -155,7 +168,7 @@ def calc_benchmark_returns(df: pd.DataFrame) -> pd.Series:
 
 def analyze_all_factors(df: pd.DataFrame) -> dict:
     """分析所有因子"""
-    factor_names = FACTOR_NAMES
+    factor_names = ANALYSIS_FACTOR_NAMES
     results = {}
 
     benchmark = calc_benchmark_returns(df)
@@ -239,7 +252,7 @@ def print_summary(results: dict):
 
 def calc_factor_correlation(df: pd.DataFrame) -> pd.DataFrame:
     """计算因子间相关性矩阵"""
-    factor_names = FACTOR_NAMES
+    factor_names = ANALYSIS_FACTOR_NAMES
     factor_cols = [c for c in factor_names if c in df.columns]
 
     corr_matrix = df[factor_cols].corr(method="spearman")
