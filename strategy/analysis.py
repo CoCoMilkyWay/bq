@@ -258,19 +258,6 @@ def calc_factor_correlation(df: pd.DataFrame) -> pd.DataFrame:
     corr_matrix = ranked.corr(method="spearman")
     return corr_matrix
 
-
-def print_correlation_matrix(corr_df: pd.DataFrame):
-    """打印相关性矩阵"""
-    print("\n" + "=" * 80)
-    print("因子相关性矩阵 (Spearman)")
-    print("=" * 80)
-
-    pd.set_option("display.float_format", "{:.3f}".format)
-    pd.set_option("display.width", 120)
-    print(corr_df)
-    print("=" * 80)
-
-
 def plot_correlation_heatmap(corr_df: pd.DataFrame):
     """绘制相关性矩阵热力图（颜色按绝对值，标注数值）"""
     import plotly.graph_objects as go  # pyright: ignore[reportMissingImports]
@@ -313,7 +300,8 @@ def plot_factor_layers(results: dict):
 
     for i, factor_name in enumerate(factor_names, 1):
         group_ret_df = results[factor_name]["group_ret_df"]
-        nav_df = (1 + group_ret_df.fillna(0)).cumprod()
+        layer_cols = [c for c in group_ret_df.columns if c.startswith("Q") and "-" not in c]
+        nav_df = (1 + group_ret_df[layer_cols].fillna(0)).cumprod()
         for col in nav_df.columns:
             fig.add_trace(go.Scatter(x=nav_df.index, y=nav_df[col], mode="lines", name=col, showlegend=(i == 1)), row=i, col=1)
 
@@ -353,6 +341,8 @@ def main():
 
     print("\n[1/5] 构建股票池...")
     pool_df = get_universe_pool(START_DATE, END_DATE, UNIVERSE_SIZE)
+    daily_count = pool_df.groupby("date").size()
+    print(f"每日标的数: 平均={daily_count.mean():.1f}, 最小={daily_count.min()}, 最大={daily_count.max()}")
 
     print("\n[2/5] 获取因子数据...")
     factors_df = get_factors_in_pool(pool_df)
@@ -360,7 +350,9 @@ def main():
     print("\n[3/5] 获取收益率数据...")
     ret_df = get_forward_returns(pool_df)
     df = factors_df.merge(ret_df, on=["date", "instrument"], how="left")
-    print(f"合并后记录数: {len(df)}")
+
+    print("\n数据分布检查:")
+    print(df[ANALYSIS_FACTOR_NAMES + ["fwd_ret"]].describe().T[["count", "mean", "std", "min", "50%", "max"]])
 
     print("\n[4/5] 因子分析...")
     results = analyze_all_factors(df)
@@ -368,7 +360,6 @@ def main():
 
     print("\n[5/5] 因子相关性...")
     corr_df = calc_factor_correlation(df)
-    print_correlation_matrix(corr_df)
     plot_correlation_heatmap(corr_df)
 
     print("\n绘制分层净值图...")
