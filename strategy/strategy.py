@@ -16,16 +16,16 @@ HOLD_N = 40
 EXIT_RATIO = 1.2
 CAPITAL_BASE = 1000000
 RANK_FACTOR_WEIGHTS = {
-    "pe_ttm": 1.0,
-    "pb": 1.0,
+    # "pe_ttm": 1.0,
+    # "pb": 1.0,
     "ps_ttm": 1.0,
-    "pcf_ttm": 1.0,
-    "roe_ttm": 1.0,
-    "roa_ttm": 1.0,
-    "dividend_yield": 1.0,
-    "total_market_cap": 1.0,
-    "float_market_cap": 1.0,
-    "close": 1.0,
+    # "pcf_ttm": 1.0,
+    # "roe_ttm": 1.0,
+    # "roa_ttm": 1.0,
+    # "dividend_yield": 1.0,
+    # "total_market_cap": 1.0,
+    # "float_market_cap": 1.0,
+    # "close": 1.0,
 }
 
 '''
