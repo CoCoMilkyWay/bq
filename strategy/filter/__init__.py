@@ -42,6 +42,10 @@
     数据源: bigquant cn_stock_status
     `risk_warning := is_risk_warning = 1`
     - 风险警示公告发布后标记
+**次新股** (new_listing): (17年次新股涨停潮, 不可复制, 影响回测)
+    数据源: bigquant cn_stock_basic_info
+    `new_listing := 上市日期距今 < 60天`
+    - 过滤上市不满60天的次新股，避免涨停板无法买入的问题
 """
 
 import json
