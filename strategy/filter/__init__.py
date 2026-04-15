@@ -59,6 +59,7 @@ FILTER_NAMES = [
     "risk_warning",
     "trading_st",
     "dividend_st",
+    "new_listing",
 ]
 
 SW2021_ALL_INDUSTRIES = [

@@ -54,13 +54,14 @@ def get_factors_in_pool(pool_df: pd.DataFrame, pool_name: str = f"smallcap{UNIVE
 
 def get_forward_returns(pool_df: pd.DataFrame) -> pd.DataFrame:
     """
-    获取 T+1 日收益率（使用预计算的 daily_return，已复权）
-    返回: DataFrame[date, instrument, fwd_ret]
+    获取 T+1 日收益率 和 当日收益率（用于判断涨停）
+    返回: DataFrame[date, instrument, fwd_ret, prev_ret]
     """
     sql = """
     SELECT
         date,
         instrument,
+        daily_return AS prev_ret,
         m_lead(daily_return, 1) AS fwd_ret
     FROM cn_stock_prefactors_community
     ORDER BY instrument, date
@@ -78,16 +79,20 @@ def get_forward_returns(pool_df: pd.DataFrame) -> pd.DataFrame:
 # ==================== 因子分析 ====================
 
 def calc_ic(group_df: pd.DataFrame, factor_col: str) -> float:
-    """计算单日 Rank IC (Spearman)"""
-    valid = group_df[[factor_col, "fwd_ret"]].dropna()
+    """计算单日 Rank IC (Spearman)，排除涨停股票"""
+    valid = group_df[[factor_col, "fwd_ret", "prev_ret"]].dropna()
+    # 排除前日涨停（当日无法买入）
+    valid = valid[valid["prev_ret"] < 0.095]
     if len(valid) < 10:
         return np.nan
     return valid[[factor_col, "fwd_ret"]].corr(method="spearman").iloc[0, 1]
 
 
 def calc_group_returns(group_df: pd.DataFrame, factor_col: str, group_num: int) -> pd.Series:
-    """计算单日分组收益，返回 Series[Q1..Q5] = mean_ret"""
-    valid = group_df[[factor_col, "fwd_ret"]].dropna(subset=[factor_col]).copy()
+    """计算单日分组收益，返回 Series[Q1..Q5] = mean_ret，排除涨停股票"""
+    valid = group_df[[factor_col, "fwd_ret", "prev_ret"]].dropna(subset=[factor_col]).copy()
+    # 排除前日涨停（当日无法买入）
+    valid = valid[valid["prev_ret"] < 0.095]
     if len(valid) < group_num:
         return pd.Series(dtype=float)
 
@@ -158,8 +163,9 @@ def analyze_factor(df: pd.DataFrame, factor_col: str, group_num: int = GROUP_NUM
 
 
 def calc_benchmark_returns(df: pd.DataFrame) -> pd.Series:
-    """计算股票池等权基准收益"""
-    return df.groupby("date")["fwd_ret"].mean()
+    """计算股票池等权基准收益，排除涨停股票"""
+    valid = df[df["prev_ret"] < 0.095]
+    return valid.groupby("date")["fwd_ret"].mean()
 
 
 def analyze_all_factors(df: pd.DataFrame) -> dict:
@@ -344,16 +350,18 @@ def main():
     print("\n[2/5] 获取收益率数据...")
     ret_df = get_forward_returns(pool_df)
     pool_ret = pool_df.merge(ret_df, on=["date", "instrument"], how="left")
-    pool_ret["year"] = pool_ret["date"].dt.year
-    yearly_stats = pool_ret.groupby("year")["fwd_ret"].agg(["mean", "std", "min", "max", "count"])
+    # 排除涨停（当日无法买入）
+    pool_ret_tradable = pool_ret[pool_ret["prev_ret"] < 0.095]
+    pool_ret_tradable["year"] = pool_ret_tradable["date"].dt.year
+    yearly_stats = pool_ret_tradable.groupby("year")["fwd_ret"].agg(["mean", "std", "min", "max", "count"])
     yearly_stats["mean"] = yearly_stats["mean"] * 100
     yearly_stats["std"] = yearly_stats["std"] * 100
     yearly_stats["min"] = yearly_stats["min"] * 100
     yearly_stats["max"] = yearly_stats["max"] * 100
     yearly_stats["annual"] = yearly_stats["mean"] * 252
-    print("\n按年收益率统计 (%):")
+    print("\n按年收益率统计 (%, 排除涨停):")
     print(yearly_stats.round(2))
-    daily_ret = pool_ret.groupby("date")["fwd_ret"].mean()
+    daily_ret = pool_ret_tradable.groupby("date")["fwd_ret"].mean()
     print(f"\n总体: 日均={daily_ret.mean()*100:.3f}%, 累计净值={(1+daily_ret).prod():.1f}倍")
 
     print("\n[3/5] 获取因子数据...")
