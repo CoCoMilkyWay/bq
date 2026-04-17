@@ -18,7 +18,7 @@ LIST_SECTOR_MAIN_BOARD = 1
 def fetch_data() -> pd.DataFrame:
     sql = """
     SELECT date, instrument, close, total_market_cap, list_sector
-    FROM cn_stock_prefactors_community
+    FROM cn_stock_prefactors
     WHERE close IS NOT NULL AND total_market_cap IS NOT NULL
     ORDER BY instrument, date
     """

@@ -30,7 +30,7 @@ RANK_FACTOR_WEIGHTS = {
 
 '''
 ## 策略配置
-- **股票池** (`cn_stock_basic_selector` + `cn_stock_prefactors_community`)
+- **股票池** (`cn_stock_basic_selector` + `cn_stock_prefactors`)
   - 基础过滤: 上交所/深交所, 主板/创业板/科创板, 排除ST, 排除停牌
   - 按 `total_market_cap` 升序取前 `UNIVERSE_SIZE` 只
   - 字段: `close`, `upper_limit`, `lower_limit` (涨跌停判断)
@@ -70,7 +70,7 @@ RANK_FACTOR_WEIGHTS = {
     - 年报未发/截至: 同上
     - 21年后适用: report_year >= 2021 AND ann_date >= 20210101
 **交易ST** (trading_st):
-    数据源: bigquant cn_stock_prefactors_community
+    数据源: bigquant cn_stock_prefactors
     `trading_st := 连续20日(收盘价<1 OR 市值<阈值)`
     - 面值退市: 连续20个交易日收盘价 < 1元
     - 市值退市: 连续20个交易日市值 < 5亿元(主板) / 3亿元(科创板/创业板)
@@ -92,25 +92,25 @@ RANK_FACTOR_WEIGHTS = {
 
 排序因子:
 **PE(TTM)** (`pe_ttm`): (优先:小)
-    数据源: cn_stock_prefactors_community.pe_ttm
+    数据源: cn_stock_prefactors.pe_ttm
 **PB** (`pb`): (优先:小)
-    数据源: cn_stock_prefactors_community.pb
+    数据源: cn_stock_prefactors.pb
 **PS(TTM)** (`ps_ttm`): (优先:小)
-    数据源: cn_stock_prefactors_community.ps_ttm
+    数据源: cn_stock_prefactors.ps_ttm
 **PCF(TTM)** (`pcf_ttm`): (优先:小)
-    数据源: cn_stock_prefactors_community.pcf_net_ttm
+    数据源: cn_stock_prefactors.pcf_net_ttm
 **ROE(TTM)** (`roe_ttm`): (优先:大)
-    数据源: cn_stock_prefactors_community.roe_avg_ttm
+    数据源: cn_stock_prefactors.roe_avg_ttm
 **ROA(TTM)** (`roa_ttm`): (优先:大)
-    数据源: cn_stock_prefactors_community.roa_avg_ttm
+    数据源: cn_stock_prefactors.roa_avg_ttm
 **股息率** (`dividend_yield`): (优先:大)
-    数据源: cn_stock_prefactors_community.dividend_yield_ratio
+    数据源: cn_stock_prefactors.dividend_yield_ratio
 **总市值**: (优先:小)
-    数据源: cn_stock_prefactors_community.total_market_cap
+    数据源: cn_stock_prefactors.total_market_cap
 **流通市值**: (优先:小)
-    数据源: cn_stock_prefactors_community.float_market_cap
+    数据源: cn_stock_prefactors.float_market_cap
 **收盘价**: (优先:小)
-    数据源: cn_stock_prefactors_community.close
+    数据源: cn_stock_prefactors.close
 
 代码编写原则:
 1. 回测和实盘统一使用incremental实现, 尽量共享代码和逻辑

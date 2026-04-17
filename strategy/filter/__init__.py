@@ -27,7 +27,7 @@
     - 年报未发/截至: 同上
     - 21年后适用: report_year >= 2021 AND ann_date >= 20210101
 **交易ST** (trading_st):
-    数据源: bigquant cn_stock_prefactors_community
+    数据源: bigquant cn_stock_prefactors
     `trading_st := 连续20日(收盘价<1 OR 市值<阈值)`
     - 面值退市: 连续20个交易日收盘价 < 1元
     - 市值退市: 连续20个交易日市值 < 5亿元(主板) / 3亿元(科创板/创业板)
@@ -272,7 +272,7 @@ def get_universe_pool(
     )
     SELECT
         {fields_sql}
-    FROM cn_stock_prefactors_community
+    FROM cn_stock_prefactors
     WHERE (date, instrument) IN (SELECT date, instrument FROM basic_pool)
     QUALIFY ROW_NUMBER() OVER (PARTITION BY date ORDER BY total_market_cap ASC) <= {universe_size}
     ORDER BY date, instrument

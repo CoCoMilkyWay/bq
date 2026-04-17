@@ -1,13 +1,27 @@
 """
 网格搜索因子挖掘
 
-优化目标: 5档多空收益 (Q5/Q1)
+优化目标: 5档多空组合复利 NAV (Q5 long - Q1 short, 扣费后)
 因子处理: 截面排序 -> [0,1] 分位数 -> 加权求和 -> 再排序分档
 
-流程:
-    1. 单因子测试，筛选 top N 因子
-    2. 粗粒度网格搜索 (0.3 间隔)
-    3. 热点附近细粒度搜索
+准确性要点:
+    - 数据源: cn_stock_prefactors
+    - 涨跌停粘性持仓 (对齐 strategy.py 四条限制): price_limit_status 0=缺失/1=跌停/2=正常/3=涨停
+        * status != 2 的标的"冻结": 当日持仓状态 = 昨日持仓状态, 不产生换手
+            - 涨停持仓不卖 (预期次日超额收益)
+            - 跌停持仓不卖 (做不到)
+            - 涨停非持仓不买 (做不到)
+            - 跌停非持仓不买 (预期次日超额风险)
+        * 只有 status == 2 的标的可自由进出 Q5 / Q1
+    - 成本: 每日对 Q5/Q1 分别计算真实换手率, 乘以 COST_ROUND_TRIP (千2)
+        * 低频因子年化换手 ~10倍, 对应年化成本 ~2%, 不会过度惩罚
+
+效率要点:
+    - 单 CSR 紧凑布局 (含全部 factor/ret-valid 标的 + status 标注)
+    - 每日一次 argsort, 长短侧共用 (top-down 填 Q5 / bottom-up 填 Q1)
+    - 锁定股 + 正常股均 O(cnt) 单次扫描, 无反向查找表
+    - 内存 C-order, 手写 dot, fastmath, prange 并行
+    - 粘性持仓用 per-thread bitmask O(cnt) 维护
 
 使用方式:
     python ga_mining.py
@@ -20,10 +34,12 @@ from pathlib import Path
 # ==================== 配置 ====================
 
 DATA_FILE = Path(__file__).parent / "ga_mining_data.npz"
+SCHEMA_VERSION = 1  # v1
 
 START_DATE = "2017-01-01"
 END_DATE = "2026-04-07"
 GROUP_NUM = 5  # 分档数
+COST_ROUND_TRIP = 0.002  # 一次换手综合成本 (买 0.0005 + 卖 0.0015)
 
 TOP_N_FACTORS = 5  # 筛选因子数
 COARSE_STEP = 0.3  # 粗搜步长
@@ -47,9 +63,98 @@ FACTOR_NAMES_TO_USE = [
 
 # ==================== 数据导出/加载 ====================
 
+def _load_returns_and_limits(pool_df):
+    """
+    加载 pool 范围内的 T+1 收益率 和 涨跌停状态
+    返回: DataFrame[date, instrument, fwd_ret, price_limit_status]
+    """
+    import pandas as pd
+    import dai
+
+    start = pool_df["date"].min().strftime("%Y-%m-%d")
+    pool_end = pool_df["date"].max().strftime("%Y-%m-%d")
+    query_end = (pool_df["date"].max() + pd.Timedelta(days=10)).strftime("%Y-%m-%d")
+
+    sql = """
+    SELECT
+        date,
+        instrument,
+        m_lead(daily_return, 1) AS fwd_ret,
+        price_limit_status
+    FROM cn_stock_prefactors
+    ORDER BY instrument, date
+    """
+    df = dai.query(sql, filters={"date": [start, query_end]}).df()
+    df["date"] = pd.to_datetime(df["date"]).dt.normalize()
+    df = df.loc[df["date"] <= pd.to_datetime(pool_end)]
+
+    # 校验涨跌停编码 (1=跌停, 2=非涨跌停, 3=涨停)
+    valid_status = df["price_limit_status"].dropna().unique()
+    assert set(valid_status.tolist()).issubset({1, 2, 3}), \
+        f"unexpected price_limit_status values: {valid_status}"
+
+    # Pool 过滤
+    df = df.merge(pool_df[["date", "instrument"]], on=["date", "instrument"], how="inner")
+    return df
+
+
+def _rank_percentile_vectorized(factors: np.ndarray) -> np.ndarray:
+    """
+    将因子值转换为截面排名分位数 [0, 1], NaN 保留
+    factors: (n_dates, n_stocks, n_factors) float32
+    返回: (n_dates, n_stocks, n_factors) float32
+    """
+    import pandas as pd
+    n_dates, n_stocks, n_factors = factors.shape
+    ranks = np.full_like(factors, np.nan)
+    for f in range(n_factors):
+        vals = factors[:, :, f]  # (D, S)
+        ranked = pd.DataFrame(vals).rank(axis=1, method="average", pct=True, na_option="keep").values
+        ranks[:, :, f] = ranked.astype(np.float32)
+    return ranks
+
+
+def _build_csr(
+    factor_ranks: np.ndarray,     # (D, S, F) float32, NaN for missing
+    returns: np.ndarray,          # (D, S) float32, NaN for missing
+    limit_status: np.ndarray,     # (D, S) int8: 0=缺失, 1=跌停, 2=正常, 3=涨停
+):
+    """
+    构造单侧 CSR 紧凑数组: 包含全部 factor/ret-valid 标的 (不过滤涨跌停)
+    status 作为 flat_status 保留, 由 kernel 按粘性持仓语义处理:
+        status != 2 当日持仓冻结, 只有 status == 2 可自由进出
+    """
+    D, S, F = factor_ranks.shape
+    factor_valid = ~np.isnan(factor_ranks).any(axis=2)   # (D, S) bool
+    ret_valid = ~np.isnan(returns)                        # (D, S) bool
+    mask = factor_valid & ret_valid
+
+    counts = mask.sum(axis=1).astype(np.int32)            # (D,)
+    offsets = np.zeros(D + 1, dtype=np.int32)
+    np.cumsum(counts, out=offsets[1:])
+    total = int(offsets[-1])
+
+    flat_ranks = np.empty((total, F), dtype=np.float32)
+    flat_rets = np.empty(total, dtype=np.float32)
+    flat_insts = np.empty(total, dtype=np.int32)
+    flat_status = np.empty(total, dtype=np.int8)
+
+    for d in range(D):
+        lo = offsets[d]
+        hi = offsets[d + 1]
+        if hi == lo:
+            continue
+        stock_idx = np.flatnonzero(mask[d])               # (cnt,) int64
+        flat_ranks[lo:hi] = factor_ranks[d, stock_idx, :]
+        flat_rets[lo:hi] = returns[d, stock_idx]
+        flat_insts[lo:hi] = stock_idx.astype(np.int32)
+        flat_status[lo:hi] = limit_status[d, stock_idx]
+    return flat_ranks, flat_rets, flat_insts, flat_status, offsets
+
+
 def export_data(output_path: Path = DATA_FILE) -> None:
     """
-    从数据源加载数据，转换后保存为压缩文件
+    从数据源加载数据, 转换为 CSR 紧凑布局, 保存为压缩文件
     """
     import pandas as pd
     from factor import read_pool_factors, ensure_pool_factors
@@ -68,11 +173,9 @@ def export_data(output_path: Path = DATA_FILE) -> None:
     ensure_pool_factors(POOL_NAME, END_DATE, FACTOR_NAMES_TO_USE, pool_df)
     factor_df = read_pool_factors(POOL_NAME, START_DATE, END_DATE, FACTOR_NAMES_TO_USE)
 
-    print("加载收益率...")
-    from analysis import get_forward_returns
-    ret_df = get_forward_returns(pool_df)
+    print("加载收益率和涨跌停状态...")
+    ret_df = _load_returns_and_limits(pool_df)
 
-    # 合并
     df = factor_df.merge(ret_df, on=["date", "instrument"], how="left")
 
     # 构建索引
@@ -81,200 +184,284 @@ def export_data(output_path: Path = DATA_FILE) -> None:
     all_instruments = sorted(df["instrument"].unique())
     inst_to_idx = {inst: i for i, inst in enumerate(all_instruments)}
 
-    n_dates = len(dates)
-    n_stocks = len(all_instruments)
-    n_factors = len(FACTOR_NAMES_TO_USE)
+    D = len(dates)
+    S = len(all_instruments)
+    F = len(FACTOR_NAMES_TO_USE)
+    print(f"  日数: {D}, 标的数: {S}, 因子数: {F}")
 
-    # 初始化
-    factors_raw = np.full((n_dates, n_stocks, n_factors), np.nan, dtype=np.float32)
-    returns = np.full((n_dates, n_stocks), np.nan, dtype=np.float32)
+    factors_raw = np.full((D, S, F), np.nan, dtype=np.float32)
+    returns = np.full((D, S), np.nan, dtype=np.float32)
+    limit_status = np.zeros((D, S), dtype=np.int8)  # 0 = 缺失
 
-    # 向量化索引
-    d_indices = df["date"].map(date_to_idx).values
-    i_indices = df["instrument"].map(inst_to_idx).values
-
-    # 向量化填充因子
+    d_idx = df["date"].map(date_to_idx).values.astype(np.int32)
+    i_idx = df["instrument"].map(inst_to_idx).values.astype(np.int32)
     factor_values = df[FACTOR_NAMES_TO_USE].values.astype(np.float32)
-    for f_idx in range(n_factors):
-        factors_raw[d_indices, i_indices, f_idx] = factor_values[:, f_idx]
+    for f in range(F):
+        factors_raw[d_idx, i_idx, f] = factor_values[:, f]
+    returns[d_idx, i_idx] = df["fwd_ret"].values.astype(np.float32)
+    # price_limit_status 可能有 NaN (停牌/无数据), 填 0 (= 缺失, 既不能买也不能卖)
+    pls = df["price_limit_status"].fillna(0).astype(np.int8).values
+    limit_status[d_idx, i_idx] = pls
 
-    # 向量化填充收益
-    returns[d_indices, i_indices] = df["fwd_ret"].values.astype(np.float32)
-
-    # 转换为截面排名分位数 [0, 1]
     print("转换因子为截面排名分位数...")
-    factor_ranks = _convert_to_rank_percentile(factors_raw)
+    factor_ranks = _rank_percentile_vectorized(factors_raw)
+    del factors_raw
 
-    # 保存压缩文件
+    print("构造 CSR 紧凑布局...")
+    flat_ranks, flat_rets, flat_insts, flat_status, flat_off = _build_csr(
+        factor_ranks, returns, limit_status)
+    del factor_ranks, returns, limit_status
+
+    print(f"  有效样本: {len(flat_rets)}, 日均 {len(flat_rets) / D:.1f}")
+
     print(f"保存到 {output_path}...")
     np.savez_compressed(
         output_path,
-        factor_ranks=factor_ranks,
-        returns=returns,
+        schema_version=np.int32(SCHEMA_VERSION),
+        ranks=flat_ranks,
+        rets=flat_rets,
+        insts=flat_insts,
+        status=flat_status,
+        off=flat_off,
         factor_names=np.array(FACTOR_NAMES_TO_USE),
+        n_stocks=np.int32(S),
     )
-
     file_size = output_path.stat().st_size / 1024 / 1024
-    print(f"数据形状: factor_ranks {factor_ranks.shape}, returns {returns.shape}")
     print(f"文件大小: {file_size:.2f} MB")
     print("导出完成")
 
 
-def load_data_from_file(input_path: Path = DATA_FILE) -> tuple[np.ndarray, np.ndarray, list[str]]:
-    """
-    从压缩文件加载数据
-    返回:
-        factor_ranks: (n_dates, n_stocks, n_factors) float32
-        returns: (n_dates, n_stocks) float32
-        factor_names: 因子名称列表
-    """
+def load_data_from_file(input_path: Path = DATA_FILE):
+    """加载单 CSR 数据 (含 status), 返回 dict"""
     assert input_path.exists(), f"数据文件不存在: {input_path}"
-
     print(f"从 {input_path} 加载数据...")
-    data = np.load(input_path)
-    factor_ranks = data["factor_ranks"]
-    returns = data["returns"]
-    factor_names = data["factor_names"].tolist()
+    d = np.load(input_path)
+    assert "schema_version" in d.files and int(d["schema_version"]) == SCHEMA_VERSION, \
+        f"schema 版本不匹配 (需要 v{SCHEMA_VERSION}), 请删除 {input_path} 重新导出"
+    data = {
+        "ranks": np.ascontiguousarray(d["ranks"], dtype=np.float32),
+        "rets": np.ascontiguousarray(d["rets"], dtype=np.float32),
+        "insts": np.ascontiguousarray(d["insts"], dtype=np.int32),
+        "status": np.ascontiguousarray(d["status"], dtype=np.int8),
+        "off": np.ascontiguousarray(d["off"], dtype=np.int32),
+        "factor_names": d["factor_names"].tolist(),
+        "n_stocks": int(d["n_stocks"]),
+    }
+    D = len(data["off"]) - 1
+    print(f"  日数: {D}, 全标的数: {data['n_stocks']}, 因子数: {len(data['factor_names'])}")
+    print(f"  样本: {len(data['rets'])}, 日均 {len(data['rets']) / D:.1f}")
+    return data
 
-    print(f"数据形状: factor_ranks {factor_ranks.shape}, returns {returns.shape}")
-    print(f"因子: {factor_names}")
-    return factor_ranks, returns, factor_names
+
+def select_factors(data: dict, factor_indices: list[int]) -> dict:
+    """选取子集因子, 返回新 data (其他 flat arrays 共享, ranks 复制为紧凑 C-order)"""
+    sel = np.asarray(factor_indices, dtype=np.int64)
+    new_data = dict(data)
+    new_data["ranks"] = np.ascontiguousarray(data["ranks"][:, sel], dtype=np.float32)
+    new_data["factor_names"] = [data["factor_names"][i] for i in factor_indices]
+    return new_data
 
 
-def _convert_to_rank_percentile(factors: np.ndarray) -> np.ndarray:
+# ==================== numba kernel ====================
+
+@numba.njit(parallel=True, cache=True, fastmath=True, boundscheck=False)
+def evaluate_batch_csr(
+    pop,           # (n_pop, F) float32
+    ranks,         # (N, F) float32 C-order
+    rets,          # (N,) float32
+    insts,         # (N,) int32
+    status,        # (N,) int8: 0=缺失, 1=跌停, 2=正常, 3=涨停
+    off,           # (D+1,) int32
+    group_num,     # int
+    cost_rt,       # float: 一次换手综合成本 (buy + sell)
+    n_stocks,      # int: 全标的数, 用于 bitmask
+):
     """
-    将因子值转换为截面排名分位数 [0, 1]
-    factors: (n_dates, n_stocks, n_factors)
-    返回: (n_dates, n_stocks, n_factors) 排名分位数
+    粘性持仓多空评估. 每日:
+        universe = 全部 factor/ret-valid 标的 (cnt), gsz = cnt // group_num
+        Locked-long  = prev_long ∩ (status != 2) 今日必须持有
+        Locked-short = prev_short ∩ (status != 2) 今日必须持有
+        Free-long 填满 gsz: 在 status==2 里按得分从高到低补齐
+        Free-short 填满 gsz: 在 status==2 里按得分从低到高补齐
+        turnover_long = |new_buys| / today_long_cnt  (new_buys 只可能来自 status==2, 合法可交易)
+        turnover_short 同理 (new_shorts 也只可能来自 status==2)
+        daily = ret_long - ret_short - (turnover_long + turnover_short) * cost_rt
+        nav *= 1 + daily
     """
-    n_dates, n_stocks, n_factors = factors.shape
-    ranks = np.full_like(factors, np.nan)
-
-    for d in range(n_dates):
-        for f in range(n_factors):
-            col = factors[d, :, f]
-            valid_mask = ~np.isnan(col)
-            if valid_mask.sum() < 2:
-                continue
-            valid_vals = col[valid_mask]
-            order = valid_vals.argsort().argsort() + 1
-            percentile = (order - 1) / (len(order) - 1)
-            ranks[d, valid_mask, f] = percentile
-
-    return ranks.astype(np.float32)
-
-
-# ==================== numba 评估器 ====================
-
-@numba.jit(nopython=True, cache=True)
-def _eval_single(weights: np.ndarray, factor_ranks: np.ndarray, returns: np.ndarray, group_num: int) -> float:
-    """
-    评估单个权重向量的多空累计收益比 (Q5/Q1)
-    """
-    n_dates = factor_ranks.shape[0]
-    n_stocks = factor_ranks.shape[1]
-    n_factors = len(weights)
-
-    nav_top = 1.0
-    nav_bottom = 1.0
-
-    for d in range(n_dates):
-        scores = np.empty(n_stocks, dtype=np.float32)
-        valid_count = 0
-        for i in range(n_stocks):
-            s = 0.0
-            all_valid = True
-            for f in range(n_factors):
-                v = factor_ranks[d, i, f]
-                if np.isnan(v):
-                    all_valid = False
-                    break
-                s += v * weights[f]
-            if all_valid:
-                scores[i] = s
-                valid_count += 1
-            else:
-                scores[i] = np.nan
-
-        if valid_count < group_num:
-            continue
-
-        valid_indices = np.empty(valid_count, dtype=np.int32)
-        valid_scores = np.empty(valid_count, dtype=np.float32)
-        vi = 0
-        for i in range(n_stocks):
-            if not np.isnan(scores[i]):
-                valid_indices[vi] = i
-                valid_scores[vi] = scores[i]
-                vi += 1
-
-        sorted_order = np.argsort(valid_scores)
-        group_size = valid_count // group_num
-        if group_size < 1:
-            continue
-
-        q1_start, q1_end = 0, group_size
-        q5_start, q5_end = valid_count - group_size, valid_count
-
-        ret_sum_q1, cnt_q1 = 0.0, 0
-        for j in range(q1_start, q1_end):
-            idx = valid_indices[sorted_order[j]]
-            r = returns[d, idx]
-            if not np.isnan(r):
-                ret_sum_q1 += r
-                cnt_q1 += 1
-
-        ret_sum_q5, cnt_q5 = 0.0, 0
-        for j in range(q5_start, q5_end):
-            idx = valid_indices[sorted_order[j]]
-            r = returns[d, idx]
-            if not np.isnan(r):
-                ret_sum_q5 += r
-                cnt_q5 += 1
-
-        day_ret_q1 = ret_sum_q1 / cnt_q1 if cnt_q1 > 0 else 0.0
-        day_ret_q5 = ret_sum_q5 / cnt_q5 if cnt_q5 > 0 else 0.0
-
-        nav_top *= (1.0 + day_ret_q5)
-        nav_bottom *= (1.0 + day_ret_q1)
-
-    if nav_bottom > 0:
-        return nav_top / nav_bottom
-    else:
-        return 0.0
-
-
-@numba.jit(nopython=True, parallel=True, cache=True)
-def evaluate_batch(pop: np.ndarray, factor_ranks: np.ndarray, returns: np.ndarray, group_num: int) -> np.ndarray:
-    """并行评估整个种群"""
     n_pop = pop.shape[0]
+    F = pop.shape[1]
+    D = off.shape[0] - 1
     fitness = np.empty(n_pop, dtype=np.float64)
-    for i in numba.prange(n_pop):
-        fitness[i] = _eval_single(pop[i], factor_ranks, returns, group_num)
+
+    max_cnt = 0
+    for d in range(D):
+        c = off[d + 1] - off[d]
+        if c > max_cnt:
+            max_cnt = c
+    if max_cnt < 1:
+        max_cnt = 1
+
+    for p in numba.prange(n_pop):
+        w = pop[p]
+        scores = np.empty(max_cnt, dtype=np.float32)
+        prev_long_mask = np.zeros(n_stocks, dtype=np.uint8)
+        prev_short_mask = np.zeros(n_stocks, dtype=np.uint8)
+        prev_long_ids = np.empty(max_cnt, dtype=np.int32)
+        prev_short_ids = np.empty(max_cnt, dtype=np.int32)
+        today_long_local = np.empty(max_cnt, dtype=np.int32)
+        today_short_local = np.empty(max_cnt, dtype=np.int32)
+        prev_long_cnt = 0
+        prev_short_cnt = 0
+
+        nav_ls = 1.0
+
+        for d in range(D):
+            lo = off[d]
+            cnt = off[d + 1] - lo
+            if cnt == 0:
+                continue
+            gsz = cnt // group_num
+            if gsz < 1:
+                continue
+
+            # 合并扫描: 计算分数 + 识别 locked (两侧)
+            today_long_cnt = 0
+            today_short_cnt = 0
+            for i in range(cnt):
+                s = 0.0
+                for f in range(F):
+                    s += ranks[lo + i, f] * w[f]
+                scores[i] = s
+                st = status[lo + i]
+                if st != 2:
+                    gid = insts[lo + i]
+                    if prev_long_mask[gid] != 0:
+                        today_long_local[today_long_cnt] = i
+                        today_long_cnt += 1
+                    if prev_short_mask[gid] != 0:
+                        today_short_local[today_short_cnt] = i
+                        today_short_cnt += 1
+
+            order = np.argsort(scores[:cnt])  # 升序: order[0]=min, order[cnt-1]=max
+
+            # ---------- LONG: 从高分补齐到 gsz ----------
+            j = cnt - 1
+            while j >= 0 and today_long_cnt < gsz:
+                local = order[j]
+                if status[lo + local] == 2:
+                    today_long_local[today_long_cnt] = local
+                    today_long_cnt += 1
+                j -= 1
+
+            if today_long_cnt > 0:
+                ret_sum = 0.0
+                new_buys = 0
+                for k in range(today_long_cnt):
+                    local = today_long_local[k]
+                    ret_sum += rets[lo + local]
+                    if prev_long_mask[insts[lo + local]] == 0:
+                        new_buys += 1
+                ret_long = ret_sum / today_long_cnt
+                turnover_long = new_buys / today_long_cnt
+                long_active = True
+            else:
+                ret_long = 0.0
+                turnover_long = 0.0
+                long_active = False
+
+            # ---------- SHORT: 从低分补齐到 gsz ----------
+            j = 0
+            while j < cnt and today_short_cnt < gsz:
+                local = order[j]
+                if status[lo + local] == 2:
+                    today_short_local[today_short_cnt] = local
+                    today_short_cnt += 1
+                j += 1
+
+            if today_short_cnt > 0:
+                ret_sum = 0.0
+                new_shorts = 0
+                for k in range(today_short_cnt):
+                    local = today_short_local[k]
+                    ret_sum += rets[lo + local]
+                    if prev_short_mask[insts[lo + local]] == 0:
+                        new_shorts += 1
+                ret_short = ret_sum / today_short_cnt
+                turnover_short = new_shorts / today_short_cnt
+                short_active = True
+            else:
+                ret_short = 0.0
+                turnover_short = 0.0
+                short_active = False
+
+            # 更新 prev_long (两套 ids 都写 gid, 便于下一日 O(1) 查 mask)
+            if long_active:
+                for k in range(prev_long_cnt):
+                    prev_long_mask[prev_long_ids[k]] = 0
+                for k in range(today_long_cnt):
+                    gid = insts[lo + today_long_local[k]]
+                    prev_long_mask[gid] = 1
+                    prev_long_ids[k] = gid
+                prev_long_cnt = today_long_cnt
+
+            if short_active:
+                for k in range(prev_short_cnt):
+                    prev_short_mask[prev_short_ids[k]] = 0
+                for k in range(today_short_cnt):
+                    gid = insts[lo + today_short_local[k]]
+                    prev_short_mask[gid] = 1
+                    prev_short_ids[k] = gid
+                prev_short_cnt = today_short_cnt
+
+            if long_active and short_active:
+                daily = ret_long - ret_short - (turnover_long + turnover_short) * cost_rt
+                nav_ls *= (1.0 + daily)
+            elif long_active:
+                daily = ret_long - turnover_long * cost_rt
+                nav_ls *= (1.0 + daily)
+            elif short_active:
+                daily = -ret_short - turnover_short * cost_rt
+                nav_ls *= (1.0 + daily)
+
+        fitness[p] = nav_ls
+
     return fitness
+
+
+def evaluate_single(w: np.ndarray, data: dict) -> float:
+    """评估单个权重向量"""
+    pop = w.reshape(1, -1).astype(np.float32)
+    out = evaluate_batch_csr(
+        pop,
+        data["ranks"], data["rets"], data["insts"], data["status"], data["off"],
+        GROUP_NUM, COST_ROUND_TRIP, data["n_stocks"],
+    )
+    return float(out[0])
+
+
+def evaluate_batch(pop: np.ndarray, data: dict) -> np.ndarray:
+    pop = np.ascontiguousarray(pop, dtype=np.float32)
+    return evaluate_batch_csr(
+        pop,
+        data["ranks"], data["rets"], data["insts"], data["status"], data["off"],
+        GROUP_NUM, COST_ROUND_TRIP, data["n_stocks"],
+    )
 
 
 # ==================== 网格搜索 ====================
 
-def test_single_factors(factor_ranks: np.ndarray, returns: np.ndarray, factor_names: list[str]) -> list[tuple[str, int, float]]:
-    """
-    单因子测试，返回 [(因子名, 因子索引, 多空比), ...]
-    """
-    n_factors = len(factor_names)
-    results = []
-    
-    for f_idx in range(n_factors):
-        weights = np.zeros(n_factors, dtype=np.float32)
-        weights[f_idx] = 1.0
-        fitness = _eval_single(weights, factor_ranks, returns, GROUP_NUM)
-        results.append((factor_names[f_idx], f_idx, fitness))
-    
+def test_single_factors(data: dict) -> list[tuple[str, int, float]]:
+    """单因子测试, 返回 [(因子名, 因子索引, 多空NAV), ...]"""
+    names = data["factor_names"]
+    F = len(names)
+    pop = np.eye(F, dtype=np.float32)
+    fitness = evaluate_batch(pop, data)
+    results = [(names[f], f, float(fitness[f])) for f in range(F)]
     results.sort(key=lambda x: x[2], reverse=True)
     return results
 
 
 def generate_grid(n_factors: int, step: float) -> np.ndarray:
-    """生成网格点"""
     from itertools import product
     values = np.arange(0, 1.0 + step / 2, step)
     grid = list(product(values, repeat=n_factors))
@@ -282,9 +469,7 @@ def generate_grid(n_factors: int, step: float) -> np.ndarray:
 
 
 def generate_fine_grid(center: np.ndarray, radius: float, step: float) -> np.ndarray:
-    """在热点周围生成细粒度网格"""
     from itertools import product
-    n_factors = len(center)
     ranges = []
     for c in center:
         lo = max(0.0, c - radius)
@@ -295,70 +480,55 @@ def generate_fine_grid(center: np.ndarray, radius: float, step: float) -> np.nda
     return np.array(grid, dtype=np.float32)
 
 
-def run_grid_search(factor_ranks: np.ndarray, returns: np.ndarray, factor_names: list[str]) -> tuple[np.ndarray, float, list[str]]:
+def run_grid_search(data: dict) -> tuple[np.ndarray, float, list[str]]:
     """
     多轮网格搜索
-    返回: (最优权重, 最优多空比, 选中的因子名列表)
+    返回: (最优权重(全因子维度), 最优多空NAV, 选中的因子名列表)
     """
-    n_all_factors = len(factor_names)
-    
-    # Step 1: 单因子测试
+    all_names = data["factor_names"]
+    F_all = len(all_names)
+
     print(f"\n[Step 1] 单因子测试...")
-    single_results = test_single_factors(factor_ranks, returns, factor_names)
-    
-    print(f"单因子多空比排名:")
-    for name, idx, fitness in single_results:
-        print(f"  {name:20s}: {fitness:.4f}")
-    
-    # 筛选 top N
+    single_results = test_single_factors(data)
+    print(f"单因子多空 NAV 排名:")
+    for name, idx, fit in single_results:
+        print(f"  {name:20s}: {fit:.4f}")
+
     selected = single_results[:TOP_N_FACTORS]
     selected_names = [x[0] for x in selected]
     selected_indices = [x[1] for x in selected]
-    
     print(f"\n选中因子: {selected_names}")
-    
-    # 提取选中因子的数据
-    selected_ranks = factor_ranks[:, :, selected_indices]
-    
-    # Step 2: 粗粒度搜索
+
+    sub_data = select_factors(data, selected_indices)
+
     print(f"\n[Step 2] 粗粒度网格搜索 (step={COARSE_STEP})...")
     coarse_grid = generate_grid(TOP_N_FACTORS, COARSE_STEP)
     print(f"搜索点数: {len(coarse_grid)}")
-    
-    coarse_fitness = evaluate_batch(coarse_grid, selected_ranks, returns, GROUP_NUM)
-    
-    # 找热点
+    coarse_fitness = evaluate_batch(coarse_grid, sub_data)
+
     top_k_idx = np.argsort(coarse_fitness)[-TOP_K_HOTSPOTS:][::-1]
     hotspots = coarse_grid[top_k_idx]
     hotspot_fitness = coarse_fitness[top_k_idx]
-    
     print(f"Top {TOP_K_HOTSPOTS} 热点:")
     for i, (w, f) in enumerate(zip(hotspots, hotspot_fitness)):
         w_str = ", ".join(f"{v:.1f}" for v in w)
         print(f"  #{i+1}: [{w_str}] -> {f:.4f}")
-    
-    # Step 3: 细粒度搜索
+
     print(f"\n[Step 3] 细粒度搜索 (step={FINE_STEP}, radius={FINE_RADIUS})...")
-    
-    best_weights = hotspots[0]
-    best_fitness = hotspot_fitness[0]
-    
+    best_weights = hotspots[0].copy()
+    best_fitness = float(hotspot_fitness[0])
     for i, center in enumerate(hotspots):
         fine_grid = generate_fine_grid(center, FINE_RADIUS, FINE_STEP)
-        fine_fitness = evaluate_batch(fine_grid, selected_ranks, returns, GROUP_NUM)
-        
-        local_best_idx = np.argmax(fine_fitness)
+        fine_fitness = evaluate_batch(fine_grid, sub_data)
+        local_best_idx = int(np.argmax(fine_fitness))
         if fine_fitness[local_best_idx] > best_fitness:
-            best_fitness = fine_fitness[local_best_idx]
+            best_fitness = float(fine_fitness[local_best_idx])
             best_weights = fine_grid[local_best_idx].copy()
-    
     print(f"细搜后最优: {best_fitness:.4f}")
-    
-    # 转换回全因子权重
-    full_weights = np.zeros(n_all_factors, dtype=np.float32)
+
+    full_weights = np.zeros(F_all, dtype=np.float32)
     for i, idx in enumerate(selected_indices):
         full_weights[idx] = best_weights[i]
-    
     return full_weights, best_fitness, selected_names
 
 
@@ -367,29 +537,31 @@ def run_grid_search(factor_ranks: np.ndarray, returns: np.ndarray, factor_names:
 def main():
     print("=" * 60)
     print("网格搜索因子挖掘")
-    print("优化目标: 5档多空收益比 (Q5/Q1)")
+    print(f"目标: 多空复利 NAV (Q{GROUP_NUM} long - Q1 short), cost_rt={COST_ROUND_TRIP}")
     print("=" * 60)
 
     if not DATA_FILE.exists():
-        print(f"数据文件不存在，开始生成...")
+        print(f"数据文件不存在, 开始生成...")
         export_data()
         print()
 
-    factor_ranks, returns, factor_names = load_data_from_file()
+    data = load_data_from_file()
 
     print("预热 JIT...")
-    _dummy = np.random.randn(2, len(factor_names)).astype(np.float32)
-    _ = evaluate_batch(_dummy, factor_ranks, returns, GROUP_NUM)
+    _dummy_pop = np.zeros((2, len(data["factor_names"])), dtype=np.float32)
+    _dummy_pop[0, 0] = 1.0
+    _dummy_pop[1, 1] = 1.0
+    _ = evaluate_batch(_dummy_pop, data)
 
-    best_weights, best_fitness, selected_names = run_grid_search(factor_ranks, returns, factor_names)
+    best_weights, best_fitness, selected_names = run_grid_search(data)
 
     print("\n" + "=" * 60)
     print("最终结果")
     print("=" * 60)
-    print(f"最优多空比 (Q5/Q1): {best_fitness:.4f}")
+    print(f"最优多空 NAV: {best_fitness:.4f}")
 
     print(f"\n选中因子及权重:")
-    for name, w in zip(factor_names, best_weights):
+    for name, w in zip(data["factor_names"], best_weights):
         if w > 0:
             print(f"  {name:20s}: {w:.2f}")
 
@@ -397,14 +569,14 @@ def main():
     if weight_sum > 0:
         norm_weights = best_weights / weight_sum
         print(f"\n归一化权重:")
-        for name, w in zip(factor_names, norm_weights):
+        for name, w in zip(data["factor_names"], norm_weights):
             if w > 0:
                 print(f"  {name:20s}: {w:.2f}")
 
     return {
         "selected_factors": selected_names,
-        "weights": {name: float(w) for name, w in zip(factor_names, best_weights) if w > 0},
-        "long_short_ratio": float(best_fitness),
+        "weights": {name: float(w) for name, w in zip(data["factor_names"], best_weights) if w > 0},
+        "long_short_nav": float(best_fitness),
     }
 
 
