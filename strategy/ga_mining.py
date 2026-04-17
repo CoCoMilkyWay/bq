@@ -30,6 +30,7 @@
 import numpy as np
 import numba
 from pathlib import Path
+from tqdm.auto import tqdm
 
 # ==================== 配置 ====================
 
@@ -38,11 +39,10 @@ SCHEMA_VERSION = 1  # v1
 
 START_DATE = "2017-01-01"
 END_DATE = "2026-04-07"
-GROUP_NUM = 5  # 分档数
+GROUP_NUM = 10  # 分档数
 COST_ROUND_TRIP = 0.002  # 一次换手综合成本 (买 0.0005 + 卖 0.0015)
 
-TOP_N_FACTORS = 5  # 筛选因子数
-COARSE_STEP = 0.3  # 粗搜步长
+COARSE_STEP = 0.2  # 粗搜步长
 FINE_STEP = 0.1    # 细搜步长
 FINE_RADIUS = 0.2  # 细搜范围 (热点 ± radius)
 TOP_K_HOTSPOTS = 10  # 保留多少热点做细搜
@@ -59,6 +59,20 @@ FACTOR_NAMES_TO_USE = [
     "float_market_cap",
     "close",
 ]
+
+# npz 仍导出 FACTOR_NAMES_TO_USE 全部列; 网格搜索只在下列因子上搜权重 (须为 FACTOR_NAMES_TO_USE 子集, 顺序即权重维度顺序)
+SEARCH_FACTOR_NAMES = [
+    "pb",
+    "ps_ttm",
+    "close",
+    "float_market_cap",
+    "dividend_yield",
+]
+
+assert len(SEARCH_FACTOR_NAMES) >= 1
+assert len(SEARCH_FACTOR_NAMES) == len(set(SEARCH_FACTOR_NAMES))
+for _n in SEARCH_FACTOR_NAMES:
+    assert _n in FACTOR_NAMES_TO_USE, f"SEARCH_FACTOR_NAMES 含未知因子 {_n}, 请先加入 FACTOR_NAMES_TO_USE"
 
 
 # ==================== 数据导出/加载 ====================
@@ -262,6 +276,16 @@ def select_factors(data: dict, factor_indices: list[int]) -> dict:
     return new_data
 
 
+def resolve_search_indices(factor_names: list[str]) -> list[int]:
+    """SEARCH_FACTOR_NAMES -> 在已加载 npz 列名中的索引"""
+    idx_map = {n: i for i, n in enumerate(factor_names)}
+    out: list[int] = []
+    for n in SEARCH_FACTOR_NAMES:
+        assert n in idx_map, f"搜索因子 {n} 不在 npz 中, 请删 ga_mining_data.npz 后重跑 export_data"
+        out.append(idx_map[n])
+    return out
+
+
 # ==================== numba kernel ====================
 
 @numba.njit(parallel=True, cache=True, fastmath=True, boundscheck=False)
@@ -450,17 +474,6 @@ def evaluate_batch(pop: np.ndarray, data: dict) -> np.ndarray:
 
 # ==================== 网格搜索 ====================
 
-def test_single_factors(data: dict) -> list[tuple[str, int, float]]:
-    """单因子测试, 返回 [(因子名, 因子索引, 多空NAV), ...]"""
-    names = data["factor_names"]
-    F = len(names)
-    pop = np.eye(F, dtype=np.float32)
-    fitness = evaluate_batch(pop, data)
-    results = [(names[f], f, float(fitness[f])) for f in range(F)]
-    results.sort(key=lambda x: x[2], reverse=True)
-    return results
-
-
 def generate_grid(n_factors: int, step: float) -> np.ndarray:
     from itertools import product
     values = np.arange(0, 1.0 + step / 2, step)
@@ -480,31 +493,47 @@ def generate_fine_grid(center: np.ndarray, radius: float, step: float) -> np.nda
     return np.array(grid, dtype=np.float32)
 
 
+def iter_eval_slices(total_points: int):
+    """
+    按总点数自动拆分评估区间, 不使用固定 batch 常量。
+    拆分批数 ~= sqrt(total_points), 在进度粒度与评估开销之间做平衡。
+    """
+    assert total_points >= 1
+    n_batches = int(np.sqrt(total_points))
+    if n_batches < 1:
+        n_batches = 1
+    batch_size = (total_points + n_batches - 1) // n_batches
+    for st in range(0, total_points, batch_size):
+        ed = st + batch_size
+        if ed > total_points:
+            ed = total_points
+        yield st, ed
+
+
 def run_grid_search(data: dict) -> tuple[np.ndarray, float, list[str]]:
     """
     多轮网格搜索
-    返回: (最优权重(全因子维度), 最优多空NAV, 选中的因子名列表)
+    返回: (最优权重(全因子维度), 最优多空NAV, 搜索因子名列表)
     """
     all_names = data["factor_names"]
     F_all = len(all_names)
 
-    print(f"\n[Step 1] 单因子测试...")
-    single_results = test_single_factors(data)
-    print(f"单因子多空 NAV 排名:")
-    for name, idx, fit in single_results:
-        print(f"  {name:20s}: {fit:.4f}")
-
-    selected = single_results[:TOP_N_FACTORS]
-    selected_names = [x[0] for x in selected]
-    selected_indices = [x[1] for x in selected]
-    print(f"\n选中因子: {selected_names}")
+    selected_indices = resolve_search_indices(all_names)
+    selected_names = list(SEARCH_FACTOR_NAMES)
+    n_search = len(selected_indices)
+    print(f"\n搜索因子 ({n_search} 维): {selected_names}")
 
     sub_data = select_factors(data, selected_indices)
 
-    print(f"\n[Step 2] 粗粒度网格搜索 (step={COARSE_STEP})...")
-    coarse_grid = generate_grid(TOP_N_FACTORS, COARSE_STEP)
+    print(f"\n[Step 1] 粗粒度网格搜索 (step={COARSE_STEP})...")
+    coarse_grid = generate_grid(n_search, COARSE_STEP)
     print(f"搜索点数: {len(coarse_grid)}")
-    coarse_fitness = evaluate_batch(coarse_grid, sub_data)
+    coarse_fitness = np.empty(len(coarse_grid), dtype=np.float64)
+    coarse_pbar = tqdm(total=len(coarse_grid), desc="粗搜总进度", unit="point")
+    for st, ed in iter_eval_slices(len(coarse_grid)):
+        coarse_fitness[st:ed] = evaluate_batch(coarse_grid[st:ed], sub_data)
+        coarse_pbar.update(ed - st)
+    coarse_pbar.close()
 
     top_k_idx = np.argsort(coarse_fitness)[-TOP_K_HOTSPOTS:][::-1]
     hotspots = coarse_grid[top_k_idx]
@@ -514,16 +543,28 @@ def run_grid_search(data: dict) -> tuple[np.ndarray, float, list[str]]:
         w_str = ", ".join(f"{v:.1f}" for v in w)
         print(f"  #{i+1}: [{w_str}] -> {f:.4f}")
 
-    print(f"\n[Step 3] 细粒度搜索 (step={FINE_STEP}, radius={FINE_RADIUS})...")
+    print(f"\n[Step 2] 细粒度搜索 (step={FINE_STEP}, radius={FINE_RADIUS})...")
     best_weights = hotspots[0].copy()
     best_fitness = float(hotspot_fitness[0])
-    for i, center in enumerate(hotspots):
+    hotspot_pbar = tqdm(hotspots, desc="细搜热点总进度", unit="hotspot")
+    for hotspot_idx, center in enumerate(hotspot_pbar, start=1):
         fine_grid = generate_fine_grid(center, FINE_RADIUS, FINE_STEP)
-        fine_fitness = evaluate_batch(fine_grid, sub_data)
+        fine_fitness = np.empty(len(fine_grid), dtype=np.float64)
+        fine_pbar = tqdm(
+            total=len(fine_grid),
+            desc=f"热点{hotspot_idx}进度",
+            unit="point",
+            leave=False,
+        )
+        for st, ed in iter_eval_slices(len(fine_grid)):
+            fine_fitness[st:ed] = evaluate_batch(fine_grid[st:ed], sub_data)
+            fine_pbar.update(ed - st)
+        fine_pbar.close()
         local_best_idx = int(np.argmax(fine_fitness))
         if fine_fitness[local_best_idx] > best_fitness:
             best_fitness = float(fine_fitness[local_best_idx])
             best_weights = fine_grid[local_best_idx].copy()
+    hotspot_pbar.close()
     print(f"细搜后最优: {best_fitness:.4f}")
 
     full_weights = np.zeros(F_all, dtype=np.float32)
