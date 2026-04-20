@@ -114,6 +114,10 @@ COST_ROUND_TRIP = 0.002  # 一次换手综合成本 (买 0.0005 + 卖 0.0015)
 LATTICE_M = 20  # simplex lattice 阶数: w_i = k_i / M, sum k_i = M, k_i >= 0
                 # 点数 = C(n_search + M - 1, n_search - 1); 5 因子 M=20 -> 10626
 
+# 不持仓月份 (1..12). 命中月份的交易日, fitness kernel 跳过 (不进 year_group, 不累加 year_days),
+# NAV kernel 跳过 (持仓状态冻结, nav 不变, 无交易成本). 改此值无需重新导出数据.
+SKIP_MONTHS = frozenset({1, 4})
+
 FACTOR_NAMES_TO_USE = [
     "pe_ttm",
     "pb",
@@ -141,6 +145,9 @@ assert len(SEARCH_FACTOR_NAMES) == len(set(SEARCH_FACTOR_NAMES))
 for _n in SEARCH_FACTOR_NAMES:
     assert _n in FACTOR_NAMES_TO_USE, f"SEARCH_FACTOR_NAMES 含未知因子 {_n}, 请先加入 FACTOR_NAMES_TO_USE"
 
+for _m in SKIP_MONTHS:
+    assert isinstance(_m, int) and 1 <= _m <= 12, f"SKIP_MONTHS 含非法月份 {_m}, 必须是 1..12 整数"
+
 
 # ==================== 数据导出/加载 ====================
 
@@ -150,7 +157,7 @@ def _load_returns_and_limits(pool_df):
     返回: DataFrame[date, instrument, fwd_ret, price_limit_status]
     """
     import pandas as pd
-    import dai
+    import dai  # pyright: ignore[reportMissingImports]
 
     start = pool_df["date"].min().strftime("%Y-%m-%d")
     pool_end = pool_df["date"].max().strftime("%Y-%m-%d")
@@ -263,6 +270,8 @@ def export_data(output_path: Path = DATA_FILE) -> None:
     unique_years = np.unique(year_of_day)
     year_remap = {int(y): i for i, y in enumerate(unique_years)}
     year_idx = np.array([year_remap[int(y)] for y in year_of_day], dtype=np.int32)
+    # 月份 (1..12), 保存到 npz, load 时按 SKIP_MONTHS 动态构建 active_day
+    month_of_day = np.array([pd.Timestamp(d).month for d in dates], dtype=np.int8)
     print(f"  日数: {D}, 标的数: {S}, 因子数: {F}, 年数: {len(unique_years)} ({unique_years[0]}..{unique_years[-1]})")
 
     factor_ranks = np.full((D, S, F), np.nan, dtype=np.float32)
@@ -296,6 +305,7 @@ def export_data(output_path: Path = DATA_FILE) -> None:
         status=flat_status,
         off=flat_off,
         year_idx=year_idx,
+        month_of_day=month_of_day,
         years=unique_years,
         factor_names=np.array(FACTOR_NAMES_TO_USE),
         n_stocks=np.int32(S),
@@ -313,6 +323,10 @@ def load_data_from_file(input_path: Path = DATA_FILE):
     assert "schema_version" in d.files and int(d["schema_version"]) == SCHEMA_VERSION, \
         f"schema 版本不匹配 (需要 v{SCHEMA_VERSION}), 请删除 {input_path} 重新导出"
     off = np.ascontiguousarray(d["off"], dtype=np.int32)
+    month_of_day = np.ascontiguousarray(d["month_of_day"], dtype=np.int8)
+    # active_day: 1 = 参与挖掘; 0 = 命中 SKIP_MONTHS, kernel 跳过该日
+    skip_arr = np.array(sorted(SKIP_MONTHS), dtype=np.int8) if len(SKIP_MONTHS) > 0 else np.empty(0, dtype=np.int8)
+    active_day = (~np.isin(month_of_day, skip_arr)).astype(np.uint8)
     data = {
         "ranks": np.ascontiguousarray(d["ranks"], dtype=np.float32),
         "rets": np.ascontiguousarray(d["rets"], dtype=np.float32),
@@ -320,14 +334,19 @@ def load_data_from_file(input_path: Path = DATA_FILE):
         "status": np.ascontiguousarray(d["status"], dtype=np.int8),
         "off": off,
         "year_idx": np.ascontiguousarray(d["year_idx"], dtype=np.int32),
+        "month_of_day": month_of_day,
+        "active_day": active_day,
         "years": d["years"].tolist(),
         "factor_names": d["factor_names"].tolist(),
         "n_stocks": int(d["n_stocks"]),
         "max_cnt": int(max(1, np.diff(off).max())),  # kernel 内共享, 避免重复扫描
     }
     D = len(data["off"]) - 1
+    n_active = int(active_day.sum())
+    skip_disp = sorted(SKIP_MONTHS) if SKIP_MONTHS else "无"
     print(f"  日数: {D}, 全标的数: {data['n_stocks']}, 因子数: {len(data['factor_names'])}, 年数: {len(data['years'])} ({data['years'][0]}..{data['years'][-1]})")
     print(f"  样本: {len(data['rets'])}, 日均 {len(data['rets']) / D:.1f}")
+    print(f"  SKIP_MONTHS={skip_disp}, 活跃日数: {n_active}/{D} ({100.0 * n_active / D:.1f}%)")
     return data
 
 
@@ -360,6 +379,7 @@ def evaluate_batch_csr(
     insts,         # (N,) int32
     status,        # (N,) int8: 0=缺失, 1=跌停, 2=正常, 3=涨停
     off,           # (D+1,) int32
+    active_day,    # (D,) uint8, 0=SKIP_MONTHS 命中日, 持仓冻结 nav 不变
     group_num,     # int
     cost_rt,       # float: 一次换手综合成本 (buy + sell)
     n_stocks,      # int: 全标的数, 用于 bitmask
@@ -400,6 +420,9 @@ def evaluate_batch_csr(
         nav_l = 1.0
 
         for d in range(D):
+            if active_day[d] == 0:
+                # SKIP_MONTHS 命中日: 持仓冻结, nav 不变, 无交易成本 (选项 C 语义)
+                continue
             lo = off[d]
             cnt = off[d + 1] - lo
             if cnt == 0:
@@ -522,6 +545,7 @@ def evaluate_batch(pop: np.ndarray, data: dict) -> np.ndarray:
     return evaluate_batch_csr(
         pop,
         data["ranks"], data["rets"], data["insts"], data["status"], data["off"],
+        data["active_day"],
         GROUP_NUM, COST_ROUND_TRIP, data["n_stocks"], data["max_cnt"],
     )
 
@@ -533,6 +557,7 @@ def _accum_year_group(
     rets,          # (N,) float32
     off,           # (D+1,) int32
     year_idx,      # (D,) int32
+    active_day,    # (D,) uint8, 0=SKIP_MONTHS 命中日, kernel 跳过
     G,             # int
     scores,        # (max_cnt,) float32, 调用方分配复用 buffer
     year_group,    # (n_years, G) float64, 调用方 zero out
@@ -541,10 +566,13 @@ def _accum_year_group(
     """
     核心 primitive: 按 w 每日 score→argsort→等分 G 档→按年累加档内等权日收益.
     Spearman / NAV / year matrix 三种用法都复用这个累加结果.
+    active_day[d]==0 的日子整日跳过 (不累加, 不计入 year_days).
     """
     F = w.shape[0]
     D = off.shape[0] - 1
     for d in range(D):
+        if active_day[d] == 0:
+            continue
         lo = off[d]
         cnt = off[d + 1] - lo
         if cnt < G:
@@ -576,6 +604,7 @@ def evaluate_monotonicity_csr(
     rets,          # (N,) float32
     off,           # (D+1,) int32
     year_idx,      # (D,) int32, 0..n_years-1
+    active_day,    # (D,) uint8
     n_years,       # int
     group_num,     # int
     max_cnt,       # int, 预计算的最大日样本数
@@ -594,7 +623,7 @@ def evaluate_monotonicity_csr(
         scores = np.empty(max_cnt, dtype=np.float32)
         year_group = np.zeros((n_years, G), dtype=np.float64)
         year_days = np.zeros(n_years, dtype=np.int32)
-        _accum_year_group(pop[p], ranks, rets, off, year_idx, G,
+        _accum_year_group(pop[p], ranks, rets, off, year_idx, active_day, G,
                           scores, year_group, year_days)
 
         total = 0.0
@@ -630,8 +659,8 @@ def evaluate_monotonicity(pop: np.ndarray, data: dict) -> np.ndarray:
     return evaluate_monotonicity_csr(
         pop,
         data["ranks"], data["rets"], data["off"],
-        data["year_idx"], len(data["years"]), GROUP_NUM,
-        data["max_cnt"],
+        data["year_idx"], data["active_day"],
+        len(data["years"]), GROUP_NUM, data["max_cnt"],
     )
 
 
@@ -642,6 +671,7 @@ def evaluate_year_group_matrix_csr(
     rets,          # (N,) float32
     off,           # (D+1,) int32
     year_idx,      # (D,) int32
+    active_day,    # (D,) uint8
     n_years,       # int
     group_num,     # int
     max_cnt,       # int
@@ -651,7 +681,7 @@ def evaluate_year_group_matrix_csr(
     scores = np.empty(max_cnt, dtype=np.float32)
     year_group = np.zeros((n_years, G), dtype=np.float64)
     year_days = np.zeros(n_years, dtype=np.int32)
-    _accum_year_group(w, ranks, rets, off, year_idx, G,
+    _accum_year_group(w, ranks, rets, off, year_idx, active_day, G,
                       scores, year_group, year_days)
     return year_group, year_days
 
@@ -765,7 +795,17 @@ def run_grid_search(data: dict) -> tuple[np.ndarray, float, list[str]]:
     # 邻居查找表: tuple(k) -> grid_idx
     key_to_idx = {tuple(int(v) for v in k): i for i, k in enumerate(k_grid)}
 
-    print(f"\nTop {top_k} (Y = 年均分层单调度 ∈ [0,1], 1.0 = 每年都完美单调):")
+    skip_disp = sorted(SKIP_MONTHS) if SKIP_MONTHS else "无"
+    print(f"\nTop {top_k} 结果 (搜索因子顺序: {selected_names}, SKIP_MONTHS={skip_disp}):")
+    print("列含义:")
+    print("  #       : 在 lattice 内按 Y 降序的名次")
+    print("  Y       : 年均分层分档单调度 fitness ∈ [0,1] (1.0 = 每年 Q1..QG 都完美单调)")
+    print("  NbrY    : L1=2 邻居权重的 Y 均值 (扰动稳定性)")
+    print("  衰减    : Y - NbrY, 越接近 0 越抗过拟合 (山尖 vs 平原)")
+    print("  N       : L1=2 邻居个数 (5 因子最多 20, lattice 边界上会减少)")
+    print(f"  多头NAV : 粘性+扣费 (cost_rt={COST_ROUND_TRIP}) 下 top bucket 全期多头 NAV (起点 1.0)")
+    print(f"  多空NAV : 粘性+扣费 下 top-bottom 多空 NAV (起点 1.0)")
+    print(f"  权重    : 搜索因子维度上的权重 (顺序同上, 已归一化 sum=1)")
     header = f"{'#':<3} {'Y':>7} {'NbrY':>7} {'衰减':>7} {'N':>3} {'多头NAV':>9} {'多空NAV':>9}  权重"
     print(header)
     print("-" * len(header))
@@ -785,9 +825,12 @@ def run_grid_search(data: dict) -> tuple[np.ndarray, float, list[str]]:
     yg, yd = evaluate_year_group_matrix_csr(
         best_weights,
         sub_data["ranks"], sub_data["rets"], sub_data["off"],
-        sub_data["year_idx"], n_years, GROUP_NUM, sub_data["max_cnt"],
+        sub_data["year_idx"], sub_data["active_day"],
+        n_years, GROUP_NUM, sub_data["max_cnt"],
     )
-    print(f"\n最优权重年度各档累计收益 (干净等权, 算术累加, 未扣费):")
+    print(f"\n最优权重年度各档累计收益 (干净等权, 算术累加, 未扣费; SKIP_MONTHS={skip_disp} 不计入):")
+    print(f"  Q1..Q{GROUP_NUM} = 按 score 升序切分的分位档 (Q1=最低分组, Q{GROUP_NUM}=最高分组)")
+    print(f"  单元格 = 该档全年所有活跃日 (剔除 SKIP 月) 等权日收益的算术累加")
     hdr = "年份 " + " ".join(f"Q{g + 1:<6}" for g in range(GROUP_NUM)) + "  单调度"
     print(hdr)
     for y in range(n_years):
@@ -811,10 +854,12 @@ def run_grid_search(data: dict) -> tuple[np.ndarray, float, list[str]]:
 # ==================== 主程序 ====================
 
 def main():
+    skip_disp = sorted(SKIP_MONTHS) if SKIP_MONTHS else "无"
     print("=" * 60)
     print("Simplex lattice 因子权重搜索")
     print(f"目标: 年均分档单调度 Y ∈ [0,1] (Q1..Q{GROUP_NUM}, Spearman (rho+1)/2)")
     print(f"Top10 复评: 粘性+扣费 多头/多空 NAV, cost_rt={COST_ROUND_TRIP}; 邻居 L1=2 敏感度")
+    print(f"SKIP_MONTHS={skip_disp} (命中日 fitness 与 NAV 均跳过, 持仓冻结)")
     print("=" * 60)
 
     if not DATA_FILE.exists():
