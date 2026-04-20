@@ -1,8 +1,10 @@
 """
 网格搜索因子挖掘
 
-优化目标: 5档多空组合复利 NAV (Q5 long - Q1 short, 扣费后)
-因子处理: 截面排序 -> [0,1] 分位数 -> 加权求和 -> 再排序分档
+优化目标: 多空组合复利 NAV (Q{GROUP_NUM} long - Q1 short, 扣费后)
+因子处理: 与 strategy.compute_pool_factors 共用 factor.rank_pool_factors
+    截面 pct rank [0,1] -> 加权求和 -> 再排序分档
+    (保证挖掘器搜到的权重放回 strategy.py 回测时合成分数口径一致)
 
 准确性要点:
     - 数据源: cn_stock_prefactors
@@ -112,22 +114,6 @@ def _load_returns_and_limits(pool_df):
     return df
 
 
-def _rank_percentile_vectorized(factors: np.ndarray) -> np.ndarray:
-    """
-    将因子值转换为截面排名分位数 [0, 1], NaN 保留
-    factors: (n_dates, n_stocks, n_factors) float32
-    返回: (n_dates, n_stocks, n_factors) float32
-    """
-    import pandas as pd
-    n_dates, n_stocks, n_factors = factors.shape
-    ranks = np.full_like(factors, np.nan)
-    for f in range(n_factors):
-        vals = factors[:, :, f]  # (D, S)
-        ranked = pd.DataFrame(vals).rank(axis=1, method="average", pct=True, na_option="keep").values
-        ranks[:, :, f] = ranked.astype(np.float32)
-    return ranks
-
-
 def _build_csr(
     factor_ranks: np.ndarray,     # (D, S, F) float32, NaN for missing
     returns: np.ndarray,          # (D, S) float32, NaN for missing
@@ -171,7 +157,7 @@ def export_data(output_path: Path = DATA_FILE) -> None:
     从数据源加载数据, 转换为 CSR 紧凑布局, 保存为压缩文件
     """
     import pandas as pd
-    from factor import read_pool_factors, ensure_pool_factors
+    from factor import compute_pool_factors, rank_pool_factors
     from filter import get_universe_pool, UNIVERSE_SIZE
 
     POOL_NAME = f"smallcap{UNIVERSE_SIZE}"
@@ -183,9 +169,14 @@ def export_data(output_path: Path = DATA_FILE) -> None:
     print("加载股票池...")
     pool_df = get_universe_pool(START_DATE, END_DATE, UNIVERSE_SIZE)
 
-    print("加载因子数据...")
-    ensure_pool_factors(POOL_NAME, END_DATE, FACTOR_NAMES_TO_USE, pool_df)
-    factor_df = read_pool_factors(POOL_NAME, START_DATE, END_DATE, FACTOR_NAMES_TO_USE)
+    print("加载因子数据 (含 cache ensure)...")
+    factor_df = compute_pool_factors(
+        POOL_NAME, pool_df[["date", "instrument"]],
+        START_DATE, END_DATE, FACTOR_NAMES_TO_USE,
+    )
+
+    print("截面 pct rank (与 compute_pool_factors 共用 rank_pool_factors)...")
+    factor_df = rank_pool_factors(factor_df, FACTOR_NAMES_TO_USE)
 
     print("加载收益率和涨跌停状态...")
     ret_df = _load_returns_and_limits(pool_df)
@@ -203,7 +194,7 @@ def export_data(output_path: Path = DATA_FILE) -> None:
     F = len(FACTOR_NAMES_TO_USE)
     print(f"  日数: {D}, 标的数: {S}, 因子数: {F}")
 
-    factors_raw = np.full((D, S, F), np.nan, dtype=np.float32)
+    factor_ranks = np.full((D, S, F), np.nan, dtype=np.float32)
     returns = np.full((D, S), np.nan, dtype=np.float32)
     limit_status = np.zeros((D, S), dtype=np.int8)  # 0 = 缺失
 
@@ -211,15 +202,11 @@ def export_data(output_path: Path = DATA_FILE) -> None:
     i_idx = df["instrument"].map(inst_to_idx).values.astype(np.int32)
     factor_values = df[FACTOR_NAMES_TO_USE].values.astype(np.float32)
     for f in range(F):
-        factors_raw[d_idx, i_idx, f] = factor_values[:, f]
+        factor_ranks[d_idx, i_idx, f] = factor_values[:, f]
     returns[d_idx, i_idx] = df["fwd_ret"].values.astype(np.float32)
     # price_limit_status 可能有 NaN (停牌/无数据), 填 0 (= 缺失, 既不能买也不能卖)
     pls = df["price_limit_status"].fillna(0).astype(np.int8).values
     limit_status[d_idx, i_idx] = pls
-
-    print("转换因子为截面排名分位数...")
-    factor_ranks = _rank_percentile_vectorized(factors_raw)
-    del factors_raw
 
     print("构造 CSR 紧凑布局...")
     flat_ranks, flat_rets, flat_insts, flat_status, flat_off = _build_csr(

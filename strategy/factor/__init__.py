@@ -406,6 +406,21 @@ def read_pool_factors(
 
 # ==================== API ====================
 
+def rank_pool_factors(factor_df: pd.DataFrame, factor_names: list[str]) -> pd.DataFrame:
+    """
+    截面 pct rank: 按 date 分组, 对 factor_names 各列做百分位排名 (0~1, NaN 保留)
+    用于多因子合成前的统一量纲, 保证加权求和时每个因子贡献均衡, 对离群值鲁棒
+    返回新 DataFrame, factor_names 列被替换为 rank, 其余列保持不变
+    """
+    assert {"date", "instrument"}.issubset(factor_df.columns)
+    for c in factor_names:
+        assert c in factor_df.columns, f"rank_pool_factors: 缺列 {c}"
+    out = factor_df.copy()
+    out[factor_names] = factor_df.groupby("date")[factor_names].rank(
+        method="average", pct=True)
+    return out
+
+
 def compute_pool_factors(
     pool_name: str,
     pool_df: pd.DataFrame,
@@ -417,6 +432,9 @@ def compute_pool_factors(
 ) -> pd.DataFrame:
     """
     计算 pool 因子（基于动态股票池，截面处理只在 pool 内进行）
+
+    合成逻辑: 各因子先经 pool 内截面 pct rank 统一到 [0,1], 再按 factor_weights 加权求和
+    (与 ga_mining 挖掘器共用 rank_pool_factors, 保证口径一致)
 
     参数:
         pool_name: 股票池名称（用于缓存命名，如 'smallcap200'）
@@ -434,7 +452,8 @@ def compute_pool_factors(
     if factor_weights:
         cols = list(factor_weights.keys())
         valid = factor_df[["date", "instrument"] + cols].dropna()
-        valid[score_col] = sum(valid[c] * w for c, w in factor_weights.items())
+        ranked = rank_pool_factors(valid, cols)
+        valid[score_col] = sum(ranked[c] * w for c, w in factor_weights.items())
         factor_df = factor_df.merge(
             valid[["date", "instrument", score_col]],
             on=["date", "instrument"],
