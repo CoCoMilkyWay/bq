@@ -1,29 +1,97 @@
 """
-网格搜索因子挖掘
+Simplex lattice 因子权重挖掘
 
-优化目标: 多空组合复利 NAV (Q{GROUP_NUM} long - Q1 short, 扣费后)
-因子处理: 与 strategy.compute_pool_factors 共用 factor.rank_pool_factors
-    截面 pct rank [0,1] -> 加权求和 -> 再排序分档
-    (保证挖掘器搜到的权重放回 strategy.py 回测时合成分数口径一致)
+============================================================
+整体流程 (按触发顺序):
+============================================================
 
-准确性要点:
+[阶段 1] 全量搜索: 对 lattice 上每个权重算 fitness Y
+    触发: 1 次 batch 调用, 一次喂 P = C(n+M-1, n-1) 个权重
+          n=5, M=20 -> P = 10626
+    kernel: evaluate_monotonicity_csr  (parallel=True, prange over pop)
+    每权重开销: 每日 (F 点积 + argsort(cnt) + G 档区间累加)
+               年末 G x G 朴素排名 + Spearman + (rho+1)/2
+    ≈ 全部运行时间的 99%
+
+[阶段 2] Top-10 后评估 (三件套, 合计 ~0.1% 耗时, 基本可忽略):
+
+    (2a) 粘性+扣费 NAV 复评   kernel: evaluate_batch_csr
+         触发: 1 次 batch 调用, pop = 10 (top10 权重)
+         目的: 给出对齐 strategy.py 实盘口径的多空/多头 NAV
+         相对主搜索单点更慢 (多 bitmask 粘性 + 换手统计), 但只 10 次
+
+    (2b) 参数平原敏感度       函数: neighbor_indices (纯 Python, 非 kernel)
+         触发: top10 逐个找 L1 距离=2 的邻居 (≤ n*(n-1)=20 个)
+         目的: 邻居 Y 均值 vs 中心 Y 的衰减, 判断是否过拟合山尖
+         不重跑评估, 只从阶段 1 的 fitness 数组里查表, 开销忽略
+
+    (2c) 最优权重年度档位表   kernel: evaluate_year_group_matrix_csr
+         触发: 1 次调用, 仅对 top1 权重
+         目的: 打印每年每档 (Q1..QG) 的累计收益 + 该年单调度, 便于直观检查
+         单点与主 kernel 同量级, 规模差 10626x
+
+============================================================
+Fitness 定义 (阶段 1): 年度分层单调度的跨年均值 Y ∈ [0, 1]
+============================================================
+    每日: 按 scores = ranks @ w 升序切 G 档, 档 g 当日等权收益
+          累加到 year_group[year(d), g]
+    每年: 对 G 个档的年内累计收益做 Spearman 秩相关 rho,
+          单调度 = (rho + 1) / 2 ∈ [0,1]
+    fitness = 跨自然年算术平均
+    (追求每年都分层单调, 而不是某几年暴力拉开)
+
+    注: "每日切档" 不是复杂化, 而是年度档位收益的标准日频实现
+        (截面每天都变, 不能用年度级一次性分档)
+
+============================================================
+因子处理 (口径对齐)
+============================================================
+    与 strategy.compute_pool_factors 共用 factor.rank_pool_factors:
+        截面 pct rank [0,1] -> 加权求和 -> 再排序分档
+    保证挖掘器搜到的权重放回 strategy.py 回测时合成分数口径一致.
+
+============================================================
+搜索算法 (Simplex lattice / stars-and-bars)
+============================================================
+    观察: 每日分档只依赖 scores = ranks @ w 的相对排序 (argsort), 所以
+        w 与 c*w (任意 c > 0) 产生完全相同的持仓 / 换手 / NAV.
+    结论: 有意义的搜索空间是权重的 "方向", 即单位单纯形
+        S = { w ∈ R^n : w_i >= 0, Σ w_i = 1 }
+
+    Simplex lattice 在 S 上离散化: w_i = k_i / M, 其中 k_i >= 0 整数
+    且 Σ k_i = M. 通过 stars-and-bars 递归枚举, 每个点是唯一归一化方向,
+    无比例冗余.
+        点数 = C(n + M - 1, n - 1)
+        n=5, M=20 -> 10626 个点  (旧笛卡尔全网格 6^5 = 7776, 且大量冗余)
+
+    精度: 1/M (M=20 对应步长 0.05).
+    调 M 直接权衡分辨率 ↔ 评估耗时.
+
+============================================================
+准确性要点
+============================================================
     - 数据源: cn_stock_prefactors
-    - 涨跌停粘性持仓 (对齐 strategy.py 四条限制): price_limit_status 0=缺失/1=跌停/2=正常/3=涨停
+    - 搜索阶段 (fitness Y 评估): 每日 score 升序等比切分 G 档, 每档等权日收益,
+        不做涨跌停粘性、不扣换手费. 这是"因子原始分层能力"指标.
+    - Top10 复评阶段 (粘性+扣费, 对齐 strategy.py 四条限制):
+        price_limit_status 0=缺失/1=跌停/2=正常/3=涨停
         * status != 2 的标的"冻结": 当日持仓状态 = 昨日持仓状态, 不产生换手
             - 涨停持仓不卖 (预期次日超额收益)
             - 跌停持仓不卖 (做不到)
             - 涨停非持仓不买 (做不到)
             - 跌停非持仓不买 (预期次日超额风险)
-        * 只有 status == 2 的标的可自由进出 Q5 / Q1
-    - 成本: 每日对 Q5/Q1 分别计算真实换手率, 乘以 COST_ROUND_TRIP (千2)
-        * 低频因子年化换手 ~10倍, 对应年化成本 ~2%, 不会过度惩罚
+        * 只有 status == 2 的标的可自由进出 long / short 档
+        * 成本: 每日对 long/short 分别计算真实换手率, 乘以 COST_ROUND_TRIP (千2)
 
-效率要点:
-    - 单 CSR 紧凑布局 (含全部 factor/ret-valid 标的 + status 标注)
-    - 每日一次 argsort, 长短侧共用 (top-down 填 Q5 / bottom-up 填 Q1)
-    - 锁定股 + 正常股均 O(cnt) 单次扫描, 无反向查找表
+============================================================
+效率要点
+============================================================
+    - 搜索点位于单位单纯形整数 lattice (k_i 整数, Σk=M), 规模随 M 温和增长
+    - 整数坐标兼作 O(1) 邻居查找键, 邻居敏感度只需 dict 查表
+    - 单 CSR 紧凑布局 (含全部 factor/ret-valid 标的 + status + year 标注)
+    - 单调度 kernel: 每日一次 argsort + G 个区间累加, O(cnt) 扫描, 无粘性 bitmask
+    - 粘性+扣费 kernel 只在 top10 上跑 (10 次调用, 可忽略)
     - 内存 C-order, 手写 dot, fastmath, prange 并行
-    - 粘性持仓用 per-thread bitmask O(cnt) 维护
 
 使用方式:
     python ga_mining.py
@@ -37,17 +105,14 @@ from tqdm.auto import tqdm
 # ==================== 配置 ====================
 
 DATA_FILE = Path(__file__).parent / "ga_mining_data.npz"
-SCHEMA_VERSION = 1  # v1
+SCHEMA_VERSION = 1
 
 START_DATE = "2017-01-01"
 END_DATE = "2026-04-07"
 GROUP_NUM = 10  # 分档数
 COST_ROUND_TRIP = 0.002  # 一次换手综合成本 (买 0.0005 + 卖 0.0015)
-
-COARSE_STEP = 0.2  # 粗搜步长
-FINE_STEP = 0.1    # 细搜步长
-FINE_RADIUS = 0.2  # 细搜范围 (热点 ± radius)
-TOP_K_HOTSPOTS = 10  # 保留多少热点做细搜
+LATTICE_M = 20  # simplex lattice 阶数: w_i = k_i / M, sum k_i = M, k_i >= 0
+                # 点数 = C(n_search + M - 1, n_search - 1); 5 因子 M=20 -> 10626
 
 FACTOR_NAMES_TO_USE = [
     "pe_ttm",
@@ -192,7 +257,13 @@ def export_data(output_path: Path = DATA_FILE) -> None:
     D = len(dates)
     S = len(all_instruments)
     F = len(FACTOR_NAMES_TO_USE)
-    print(f"  日数: {D}, 标的数: {S}, 因子数: {F}")
+
+    # 年份标号 (紧凑 0..n_years-1), 用于 kernel 内年度聚合
+    year_of_day = np.array([pd.Timestamp(d).year for d in dates], dtype=np.int32)
+    unique_years = np.unique(year_of_day)
+    year_remap = {int(y): i for i, y in enumerate(unique_years)}
+    year_idx = np.array([year_remap[int(y)] for y in year_of_day], dtype=np.int32)
+    print(f"  日数: {D}, 标的数: {S}, 因子数: {F}, 年数: {len(unique_years)} ({unique_years[0]}..{unique_years[-1]})")
 
     factor_ranks = np.full((D, S, F), np.nan, dtype=np.float32)
     returns = np.full((D, S), np.nan, dtype=np.float32)
@@ -224,6 +295,8 @@ def export_data(output_path: Path = DATA_FILE) -> None:
         insts=flat_insts,
         status=flat_status,
         off=flat_off,
+        year_idx=year_idx,
+        years=unique_years,
         factor_names=np.array(FACTOR_NAMES_TO_USE),
         n_stocks=np.int32(S),
     )
@@ -239,17 +312,21 @@ def load_data_from_file(input_path: Path = DATA_FILE):
     d = np.load(input_path)
     assert "schema_version" in d.files and int(d["schema_version"]) == SCHEMA_VERSION, \
         f"schema 版本不匹配 (需要 v{SCHEMA_VERSION}), 请删除 {input_path} 重新导出"
+    off = np.ascontiguousarray(d["off"], dtype=np.int32)
     data = {
         "ranks": np.ascontiguousarray(d["ranks"], dtype=np.float32),
         "rets": np.ascontiguousarray(d["rets"], dtype=np.float32),
         "insts": np.ascontiguousarray(d["insts"], dtype=np.int32),
         "status": np.ascontiguousarray(d["status"], dtype=np.int8),
-        "off": np.ascontiguousarray(d["off"], dtype=np.int32),
+        "off": off,
+        "year_idx": np.ascontiguousarray(d["year_idx"], dtype=np.int32),
+        "years": d["years"].tolist(),
         "factor_names": d["factor_names"].tolist(),
         "n_stocks": int(d["n_stocks"]),
+        "max_cnt": int(max(1, np.diff(off).max())),  # kernel 内共享, 避免重复扫描
     }
     D = len(data["off"]) - 1
-    print(f"  日数: {D}, 全标的数: {data['n_stocks']}, 因子数: {len(data['factor_names'])}")
+    print(f"  日数: {D}, 全标的数: {data['n_stocks']}, 因子数: {len(data['factor_names'])}, 年数: {len(data['years'])} ({data['years'][0]}..{data['years'][-1]})")
     print(f"  样本: {len(data['rets'])}, 日均 {len(data['rets']) / D:.1f}")
     return data
 
@@ -286,6 +363,7 @@ def evaluate_batch_csr(
     group_num,     # int
     cost_rt,       # float: 一次换手综合成本 (buy + sell)
     n_stocks,      # int: 全标的数, 用于 bitmask
+    max_cnt,       # int, 预计算的最大日样本数
 ):
     """
     粘性持仓多空评估. 每日:
@@ -296,21 +374,15 @@ def evaluate_batch_csr(
         Free-short 填满 gsz: 在 status==2 里按得分从低到高补齐
         turnover_long = |new_buys| / today_long_cnt  (new_buys 只可能来自 status==2, 合法可交易)
         turnover_short 同理 (new_shorts 也只可能来自 status==2)
-        daily = ret_long - ret_short - (turnover_long + turnover_short) * cost_rt
-        nav *= 1 + daily
+        daily_ls   = ret_long - ret_short - (turnover_long + turnover_short) * cost_rt
+        daily_long = ret_long - turnover_long * cost_rt
+        nav_ls   *= 1 + daily_ls,  nav_long *= 1 + daily_long
+    返回: fitness (n_pop, 2), [:,0] = 多空 NAV, [:,1] = 多头 NAV
     """
     n_pop = pop.shape[0]
     F = pop.shape[1]
     D = off.shape[0] - 1
-    fitness = np.empty(n_pop, dtype=np.float64)
-
-    max_cnt = 0
-    for d in range(D):
-        c = off[d + 1] - off[d]
-        if c > max_cnt:
-            max_cnt = c
-    if max_cnt < 1:
-        max_cnt = 1
+    fitness = np.empty((n_pop, 2), dtype=np.float64)
 
     for p in numba.prange(n_pop):
         w = pop[p]
@@ -325,6 +397,7 @@ def evaluate_batch_csr(
         prev_short_cnt = 0
 
         nav_ls = 1.0
+        nav_l = 1.0
 
         for d in range(D):
             lo = off[d]
@@ -434,50 +507,203 @@ def evaluate_batch_csr(
                 daily = -ret_short - turnover_short * cost_rt
                 nav_ls *= (1.0 + daily)
 
-        fitness[p] = nav_ls
+            if long_active:
+                nav_l *= (1.0 + ret_long - turnover_long * cost_rt)
+
+        fitness[p, 0] = nav_ls
+        fitness[p, 1] = nav_l
 
     return fitness
 
 
-def evaluate_single(w: np.ndarray, data: dict) -> float:
-    """评估单个权重向量"""
-    pop = w.reshape(1, -1).astype(np.float32)
-    out = evaluate_batch_csr(
-        pop,
-        data["ranks"], data["rets"], data["insts"], data["status"], data["off"],
-        GROUP_NUM, COST_ROUND_TRIP, data["n_stocks"],
-    )
-    return float(out[0])
-
-
 def evaluate_batch(pop: np.ndarray, data: dict) -> np.ndarray:
+    """粘性+扣费 多空/多头 NAV 评估. 返回 (n_pop, 2): [:,0]=多空, [:,1]=多头."""
     pop = np.ascontiguousarray(pop, dtype=np.float32)
     return evaluate_batch_csr(
         pop,
         data["ranks"], data["rets"], data["insts"], data["status"], data["off"],
-        GROUP_NUM, COST_ROUND_TRIP, data["n_stocks"],
+        GROUP_NUM, COST_ROUND_TRIP, data["n_stocks"], data["max_cnt"],
     )
 
 
-# ==================== 网格搜索 ====================
+@numba.njit(cache=True, fastmath=True, boundscheck=False, inline='always')
+def _accum_year_group(
+    w,             # (F,) float32, 单个权重
+    ranks,         # (N, F) float32 C-order
+    rets,          # (N,) float32
+    off,           # (D+1,) int32
+    year_idx,      # (D,) int32
+    G,             # int
+    scores,        # (max_cnt,) float32, 调用方分配复用 buffer
+    year_group,    # (n_years, G) float64, 调用方 zero out
+    year_days,     # (n_years,) int32, 调用方 zero out
+):
+    """
+    核心 primitive: 按 w 每日 score→argsort→等分 G 档→按年累加档内等权日收益.
+    Spearman / NAV / year matrix 三种用法都复用这个累加结果.
+    """
+    F = w.shape[0]
+    D = off.shape[0] - 1
+    for d in range(D):
+        lo = off[d]
+        cnt = off[d + 1] - lo
+        if cnt < G:
+            continue
+        for i in range(cnt):
+            s = 0.0
+            for f in range(F):
+                s += ranks[lo + i, f] * w[f]
+            scores[i] = s
+        order = np.argsort(scores[:cnt])  # 升序, order[0]=min (Q1), order[cnt-1]=max (QG)
+        y = year_idx[d]
+        for g in range(G):
+            lo_g = cnt * g // G
+            hi_g = cnt * (g + 1) // G
+            sz = hi_g - lo_g
+            if sz < 1:
+                continue
+            sum_ret = 0.0
+            for k in range(lo_g, hi_g):
+                sum_ret += rets[lo + order[k]]
+            year_group[y, g] += sum_ret / sz
+        year_days[y] += 1
 
-def generate_grid(n_factors: int, step: float) -> np.ndarray:
-    from itertools import product
-    values = np.arange(0, 1.0 + step / 2, step)
-    grid = list(product(values, repeat=n_factors))
-    return np.array(grid, dtype=np.float32)
+
+@numba.njit(parallel=True, cache=True, fastmath=True, boundscheck=False)
+def evaluate_monotonicity_csr(
+    pop,           # (n_pop, F) float32
+    ranks,         # (N, F) float32 C-order
+    rets,          # (N,) float32
+    off,           # (D+1,) int32
+    year_idx,      # (D,) int32, 0..n_years-1
+    n_years,       # int
+    group_num,     # int
+    max_cnt,       # int, 预计算的最大日样本数
+):
+    """
+    年度分层单调度 fitness. 调 _accum_year_group 拿到 year_group 后,
+    每年做一次无并列 Spearman: rho = 1 - 6Σd²/(G(G²-1)), score_y = (rho+1)/2.
+    fitness = 有效年份均值 ∈ [0,1].
+    """
+    n_pop = pop.shape[0]
+    G = group_num
+    fitness = np.empty(n_pop, dtype=np.float64)
+    spearman_denom = float(G * (G * G - 1))  # G>=2 保证 > 0
+
+    for p in numba.prange(n_pop):
+        scores = np.empty(max_cnt, dtype=np.float32)
+        year_group = np.zeros((n_years, G), dtype=np.float64)
+        year_days = np.zeros(n_years, dtype=np.int32)
+        _accum_year_group(pop[p], ranks, rets, off, year_idx, G,
+                          scores, year_group, year_days)
+
+        total = 0.0
+        n_valid = 0
+        for y in range(n_years):
+            if year_days[y] < G:
+                continue
+            ssq = 0.0
+            for g in range(G):
+                r = 1
+                for h in range(G):
+                    if year_group[y, h] < year_group[y, g]:
+                        r += 1
+                    elif year_group[y, h] == year_group[y, g] and h < g:
+                        r += 1
+                diff = float(r - (g + 1))
+                ssq += diff * diff
+            rho = 1.0 - 6.0 * ssq / spearman_denom
+            total += (rho + 1.0) * 0.5
+            n_valid += 1
+
+        if n_valid == 0:
+            fitness[p] = 0.0
+        else:
+            fitness[p] = total / n_valid
+
+    return fitness
 
 
-def generate_fine_grid(center: np.ndarray, radius: float, step: float) -> np.ndarray:
-    from itertools import product
-    ranges = []
-    for c in center:
-        lo = max(0.0, c - radius)
-        hi = min(1.0, c + radius)
-        vals = np.arange(lo, hi + step / 2, step)
-        ranges.append(vals)
-    grid = list(product(*ranges))
-    return np.array(grid, dtype=np.float32)
+def evaluate_monotonicity(pop: np.ndarray, data: dict) -> np.ndarray:
+    """年度分层单调度 fitness ∈ [0,1]. 返回 (n_pop,)."""
+    pop = np.ascontiguousarray(pop, dtype=np.float32)
+    return evaluate_monotonicity_csr(
+        pop,
+        data["ranks"], data["rets"], data["off"],
+        data["year_idx"], len(data["years"]), GROUP_NUM,
+        data["max_cnt"],
+    )
+
+
+@numba.njit(cache=True, fastmath=True, boundscheck=False)
+def evaluate_year_group_matrix_csr(
+    w,             # (F,) float32, 单个权重
+    ranks,         # (N, F) float32 C-order
+    rets,          # (N,) float32
+    off,           # (D+1,) int32
+    year_idx,      # (D,) int32
+    n_years,       # int
+    group_num,     # int
+    max_cnt,       # int
+):
+    """单个权重 w 的年度档位收益矩阵. 直接包装 _accum_year_group."""
+    G = group_num
+    scores = np.empty(max_cnt, dtype=np.float32)
+    year_group = np.zeros((n_years, G), dtype=np.float64)
+    year_days = np.zeros(n_years, dtype=np.int32)
+    _accum_year_group(w, ranks, rets, off, year_idx, G,
+                      scores, year_group, year_days)
+    return year_group, year_days
+
+
+# ==================== Simplex lattice 搜索 ====================
+
+def generate_simplex_lattice(n_factors: int, m: int) -> np.ndarray:
+    """
+    n 维单位单纯形上 M 阶 lattice 的整数坐标 k:
+        k_i >= 0 整数, Σk_i = m; 对应权重 w = k / m.
+    stars-and-bars 递归枚举, 点数 = C(n+m-1, n-1).
+    返回: (P, n) int32. 浮点权重由调用方自行除 m 得到.
+    """
+    assert n_factors >= 1 and m >= 1
+    points: list[tuple[int, ...]] = []
+    k = [0] * n_factors
+
+    def rec(i: int, remain: int) -> None:
+        if i == n_factors - 1:
+            k[i] = remain
+            points.append(tuple(k))
+            return
+        for v in range(remain + 1):
+            k[i] = v
+            rec(i + 1, remain - v)
+
+    rec(0, m)
+    return np.asarray(points, dtype=np.int32)
+
+
+def neighbor_indices(k_grid: np.ndarray, center_idx: int, key_to_idx: dict) -> list[int]:
+    """
+    在 simplex lattice 上找到与 center 的 L1 距离 = 2 的邻居
+    (等价于从某个非零因子转移 1 个单位到另一个因子, 仍满足 Σk=M).
+    n 因子时最多 n*(n-1) 个邻居 (在边界上会减少).
+    """
+    k = k_grid[center_idx]
+    n = len(k)
+    out: list[int] = []
+    for i in range(n):
+        if k[i] == 0:
+            continue
+        for j in range(n):
+            if i == j:
+                continue
+            new_k = k.copy()
+            new_k[i] -= 1
+            new_k[j] += 1
+            key = tuple(int(v) for v in new_k)
+            if key in key_to_idx:
+                out.append(key_to_idx[key])
+    return out
 
 
 def iter_eval_slices(total_points: int):
@@ -499,11 +725,17 @@ def iter_eval_slices(total_points: int):
 
 def run_grid_search(data: dict) -> tuple[np.ndarray, float, list[str]]:
     """
-    多轮网格搜索
-    返回: (最优权重(全因子维度), 最优多空NAV, 搜索因子名列表)
+    两阶段评估:
+      1) 全量 lattice 扫 fitness Y = 年均分层单调度 ∈ [0,1]
+      2) Top-K 权重额外算:
+         - 邻居平均 Y (L1=2, 参数平原 / 过拟合敏感度)
+         - 粘性+扣费口径的全期多头 NAV 和多空 NAV
+    返回: (最优权重(全因子维度, 已归一化), 最优 Y, 搜索因子名列表)
     """
     all_names = data["factor_names"]
     F_all = len(all_names)
+    n_years = len(data["years"])
+    years = data["years"]
 
     selected_indices = resolve_search_indices(all_names)
     selected_names = list(SEARCH_FACTOR_NAMES)
@@ -512,47 +744,63 @@ def run_grid_search(data: dict) -> tuple[np.ndarray, float, list[str]]:
 
     sub_data = select_factors(data, selected_indices)
 
-    print(f"\n[Step 1] 粗粒度网格搜索 (step={COARSE_STEP})...")
-    coarse_grid = generate_grid(n_search, COARSE_STEP)
-    print(f"搜索点数: {len(coarse_grid)}")
-    coarse_fitness = np.empty(len(coarse_grid), dtype=np.float64)
-    coarse_pbar = tqdm(total=len(coarse_grid), desc="粗搜总进度", unit="point")
-    for st, ed in iter_eval_slices(len(coarse_grid)):
-        coarse_fitness[st:ed] = evaluate_batch(coarse_grid[st:ed], sub_data)
-        coarse_pbar.update(ed - st)
-    coarse_pbar.close()
+    k_grid = generate_simplex_lattice(n_search, LATTICE_M)  # (P, n) int32
+    w_grid = (k_grid.astype(np.float32) / np.float32(LATTICE_M))  # (P, n) float32
+    print(f"Simplex lattice M={LATTICE_M}, 点数={len(w_grid)}, 步长=1/{LATTICE_M}={1.0 / LATTICE_M:.4f}")
 
-    top_k_idx = np.argsort(coarse_fitness)[-TOP_K_HOTSPOTS:][::-1]
-    hotspots = coarse_grid[top_k_idx]
-    hotspot_fitness = coarse_fitness[top_k_idx]
-    print(f"Top {TOP_K_HOTSPOTS} 热点:")
-    for i, (w, f) in enumerate(zip(hotspots, hotspot_fitness)):
-        w_str = ", ".join(f"{v:.1f}" for v in w)
-        print(f"  #{i+1}: [{w_str}] -> {f:.4f}")
+    fitness = np.empty(len(w_grid), dtype=np.float64)
+    pbar = tqdm(total=len(w_grid), desc="单调度搜索", unit="point")
+    for st, ed in iter_eval_slices(len(w_grid)):
+        fitness[st:ed] = evaluate_monotonicity(w_grid[st:ed], sub_data)
+        pbar.update(ed - st)
+    pbar.close()
 
-    print(f"\n[Step 2] 细粒度搜索 (step={FINE_STEP}, radius={FINE_RADIUS})...")
-    best_weights = hotspots[0].copy()
-    best_fitness = float(hotspot_fitness[0])
-    hotspot_pbar = tqdm(hotspots, desc="细搜热点总进度", unit="hotspot")
-    for hotspot_idx, center in enumerate(hotspot_pbar, start=1):
-        fine_grid = generate_fine_grid(center, FINE_RADIUS, FINE_STEP)
-        fine_fitness = np.empty(len(fine_grid), dtype=np.float64)
-        fine_pbar = tqdm(
-            total=len(fine_grid),
-            desc=f"热点{hotspot_idx}进度",
-            unit="point",
-            leave=False,
-        )
-        for st, ed in iter_eval_slices(len(fine_grid)):
-            fine_fitness[st:ed] = evaluate_batch(fine_grid[st:ed], sub_data)
-            fine_pbar.update(ed - st)
-        fine_pbar.close()
-        local_best_idx = int(np.argmax(fine_fitness))
-        if fine_fitness[local_best_idx] > best_fitness:
-            best_fitness = float(fine_fitness[local_best_idx])
-            best_weights = fine_grid[local_best_idx].copy()
-    hotspot_pbar.close()
-    print(f"细搜后最优: {best_fitness:.4f}")
+    top_k = min(10, len(w_grid))
+    top_idx = np.argsort(fitness)[-top_k:][::-1]
+
+    # Top-K 粘性+扣费 NAV (多空 + 多头)
+    top_w = w_grid[top_idx]
+    top_nav = evaluate_batch(top_w, sub_data)  # (top_k, 2)
+
+    # 邻居查找表: tuple(k) -> grid_idx
+    key_to_idx = {tuple(int(v) for v in k): i for i, k in enumerate(k_grid)}
+
+    print(f"\nTop {top_k} (Y = 年均分层单调度 ∈ [0,1], 1.0 = 每年都完美单调):")
+    header = f"{'#':<3} {'Y':>7} {'NbrY':>7} {'衰减':>7} {'N':>3} {'多头NAV':>9} {'多空NAV':>9}  权重"
+    print(header)
+    print("-" * len(header))
+    for rank, gi in enumerate(top_idx, 1):
+        nbrs = neighbor_indices(k_grid, gi, key_to_idx)
+        nbr_mean = float(np.mean(fitness[nbrs])) if nbrs else float("nan")
+        decay = float(fitness[gi]) - nbr_mean
+        w_str = ", ".join(f"{v:.2f}" for v in w_grid[gi])
+        nav_ls = top_nav[rank - 1, 0]
+        nav_l = top_nav[rank - 1, 1]
+        print(f"{rank:<3} {fitness[gi]:7.4f} {nbr_mean:7.4f} {decay:+7.4f} {len(nbrs):3d} {nav_l:9.3f} {nav_ls:9.3f}  [{w_str}]")
+
+    # 最优权重的年度各档累计收益表 (干净等权, 算术累加)
+    best_idx = int(top_idx[0])
+    best_weights = w_grid[best_idx].copy()
+    best_fitness = float(fitness[best_idx])
+    yg, yd = evaluate_year_group_matrix_csr(
+        best_weights,
+        sub_data["ranks"], sub_data["rets"], sub_data["off"],
+        sub_data["year_idx"], n_years, GROUP_NUM, sub_data["max_cnt"],
+    )
+    print(f"\n最优权重年度各档累计收益 (干净等权, 算术累加, 未扣费):")
+    hdr = "年份 " + " ".join(f"Q{g + 1:<6}" for g in range(GROUP_NUM)) + "  单调度"
+    print(hdr)
+    for y in range(n_years):
+        if yd[y] < GROUP_NUM:
+            continue
+        row_vals = yg[y]
+        # 单独再算一次该年单调度用于展示
+        ranks_sorted = np.argsort(np.argsort(row_vals))  # 0..G-1 秩
+        ssq = float(np.sum((ranks_sorted - np.arange(GROUP_NUM)) ** 2))
+        rho = 1.0 - 6.0 * ssq / (GROUP_NUM * (GROUP_NUM ** 2 - 1))
+        y_score = (rho + 1.0) * 0.5
+        cells = " ".join(f"{v:+.4f}" for v in row_vals)
+        print(f"{years[y]} {cells}  {y_score:.3f}")
 
     full_weights = np.zeros(F_all, dtype=np.float32)
     for i, idx in enumerate(selected_indices):
@@ -564,8 +812,9 @@ def run_grid_search(data: dict) -> tuple[np.ndarray, float, list[str]]:
 
 def main():
     print("=" * 60)
-    print("网格搜索因子挖掘")
-    print(f"目标: 多空复利 NAV (Q{GROUP_NUM} long - Q1 short), cost_rt={COST_ROUND_TRIP}")
+    print("Simplex lattice 因子权重搜索")
+    print(f"目标: 年均分档单调度 Y ∈ [0,1] (Q1..Q{GROUP_NUM}, Spearman (rho+1)/2)")
+    print(f"Top10 复评: 粘性+扣费 多头/多空 NAV, cost_rt={COST_ROUND_TRIP}; 邻居 L1=2 敏感度")
     print("=" * 60)
 
     if not DATA_FILE.exists():
@@ -576,35 +825,26 @@ def main():
     data = load_data_from_file()
 
     print("预热 JIT...")
-    _dummy_pop = np.zeros((2, len(data["factor_names"])), dtype=np.float32)
-    _dummy_pop[0, 0] = 1.0
-    _dummy_pop[1, 1] = 1.0
-    _ = evaluate_batch(_dummy_pop, data)
+    _dummy = np.zeros((1, len(data["factor_names"])), dtype=np.float32)
+    _dummy[0, 0] = 1.0
+    evaluate_batch(_dummy, data)
+    evaluate_monotonicity(_dummy, data)
 
     best_weights, best_fitness, selected_names = run_grid_search(data)
 
     print("\n" + "=" * 60)
     print("最终结果")
     print("=" * 60)
-    print(f"最优多空 NAV: {best_fitness:.4f}")
-
-    print(f"\n选中因子及权重:")
+    print(f"最优年均分层单调度 Y: {best_fitness:.4f}")
+    print(f"\n最优权重 (sum=1):")
     for name, w in zip(data["factor_names"], best_weights):
         if w > 0:
-            print(f"  {name:20s}: {w:.2f}")
-
-    weight_sum = best_weights.sum()
-    if weight_sum > 0:
-        norm_weights = best_weights / weight_sum
-        print(f"\n归一化权重:")
-        for name, w in zip(data["factor_names"], norm_weights):
-            if w > 0:
-                print(f"  {name:20s}: {w:.2f}")
+            print(f"  {name:20s}: {w:.4f}")
 
     return {
         "selected_factors": selected_names,
         "weights": {name: float(w) for name, w in zip(data["factor_names"], best_weights) if w > 0},
-        "long_short_nav": float(best_fitness),
+        "mean_monotonicity": float(best_fitness),
     }
 
 
