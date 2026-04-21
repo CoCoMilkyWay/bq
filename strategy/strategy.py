@@ -1,11 +1,12 @@
 from pathlib import Path
 
 from bigmodule import M, I  # pyright: ignore[reportMissingImports]
-import dai
+import dai  # pyright: ignore[reportMissingImports]
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from factor import compute_pool_factors
+from factor import compute_pool_factors, rank_pool_factors
 from filter import get_universe_pool, UNIVERSE_SIZE
 
 STRATEGY_DIR = Path.cwd()
@@ -15,18 +16,18 @@ BACKTEST_END_DATE = "2026-04-07"
 HOLD_N = 40
 EXIT_RATIO = 1.2
 CAPITAL_BASE = 1000000
-RANK_FACTOR_WEIGHTS = {
-    # "pe_ttm": 1.0,
-    # "pb": 1.0,
-    "ps_ttm": 1.0,
-    # "pcf_ttm": 1.0,
-    # "roe_ttm": 1.0,
-    # "roa_ttm": 1.0,
-    # "dividend_yield": 1.0,
-    # "total_market_cap": 1.0,
-    # "float_market_cap": 1.0,
-    # "close": 1.0,
-}
+
+# 动态 IC 权重配置 (micro-cap 风格驱动, 放弃固定权重, 改为每日跟随当期风格)
+IC_WINDOW_DAYS = 25           # 滑窗 IC 天数 (约一个月交易日); expanding 冷启动 (min_periods=1)
+FLOAT_CAP_WEIGHT = 0.4        # 主因子 float_market_cap 固定权重, 小市值偏好作为策略底色
+TOP_K_STYLE = 3               # 每日从风格因子中挑选 signed IC 正值的前 K 个, 不够用几个算几个
+CORE_FACTOR = "float_market_cap"
+STYLE_FACTOR_NAMES = [
+    "pe_ttm", "pb", "ps_ttm", "pcf_ttm",
+    "roe_ttm", "roa_ttm", "dividend_yield",
+    "total_market_cap", "close",
+]
+ALL_FACTOR_NAMES = [CORE_FACTOR] + STYLE_FACTOR_NAMES
 
 '''
 ## 策略配置
@@ -39,9 +40,14 @@ RANK_FACTOR_WEIGHTS = {
 - **过滤因子**
   - 股票池排除过滤因子=1的标的
   - 每日重算
-- **排序因子**
-  - 过滤后的股票池, 根据排序因子加权计算得分, 得到最终当日持仓标的
-  - 每日重算
+- **排序因子 (动态 IC 权重)**
+  - 市值尾部 `UNIVERSE_SIZE` 风格驱动, 固定权重组合无法稳定排序超额, 改为每日跟随
+  - `float_market_cap` 固定主因子, 权重 `FLOAT_CAP_WEIGHT` (默认 0.4), 提供小市值底色
+  - 对 `STYLE_FACTOR_NAMES` 中每个风格因子, 单日 IC = Pearson(当日 pct rank, T+1 日收益)
+  - 每日用最近 `IC_WINDOW_DAYS` (默认 25, expanding 冷启动) 的滑窗均值 IC, 取 signed IC>0 的前 `TOP_K_STYLE` (默认 3) 个风格因子
+  - 入选风格因子平分剩余权重 `1 - FLOAT_CAP_WEIGHT`; 若无正 IC 风格因子则 `float_market_cap` 独扛 (永远满仓)
+  - Point-in-time 严格无未来: D 日用 `[D-N, D-1]` 的滑窗, 实盘天然按日增量更新
+  - factor_score = sum_f (w_{D,f} * pct_rank_{D,f}); 每日重算
 - **持仓/交易**
   - 预期持仓标的数: `HOLD_N`
   - 预期仓位: 保持100%
@@ -133,6 +139,116 @@ RANK_FACTOR_WEIGHTS = {
 '''
 
 
+
+
+def compute_dynamic_factor_score(factor_df: pd.DataFrame, universe_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    动态 IC 权重合成 factor_score, 严格 point-in-time 无未来数据.
+
+    流程:
+        1. 仅保留所有因子都有值的行, pool 内 pct rank 到 [0,1] (与挖掘器口径一致)
+        2. T+1 收益: 基于 universe_df.close, 仅当前后两日都在 pool 内才计 (避免跨调出错位)
+        3. 单日 IC: IC_{d,f} = Pearson(rank_{d,f}, ret_{d→d+1})
+           (输入已是 pct rank, Pearson 即等价 Spearman)
+        4. 滑窗均值: ic_mean_d = mean(IC_{d-N..d-1}); 用 rolling(N, min_periods=1).mean().shift(1)
+           实现 expanding 冷启动 + 严格滞后 (D 日只能看见 IC 截至 D-1)
+        5. 每日权重:
+           - pos IC 因子数 k = min(# signed IC > 0, TOP_K_STYLE)
+           - k > 0: float_cap = FLOAT_CAP_WEIGHT, top-k 风格各 (1 - FLOAT_CAP_WEIGHT) / k
+           - k == 0: float_cap = 1.0 (冷启动 / 全负 IC, 纯小市值, 仍满仓)
+        6. factor_score = Σ_f w_{d,f} * rank_{d,f}
+    """
+    valid = factor_df[["date", "instrument"] + ALL_FACTOR_NAMES].dropna().copy()
+    assert not valid.empty, "动态 IC: 因子数据全为空"
+    ranked = rank_pool_factors(valid, ALL_FACTOR_NAMES)
+
+    u = universe_df[["date", "instrument", "close"]].sort_values(["instrument", "date"]).copy()
+    dates_sorted = sorted(universe_df["date"].unique())
+    date_to_idx = {d: i for i, d in enumerate(dates_sorted)}
+    u["cur_idx"] = u["date"].map(date_to_idx)
+    u["next_close"] = u.groupby("instrument")["close"].shift(-1)
+    u["next_idx"] = u.groupby("instrument")["cur_idx"].shift(-1)
+    u.loc[u["next_idx"] != u["cur_idx"] + 1, "next_close"] = np.nan
+    u["fwd_ret"] = (u["next_close"] - u["close"]) / u["close"]
+
+    merged = ranked.merge(u[["date", "instrument", "fwd_ret"]], on=["date", "instrument"], how="left")
+
+    ic_dates: list = []
+    ic_matrix: list[list[float]] = []
+    for date, g in merged.groupby("date", sort=True):
+        g = g.dropna(subset=["fwd_ret"])
+        ic_dates.append(date)
+        if len(g) < 2:
+            ic_matrix.append([np.nan] * len(STYLE_FACTOR_NAMES))
+            continue
+        ret = g["fwd_ret"].values
+        ret_std = ret.std()
+        row_ics: list[float] = []
+        for f in STYLE_FACTOR_NAMES:
+            fv = g[f].values
+            if ret_std == 0 or fv.std() == 0:
+                row_ics.append(np.nan)
+            else:
+                row_ics.append(float(np.corrcoef(fv, ret)[0, 1]))
+        ic_matrix.append(row_ics)
+
+    ic_df = pd.DataFrame(ic_matrix, columns=STYLE_FACTOR_NAMES)
+    ic_df.insert(0, "date", ic_dates)
+    ic_df = ic_df.sort_values("date").reset_index(drop=True)
+
+    ic_mean = ic_df[STYLE_FACTOR_NAMES].rolling(IC_WINDOW_DAYS, min_periods=1).mean().shift(1)
+    ic_mean_arr = ic_mean.values  # (D, n_style)
+
+    n_dates = len(ic_df)
+    n_factors = len(ALL_FACTOR_NAMES)
+    weights_arr = np.zeros((n_dates, n_factors), dtype=np.float64)
+    core_idx = ALL_FACTOR_NAMES.index(CORE_FACTOR)
+    style_positions = [ALL_FACTOR_NAMES.index(f) for f in STYLE_FACTOR_NAMES]
+
+    # 统计: 每个风格因子被入选 top-k 的次数 & 平均每日入选个数
+    pick_counts = np.zeros(len(STYLE_FACTOR_NAMES), dtype=np.int64)
+    picked_per_day = np.zeros(n_dates, dtype=np.int64)
+
+    for d in range(n_dates):
+        ic_row = ic_mean_arr[d]
+        pos_mask = ~np.isnan(ic_row) & (ic_row > 0)
+        n_pos = int(pos_mask.sum())
+        if n_pos == 0:
+            weights_arr[d, core_idx] = 1.0
+            continue
+        pos_positions = np.where(pos_mask)[0]
+        pos_values = ic_row[pos_positions]
+        order = np.argsort(-pos_values)[:TOP_K_STYLE]
+        chosen = pos_positions[order]
+        k = len(chosen)
+        style_w = (1.0 - FLOAT_CAP_WEIGHT) / k
+        weights_arr[d, core_idx] = FLOAT_CAP_WEIGHT
+        for j in chosen:
+            weights_arr[d, style_positions[j]] = style_w
+        pick_counts[chosen] += 1
+        picked_per_day[d] = k
+
+    weights_cols = [f + "__w" for f in ALL_FACTOR_NAMES]
+    weights_df = pd.DataFrame(weights_arr, columns=weights_cols)
+    weights_df.insert(0, "date", ic_df["date"].values)
+
+    ranked_w = ranked.merge(weights_df, on="date", how="left")
+    score = np.zeros(len(ranked_w), dtype=np.float64)
+    for f in ALL_FACTOR_NAMES:
+        score += ranked_w[f].values * ranked_w[f + "__w"].values
+    ranked_w["factor_score"] = score
+    score_df = ranked_w[["date", "instrument", "factor_score"]]
+
+    n_no_style = int((picked_per_day == 0).sum())
+    avg_k = float(picked_per_day[picked_per_day > 0].mean()) if (picked_per_day > 0).any() else 0.0
+    print(f"动态 IC 权重: {n_dates} 个交易日, 其中 {n_no_style} 天无正 IC 风格因子 (纯 float_cap)")
+    print(f"  有风格日平均入选个数: {avg_k:.2f} / 上限 {TOP_K_STYLE}")
+    print(f"  风格因子入选频次 (/{n_dates} 日):")
+    for f, c in sorted(zip(STYLE_FACTOR_NAMES, pick_counts), key=lambda x: -x[1]):
+        print(f"    {f:20s}: {c:5d} ({100.0 * c / n_dates:5.1f}%)")
+
+    result = universe_df.merge(score_df, on=["date", "instrument"], how="left")
+    return result
 
 
 def build_target_on_day(instruments, ranking_scores):
@@ -388,11 +504,10 @@ factor_df = compute_pool_factors(
     pool_df=universe_df[["date", "instrument"]],
     start_date=BACKTEST_START_DATE,
     end_date=BACKTEST_END_DATE,
-    factor_names=list(RANK_FACTOR_WEIGHTS.keys()),
-    factor_weights=RANK_FACTOR_WEIGHTS,
+    factor_names=ALL_FACTOR_NAMES,
+    factor_weights=None,
 )
-factor_score_df = factor_df[["date", "instrument", "factor_score"]].dropna()
-universe_df = universe_df.merge(factor_score_df, on=["date", "instrument"], how="left")
+universe_df = compute_dynamic_factor_score(factor_df, universe_df)
 score_coverage = universe_df["factor_score"].notna().mean()
 print(f"因子分数覆盖率：{score_coverage:.2%}")
 assert score_coverage > 0, "factor_score coverage is zero"
