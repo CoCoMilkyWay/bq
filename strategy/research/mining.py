@@ -118,7 +118,7 @@ GROUP_NUM = 5  # 分档数
 COST_ROUND_TRIP = 0.002  # 一次换手综合成本 (买 0.0005 + 卖 0.0015)
 LATTICE_M = 15  # simplex lattice 阶数: w_i = k_i / M, sum k_i = M, k_i >= 0
                 # 点数 = C(n_search + M - 1, n_search - 1); 5 因子 M=20 -> 10626
-TOP_N = 50  # 阶段2：按 fitness 取前 N 条做 NAV 复评、邻居表与打印 (可改)
+TOP_N = 200  # 阶段2：按 fitness 取前 N 条做 NAV 复评、邻居表与打印 (可改)
 
 # 不持仓月份 (1..12). 命中月份的交易日, fitness kernel 跳过 (不进 year_group, 不累加 year_days),
 # NAV kernel 跳过 (持仓状态冻结, nav 不变, 无交易成本). 改此值无需重新导出数据.
