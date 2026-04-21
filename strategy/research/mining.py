@@ -146,6 +146,7 @@ FACTOR_NAMES_TO_USE = [
 SEARCH_FACTOR_NAMES = [
     "pb",
     "ps_ttm",
+    "pcf_ttm",
     "close",
     "float_market_cap",
     "total_market_cap",
