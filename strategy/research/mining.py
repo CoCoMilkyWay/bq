@@ -21,7 +21,9 @@ Simplex lattice 因子权重挖掘
          相对主搜索单点更慢 (多 bitmask 粘性 + 换手统计), 但只 N 次
 
     (2b) 参数平原敏感度       函数: neighbor_indices (纯 Python, 非 kernel)
-         触发: top N 逐个找 L1 距离=2 的邻居 (≤ n*(n-1)=20 个)
+         触发: top N 逐个 BFS 找 [1, NEIGHBOR_DISTANCE_MAX] 跳邻居
+               一跳 = 某 k_i -1 & 另一 k_j +1 (L1=2), 单步邻居上限 n*(n-1)
+               多跳总数随 N 组合增长, 默认 N=3 仍远小于 lattice 规模
          目的: 邻居 Y 均值 vs 中心 Y 的衰减, 判断是否过拟合山尖
          不重跑评估, 只从阶段 1 的 fitness 数组里查表, 开销忽略
 
@@ -119,6 +121,9 @@ COST_ROUND_TRIP = 0.002  # 一次换手综合成本 (买 0.0005 + 卖 0.0015)
 LATTICE_M = 15  # simplex lattice 阶数: w_i = k_i / M, sum k_i = M, k_i >= 0
                 # 点数 = C(n_search + M - 1, n_search - 1); 5 因子 M=20 -> 10626
 TOP_N = 200  # 阶段2：按 fitness 取前 N 条做 NAV 复评、邻居表与打印 (可改)
+NEIGHBOR_DISTANCE_MAX = 3  # 阶段 2b 邻居敏感度: 统计 [1, N] 跳内全部 lattice 点的 Y 均值
+                           # 一跳 = 某因子 -1, 另一因子 +1 (L1=2); N=3 -> BFS 最多 3 层
+STAR_LEVELS = 10  # 衰减星级分档数: 衰减升序排名分 STAR_LEVELS 档, 最低档 = STAR_LEVELS 星 (最平原)
 
 # 不持仓月份 (1..12). 命中月份的交易日, fitness kernel 跳过 (不进 year_group, 不累加 year_days),
 # NAV kernel 跳过 (持仓状态冻结, nav 不变, 无交易成本). 改此值无需重新导出数据.
@@ -754,27 +759,41 @@ def generate_simplex_lattice(n_factors: int, m: int) -> np.ndarray:
     return np.asarray(points, dtype=np.int32)
 
 
-def neighbor_indices(k_grid: np.ndarray, center_idx: int, key_to_idx: dict) -> list[int]:
+def neighbor_indices(k_grid: np.ndarray, center_idx: int, key_to_idx: dict, max_dist: int) -> list[int]:
     """
-    在 simplex lattice 上找到与 center 的 L1 距离 = 2 的邻居
-    (等价于从某个非零因子转移 1 个单位到另一个因子, 仍满足 Σk=M).
-    n 因子时最多 n*(n-1) 个邻居 (在边界上会减少).
+    在 simplex lattice 上 BFS 查找与 center 距离在 [1, max_dist] 跳内的全部邻居 (不含 center).
+    一跳 = 从某非零因子转移 1 单位到另一因子 (k_i-=1, k_j+=1; L1 距离=2).
+    返回的索引顺序无特殊语义, 调用方只用于查 fitness 做算术平均.
     """
-    k = k_grid[center_idx]
-    n = len(k)
+    assert max_dist >= 1
+    center_key = tuple(int(v) for v in k_grid[center_idx])
+    n = len(center_key)
+    visited: set[tuple[int, ...]] = {center_key}
+    frontier: list[tuple[int, ...]] = [center_key]
     out: list[int] = []
-    for i in range(n):
-        if k[i] == 0:
-            continue
-        for j in range(n):
-            if i == j:
-                continue
-            new_k = k.copy()
-            new_k[i] -= 1
-            new_k[j] += 1
-            key = tuple(int(v) for v in new_k)
-            if key in key_to_idx:
-                out.append(key_to_idx[key])
+    for _hop in range(max_dist):
+        next_frontier: list[tuple[int, ...]] = []
+        for key in frontier:
+            for i in range(n):
+                if key[i] == 0:
+                    continue
+                for j in range(n):
+                    if i == j:
+                        continue
+                    new_list = list(key)
+                    new_list[i] -= 1
+                    new_list[j] += 1
+                    new_key = tuple(new_list)
+                    if new_key in visited:
+                        continue
+                    visited.add(new_key)
+                    # 一步 ±1 转移保持 Σk=M 与 k>=0, 必然在 lattice 内
+                    assert new_key in key_to_idx
+                    out.append(key_to_idx[new_key])
+                    next_frontier.append(new_key)
+        if not next_frontier:
+            break
+        frontier = next_frontier
     return out
 
 
@@ -839,42 +858,46 @@ def run_grid_search(data: dict, top_n: int | None = None) -> tuple[np.ndarray, f
     # 邻居查找表: tuple(k) -> grid_idx
     key_to_idx = {tuple(int(v) for v in k): i for i, k in enumerate(k_grid)}
 
-    # 收集 top-k 明细, 先算衰减再映射星级
+    # 收集 top-k 明细, 先算衰减再映射星级 (邻居 = [1, NEIGHBOR_DISTANCE_MAX] 跳内全部点)
     nbr_counts = np.empty(top_k, dtype=np.int32)
     nbr_means = np.empty(top_k, dtype=np.float64)
     decays = np.empty(top_k, dtype=np.float64)
     for i, gi in enumerate(top_idx):
-        nbrs = neighbor_indices(k_grid, gi, key_to_idx)
+        nbrs = neighbor_indices(k_grid, gi, key_to_idx, NEIGHBOR_DISTANCE_MAX)
         nbr_counts[i] = len(nbrs)
         nbr_means[i] = float(np.mean(fitness[nbrs])) if nbrs else float("nan")
         decays[i] = float(fitness[gi]) - nbr_means[i]
 
-    # 衰减升序 rank -> 1..5 星 (0..20% 衰减最小 = 5 星 = 最平原, 80..100% = 1 星 = 最山尖)
+    # 衰减升序 rank -> 1..STAR_LEVELS 星 (最低衰减档 = STAR_LEVELS 星 = 最平原, 最高衰减档 = 1 星 = 最山尖)
+    assert STAR_LEVELS >= 1
     order = np.argsort(decays)
     d_rank = np.empty_like(order)
     d_rank[order] = np.arange(top_k)
     star_counts = np.empty(top_k, dtype=np.int32)
     for i in range(top_k):
-        b = int(d_rank[i] * 5 / max(top_k, 1))
-        if b > 4:
-            b = 4
-        star_counts[i] = 5 - b
+        b = int(d_rank[i] * STAR_LEVELS / max(top_k, 1))
+        if b > STAR_LEVELS - 1:
+            b = STAR_LEVELS - 1
+        star_counts[i] = STAR_LEVELS - b
 
     skip_disp = sorted(SKIP_MONTHS) if SKIP_MONTHS else "无"
+    pct_per_bin = 100.0 / STAR_LEVELS
+    star_w = STAR_LEVELS
+    nbr_col_w = max(3, len(str(int(nbr_counts.max()))) if top_k > 0 else 3)
     print(f"\nTop {top_k} 结果 (搜索因子顺序: {selected_names}, SKIP_MONTHS={skip_disp}):")
     print("列含义:")
     print("  #        : 在 lattice 内按 Y 降序的名次")
     print("  Y        : 年均分层分档单调度 fitness ∈ [0,1] (1.0 = 每年 Q1..QG 都完美单调)")
-    print("  NbrY     : L1=2 邻居权重的 Y 均值 (扰动稳定性)")
+    print(f"  NbrY     : [1,{NEIGHBOR_DISTANCE_MAX}] 跳内全部邻居权重的 Y 均值 (扰动稳定性)")
     print("  衰减     : Y - NbrY, 越接近 0 越抗过拟合 (山尖 vs 平原)")
-    print("  星       : 衰减在 top-N 内升序五分位 (5★=衰减最低 20% 最平原, 1★=最高 20% 最山尖)")
-    print("  N        : L1=2 邻居个数 (n 因子最多 n*(n-1), lattice 边界上会减少)")
+    print(f"  星       : 衰减在 top-N 内升序 {STAR_LEVELS} 分位 ({STAR_LEVELS}★=衰减最低 {pct_per_bin:.1f}% 最平原, 1★=最高 {pct_per_bin:.1f}% 最山尖)")
+    print(f"  N        : [1,{NEIGHBOR_DISTANCE_MAX}] 跳内邻居总个数 (边界点会减少)")
     print(f"  多头累计 : 粘性+扣费 (cost_rt={COST_ROUND_TRIP}) 下 top bucket 全期多头 NAV (起点 1.0)")
     print(f"  多头年均 : 逐年重置 NAV, 各年年末 NAV 算术平均 (1.0 = 当年持平)")
     print(f"  多空累计 : 粘性+扣费 下 top-bottom 多空 NAV (起点 1.0)")
     print(f"  多空年均 : 逐年重置多空 NAV, 各年年末算术平均")
     print(f"  权重     : 搜索因子维度上的权重 (顺序同上, 已归一化 sum=1)")
-    header = f"{'#':<3} {'Y':>7} {'NbrY':>7} {'衰减':>7} {'星':<5} {'N':>3} {'多头累计':>8} {'多头年均':>8} {'多空累计':>8} {'多空年均':>8}  权重"
+    header = f"{'#':<3} {'Y':>7} {'NbrY':>7} {'衰减':>7} {'星':<{star_w}} {'N':>{nbr_col_w}} {'多头累计':>8} {'多头年均':>8} {'多空累计':>8} {'多空年均':>8}  权重"
     print(header)
     print("-" * len(header))
     for rank, gi in enumerate(top_idx, 1):
@@ -887,7 +910,7 @@ def run_grid_search(data: dict, top_n: int | None = None) -> tuple[np.ndarray, f
         nav_l_avg = float(top_nav[i, 3])
         print(
             f"{rank:<3} {fitness[gi]:7.4f} {nbr_means[i]:7.4f} {decays[i]:+7.4f} "
-            f"{stars:<5} {int(nbr_counts[i]):3d} "
+            f"{stars:<{star_w}} {int(nbr_counts[i]):{nbr_col_w}d} "
             f"{nav_l_cum:8.3f} {nav_l_avg:8.3f} {nav_ls_cum:8.3f} {nav_ls_avg:8.3f}  [{w_str}]"
         )
 
