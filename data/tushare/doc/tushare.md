@@ -1,18 +1,30 @@
 ## 股票数据
- - 股票数据
- - 基础数据
+ - 基础数据 data/tushare/doc/basic
+   - 基础信息: stock_basic.md
+   - 股本情况(盘前): stk_premarket.md
+   - 交易日历: trade_cal.md
+   - ST股票列表: stock_st.md
+   - ST风险警示板股票: st.md
+   - 沪深港通股票列表: stock_hsgt.md
+   - 股票曾用名: namechange.md
+   - 上市公司基本信息: stock_company.md
+   - 上市公司管理层: stk_managers.md
+   - 管理层薪酬和持股: stk_rewards.md
+   - 北交所新旧代码对照表: bse_mapping.md
+   - IPO新股列表: new_share.md
+   - 股票历史列表(历史每天股票列表): bak_basic.md
  - 行情数据
- - 财务数据 data/tushare/doc/finnacial
-    - 利润表: income.md
-    - 资产负债表: balancesheet.md
-    - 现金流量表: cashflow.md
-    - 业绩预告: forecast.md
-    - 业绩快报: express.md
-    - 分红送股数据: dividend.md
-    - 财务指标数据: fina_indicator.md
-    - 财务审计意见: fina_audit.md
-    - 主营业务构成: fina_mainbz.md
-    - 财报披露日期表: disclosure_date.md
+ - 财务数据 data/tushare/doc/financial
+   - 利润表: income.md
+   - 资产负债表: balancesheet.md
+   - 现金流量表: cashflow.md
+   - 业绩预告: forecast.md
+   - 业绩快报: express.md
+   - 分红送股数据: dividend.md
+   - 财务指标数据: fina_indicator.md
+   - 财务审计意见: fina_audit.md
+   - 主营业务构成: fina_mainbz.md
+   - 财报披露日期表: disclosure_date.md
  - 参考数据
  - 特色数据
  - 两融及转融通
