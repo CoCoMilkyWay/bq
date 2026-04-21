@@ -94,29 +94,34 @@ Fitness 定义 (阶段 1): 年度分层单调度的跨年均值 Y ∈ [0, 1]
     - 内存 C-order, 手写 dot, fastmath, prange 并行
 
 使用方式:
-    python ga_mining.py
+    python mining.py
 """
 
 import numpy as np
 import numba
+import sys
 from pathlib import Path
 from tqdm.auto import tqdm
 
 # ==================== 配置 ====================
 
-DATA_FILE = Path(__file__).parent / "ga_mining_data.npz"
+STRATEGY_DIR = Path(__file__).resolve().parents[1]
+if str(STRATEGY_DIR) not in sys.path:
+    sys.path.insert(0, str(STRATEGY_DIR))
+
+DATA_FILE = Path(__file__).parent / "mining_data.npz"
 SCHEMA_VERSION = 1
 
 START_DATE = "2017-01-01"
 END_DATE = "2026-04-07"
 GROUP_NUM = 10  # 分档数
 COST_ROUND_TRIP = 0.002  # 一次换手综合成本 (买 0.0005 + 卖 0.0015)
-LATTICE_M = 20  # simplex lattice 阶数: w_i = k_i / M, sum k_i = M, k_i >= 0
+LATTICE_M = 15  # simplex lattice 阶数: w_i = k_i / M, sum k_i = M, k_i >= 0
                 # 点数 = C(n_search + M - 1, n_search - 1); 5 因子 M=20 -> 10626
 
 # 不持仓月份 (1..12). 命中月份的交易日, fitness kernel 跳过 (不进 year_group, 不累加 year_days),
 # NAV kernel 跳过 (持仓状态冻结, nav 不变, 无交易成本). 改此值无需重新导出数据.
-SKIP_MONTHS = frozenset({1, 4})
+SKIP_MONTHS = frozenset({1, 4, 12})
 
 FACTOR_NAMES_TO_USE = [
     "pe_ttm",
@@ -137,6 +142,7 @@ SEARCH_FACTOR_NAMES = [
     "ps_ttm",
     "close",
     "float_market_cap",
+    "total_market_cap",
     "dividend_yield",
 ]
 
@@ -364,7 +370,7 @@ def resolve_search_indices(factor_names: list[str]) -> list[int]:
     idx_map = {n: i for i, n in enumerate(factor_names)}
     out: list[int] = []
     for n in SEARCH_FACTOR_NAMES:
-        assert n in idx_map, f"搜索因子 {n} 不在 npz 中, 请删 ga_mining_data.npz 后重跑 export_data"
+        assert n in idx_map, f"搜索因子 {n} 不在 npz 中, 请删 mining_data.npz 后重跑 export_data"
         out.append(idx_map[n])
     return out
 
