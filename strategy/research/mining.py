@@ -13,15 +13,15 @@ Simplex lattice 因子权重挖掘
                年末 G x G 朴素排名 + Spearman + (rho+1)/2
     ≈ 全部运行时间的 99%
 
-[阶段 2] Top-10 后评估 (三件套, 合计 ~0.1% 耗时, 基本可忽略):
+[阶段 2] Top-N 后评估 (三件套, 合计 ~0.1% 耗时, 基本可忽略, N=TOP_N):
 
     (2a) 粘性+扣费 NAV 复评   kernel: evaluate_batch_csr
-         触发: 1 次 batch 调用, pop = 10 (top10 权重)
+         触发: 1 次 batch 调用, pop = N (top N 权重)
          目的: 给出对齐 strategy.py 实盘口径的多空/多头 NAV
-         相对主搜索单点更慢 (多 bitmask 粘性 + 换手统计), 但只 10 次
+         相对主搜索单点更慢 (多 bitmask 粘性 + 换手统计), 但只 N 次
 
     (2b) 参数平原敏感度       函数: neighbor_indices (纯 Python, 非 kernel)
-         触发: top10 逐个找 L1 距离=2 的邻居 (≤ n*(n-1)=20 个)
+         触发: top N 逐个找 L1 距离=2 的邻居 (≤ n*(n-1)=20 个)
          目的: 邻居 Y 均值 vs 中心 Y 的衰减, 判断是否过拟合山尖
          不重跑评估, 只从阶段 1 的 fitness 数组里查表, 开销忽略
 
@@ -73,7 +73,7 @@ Fitness 定义 (阶段 1): 年度分层单调度的跨年均值 Y ∈ [0, 1]
     - 数据源: cn_stock_prefactors
     - 搜索阶段 (fitness Y 评估): 每日 score 升序等比切分 G 档, 每档等权日收益,
         不做涨跌停粘性、不扣换手费. 这是"因子原始分层能力"指标.
-    - Top10 复评阶段 (粘性+扣费, 对齐 strategy.py 四条限制):
+    - Top-N 复评阶段 (粘性+扣费, 对齐 strategy.py 四条限制):
         price_limit_status 0=缺失/1=跌停/2=正常/3=涨停
         * status != 2 的标的"冻结": 当日持仓状态 = 昨日持仓状态, 不产生换手
             - 涨停持仓不卖 (预期次日超额收益)
@@ -90,7 +90,7 @@ Fitness 定义 (阶段 1): 年度分层单调度的跨年均值 Y ∈ [0, 1]
     - 整数坐标兼作 O(1) 邻居查找键, 邻居敏感度只需 dict 查表
     - 单 CSR 紧凑布局 (含全部 factor/ret-valid 标的 + status + year 标注)
     - 单调度 kernel: 每日一次 argsort + G 个区间累加, O(cnt) 扫描, 无粘性 bitmask
-    - 粘性+扣费 kernel 只在 top10 上跑 (10 次调用, 可忽略)
+    - 粘性+扣费 kernel 只在 top N 上跑 (N 次调用, 可忽略)
     - 内存 C-order, 手写 dot, fastmath, prange 并行
 
 使用方式:
@@ -114,10 +114,11 @@ SCHEMA_VERSION = 1
 
 START_DATE = "2017-01-01"
 END_DATE = "2026-04-07"
-GROUP_NUM = 10  # 分档数
+GROUP_NUM = 5  # 分档数
 COST_ROUND_TRIP = 0.002  # 一次换手综合成本 (买 0.0005 + 卖 0.0015)
 LATTICE_M = 15  # simplex lattice 阶数: w_i = k_i / M, sum k_i = M, k_i >= 0
                 # 点数 = C(n_search + M - 1, n_search - 1); 5 因子 M=20 -> 10626
+TOP_N = 50  # 阶段2：按 fitness 取前 N 条做 NAV 复评、邻居表与打印 (可改)
 
 # 不持仓月份 (1..12). 命中月份的交易日, fitness kernel 跳过 (不进 year_group, 不累加 year_days),
 # NAV kernel 跳过 (持仓状态冻结, nav 不变, 无交易成本). 改此值无需重新导出数据.
@@ -759,7 +760,7 @@ def iter_eval_slices(total_points: int):
         yield st, ed
 
 
-def run_grid_search(data: dict) -> tuple[np.ndarray, float, list[str]]:
+def run_grid_search(data: dict, top_n: int | None = None) -> tuple[np.ndarray, float, list[str]]:
     """
     两阶段评估:
       1) 全量 lattice 扫 fitness Y = 年均分层单调度 ∈ [0,1]
@@ -791,7 +792,9 @@ def run_grid_search(data: dict) -> tuple[np.ndarray, float, list[str]]:
         pbar.update(ed - st)
     pbar.close()
 
-    top_k = min(10, len(w_grid))
+    n_top = TOP_N if top_n is None else top_n
+    assert n_top >= 1
+    top_k = min(n_top, len(w_grid))
     top_idx = np.argsort(fitness)[-top_k:][::-1]
 
     # Top-K 粘性+扣费 NAV (多空 + 多头)
@@ -864,7 +867,7 @@ def main():
     print("=" * 60)
     print("Simplex lattice 因子权重搜索")
     print(f"目标: 年均分档单调度 Y ∈ [0,1] (Q1..Q{GROUP_NUM}, Spearman (rho+1)/2)")
-    print(f"Top10 复评: 粘性+扣费 多头/多空 NAV, cost_rt={COST_ROUND_TRIP}; 邻居 L1=2 敏感度")
+    print(f"Top{TOP_N} 复评: 粘性+扣费 多头/多空 NAV, cost_rt={COST_ROUND_TRIP}; 邻居 L1=2 敏感度")
     print(f"SKIP_MONTHS={skip_disp} (命中日 fitness 与 NAV 均跳过, 持仓冻结)")
     print("=" * 60)
 
