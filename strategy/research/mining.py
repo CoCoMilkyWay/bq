@@ -387,6 +387,8 @@ def evaluate_batch_csr(
     status,        # (N,) int8: 0=缺失, 1=跌停, 2=正常, 3=涨停
     off,           # (D+1,) int32
     active_day,    # (D,) uint8, 0=SKIP_MONTHS 命中日, 持仓冻结 nav 不变
+    year_idx,      # (D,) int32, 0..n_years-1
+    n_years,       # int
     group_num,     # int
     cost_rt,       # float: 一次换手综合成本 (buy + sell)
     n_stocks,      # int: 全标的数, 用于 bitmask
@@ -403,13 +405,19 @@ def evaluate_batch_csr(
         turnover_short 同理 (new_shorts 也只可能来自 status==2)
         daily_ls   = ret_long - ret_short - (turnover_long + turnover_short) * cost_rt
         daily_long = ret_long - turnover_long * cost_rt
-        nav_ls   *= 1 + daily_ls,  nav_long *= 1 + daily_long
-    返回: fitness (n_pop, 2), [:,0] = 多空 NAV, [:,1] = 多头 NAV
+    NAV 按年分桶累乘 (每年起算 1.0):
+        cum_nav = Π_y year_nav[y]      (等价全期累乘)
+        avg_nav = mean_y year_nav[y]   (各年年末 NAV 算术平均)
+    返回: fitness (n_pop, 4)
+        [:,0] = 累计多空 NAV
+        [:,1] = 累计多头 NAV
+        [:,2] = 年均多空 NAV (逐年重置, 年末 NAV 算术平均)
+        [:,3] = 年均多头 NAV
     """
     n_pop = pop.shape[0]
     F = pop.shape[1]
     D = off.shape[0] - 1
-    fitness = np.empty((n_pop, 2), dtype=np.float64)
+    fitness = np.empty((n_pop, 4), dtype=np.float64)
 
     for p in numba.prange(n_pop):
         w = pop[p]
@@ -423,8 +431,9 @@ def evaluate_batch_csr(
         prev_long_cnt = 0
         prev_short_cnt = 0
 
-        nav_ls = 1.0
-        nav_l = 1.0
+        year_nav_ls = np.ones(n_years, dtype=np.float64)
+        year_nav_l = np.ones(n_years, dtype=np.float64)
+        year_seen = np.zeros(n_years, dtype=np.uint8)
 
         for d in range(D):
             if active_day[d] == 0:
@@ -437,6 +446,8 @@ def evaluate_batch_csr(
             gsz = cnt // group_num
             if gsz < 1:
                 continue
+            y = year_idx[d]
+            year_seen[y] = 1
 
             # 合并扫描: 计算分数 + 识别 locked (两侧)
             today_long_cnt = 0
@@ -529,30 +540,54 @@ def evaluate_batch_csr(
 
             if long_active and short_active:
                 daily = ret_long - ret_short - (turnover_long + turnover_short) * cost_rt
-                nav_ls *= (1.0 + daily)
+                year_nav_ls[y] *= (1.0 + daily)
             elif long_active:
                 daily = ret_long - turnover_long * cost_rt
-                nav_ls *= (1.0 + daily)
+                year_nav_ls[y] *= (1.0 + daily)
             elif short_active:
                 daily = -ret_short - turnover_short * cost_rt
-                nav_ls *= (1.0 + daily)
+                year_nav_ls[y] *= (1.0 + daily)
 
             if long_active:
-                nav_l *= (1.0 + ret_long - turnover_long * cost_rt)
+                year_nav_l[y] *= (1.0 + ret_long - turnover_long * cost_rt)
 
-        fitness[p, 0] = nav_ls
-        fitness[p, 1] = nav_l
+        cum_ls = 1.0
+        cum_l = 1.0
+        sum_ls = 0.0
+        sum_l = 0.0
+        n_seen = 0
+        for y in range(n_years):
+            if year_seen[y] != 0:
+                cum_ls *= year_nav_ls[y]
+                cum_l *= year_nav_l[y]
+                sum_ls += year_nav_ls[y]
+                sum_l += year_nav_l[y]
+                n_seen += 1
+        if n_seen > 0:
+            avg_ls = sum_ls / n_seen
+            avg_l = sum_l / n_seen
+        else:
+            avg_ls = 1.0
+            avg_l = 1.0
+        fitness[p, 0] = cum_ls
+        fitness[p, 1] = cum_l
+        fitness[p, 2] = avg_ls
+        fitness[p, 3] = avg_l
 
     return fitness
 
 
 def evaluate_batch(pop: np.ndarray, data: dict) -> np.ndarray:
-    """粘性+扣费 多空/多头 NAV 评估. 返回 (n_pop, 2): [:,0]=多空, [:,1]=多头."""
+    """
+    粘性+扣费 多空/多头 NAV 评估. 返回 (n_pop, 4):
+        [:,0]=累计多空, [:,1]=累计多头, [:,2]=年均多空, [:,3]=年均多头.
+    """
     pop = np.ascontiguousarray(pop, dtype=np.float32)
     return evaluate_batch_csr(
         pop,
         data["ranks"], data["rets"], data["insts"], data["status"], data["off"],
         data["active_day"],
+        data["year_idx"], len(data["years"]),
         GROUP_NUM, COST_ROUND_TRIP, data["n_stocks"], data["max_cnt"],
     )
 
@@ -797,35 +832,64 @@ def run_grid_search(data: dict, top_n: int | None = None) -> tuple[np.ndarray, f
     top_k = min(n_top, len(w_grid))
     top_idx = np.argsort(fitness)[-top_k:][::-1]
 
-    # Top-K 粘性+扣费 NAV (多空 + 多头)
+    # Top-K 粘性+扣费 NAV (累计 + 年均, 多空 + 多头)
     top_w = w_grid[top_idx]
-    top_nav = evaluate_batch(top_w, sub_data)  # (top_k, 2)
+    top_nav = evaluate_batch(top_w, sub_data)  # (top_k, 4)
 
     # 邻居查找表: tuple(k) -> grid_idx
     key_to_idx = {tuple(int(v) for v in k): i for i, k in enumerate(k_grid)}
 
+    # 收集 top-k 明细, 先算衰减再映射星级
+    nbr_counts = np.empty(top_k, dtype=np.int32)
+    nbr_means = np.empty(top_k, dtype=np.float64)
+    decays = np.empty(top_k, dtype=np.float64)
+    for i, gi in enumerate(top_idx):
+        nbrs = neighbor_indices(k_grid, gi, key_to_idx)
+        nbr_counts[i] = len(nbrs)
+        nbr_means[i] = float(np.mean(fitness[nbrs])) if nbrs else float("nan")
+        decays[i] = float(fitness[gi]) - nbr_means[i]
+
+    # 衰减升序 rank -> 1..5 星 (0..20% 衰减最小 = 5 星 = 最平原, 80..100% = 1 星 = 最山尖)
+    order = np.argsort(decays)
+    d_rank = np.empty_like(order)
+    d_rank[order] = np.arange(top_k)
+    star_counts = np.empty(top_k, dtype=np.int32)
+    for i in range(top_k):
+        b = int(d_rank[i] * 5 / max(top_k, 1))
+        if b > 4:
+            b = 4
+        star_counts[i] = 5 - b
+
     skip_disp = sorted(SKIP_MONTHS) if SKIP_MONTHS else "无"
     print(f"\nTop {top_k} 结果 (搜索因子顺序: {selected_names}, SKIP_MONTHS={skip_disp}):")
     print("列含义:")
-    print("  #       : 在 lattice 内按 Y 降序的名次")
-    print("  Y       : 年均分层分档单调度 fitness ∈ [0,1] (1.0 = 每年 Q1..QG 都完美单调)")
-    print("  NbrY    : L1=2 邻居权重的 Y 均值 (扰动稳定性)")
-    print("  衰减    : Y - NbrY, 越接近 0 越抗过拟合 (山尖 vs 平原)")
-    print("  N       : L1=2 邻居个数 (5 因子最多 20, lattice 边界上会减少)")
-    print(f"  多头NAV : 粘性+扣费 (cost_rt={COST_ROUND_TRIP}) 下 top bucket 全期多头 NAV (起点 1.0)")
-    print(f"  多空NAV : 粘性+扣费 下 top-bottom 多空 NAV (起点 1.0)")
-    print(f"  权重    : 搜索因子维度上的权重 (顺序同上, 已归一化 sum=1)")
-    header = f"{'#':<3} {'Y':>7} {'NbrY':>7} {'衰减':>7} {'N':>3} {'多头NAV':>9} {'多空NAV':>9}  权重"
+    print("  #        : 在 lattice 内按 Y 降序的名次")
+    print("  Y        : 年均分层分档单调度 fitness ∈ [0,1] (1.0 = 每年 Q1..QG 都完美单调)")
+    print("  NbrY     : L1=2 邻居权重的 Y 均值 (扰动稳定性)")
+    print("  衰减     : Y - NbrY, 越接近 0 越抗过拟合 (山尖 vs 平原)")
+    print("  星       : 衰减在 top-N 内升序五分位 (5★=衰减最低 20% 最平原, 1★=最高 20% 最山尖)")
+    print("  N        : L1=2 邻居个数 (n 因子最多 n*(n-1), lattice 边界上会减少)")
+    print(f"  多头累计 : 粘性+扣费 (cost_rt={COST_ROUND_TRIP}) 下 top bucket 全期多头 NAV (起点 1.0)")
+    print(f"  多头年均 : 逐年重置 NAV, 各年年末 NAV 算术平均 (1.0 = 当年持平)")
+    print(f"  多空累计 : 粘性+扣费 下 top-bottom 多空 NAV (起点 1.0)")
+    print(f"  多空年均 : 逐年重置多空 NAV, 各年年末算术平均")
+    print(f"  权重     : 搜索因子维度上的权重 (顺序同上, 已归一化 sum=1)")
+    header = f"{'#':<3} {'Y':>7} {'NbrY':>7} {'衰减':>7} {'星':<5} {'N':>3} {'多头累计':>8} {'多头年均':>8} {'多空累计':>8} {'多空年均':>8}  权重"
     print(header)
     print("-" * len(header))
     for rank, gi in enumerate(top_idx, 1):
-        nbrs = neighbor_indices(k_grid, gi, key_to_idx)
-        nbr_mean = float(np.mean(fitness[nbrs])) if nbrs else float("nan")
-        decay = float(fitness[gi]) - nbr_mean
+        i = rank - 1
         w_str = ", ".join(f"{v:.2f}" for v in w_grid[gi])
-        nav_ls = top_nav[rank - 1, 0]
-        nav_l = top_nav[rank - 1, 1]
-        print(f"{rank:<3} {fitness[gi]:7.4f} {nbr_mean:7.4f} {decay:+7.4f} {len(nbrs):3d} {nav_l:9.3f} {nav_ls:9.3f}  [{w_str}]")
+        stars = "*" * int(star_counts[i])
+        nav_ls_cum = float(top_nav[i, 0])
+        nav_l_cum = float(top_nav[i, 1])
+        nav_ls_avg = float(top_nav[i, 2])
+        nav_l_avg = float(top_nav[i, 3])
+        print(
+            f"{rank:<3} {fitness[gi]:7.4f} {nbr_means[i]:7.4f} {decays[i]:+7.4f} "
+            f"{stars:<5} {int(nbr_counts[i]):3d} "
+            f"{nav_l_cum:8.3f} {nav_l_avg:8.3f} {nav_ls_cum:8.3f} {nav_ls_avg:8.3f}  [{w_str}]"
+        )
 
     # 最优权重的年度各档累计收益表 (干净等权, 算术累加)
     best_idx = int(top_idx[0])
