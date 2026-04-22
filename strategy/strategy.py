@@ -21,7 +21,7 @@ CAPITAL_BASE = 1000000
 IC_WINDOW_DAYS = 25  # 滑窗 IC 天数 (约一个月交易日); expanding 冷启动 (min_periods=1)
 FLOAT_CAP_WEIGHT = 0.99  # 主因子 float_market_cap 固定权重, 小市值偏好作为策略底色
 TOP_K_STYLE = 3  # 每日从风格因子中挑选 signed IC 正值的前 K 个, 不够用几个算几个
-CORE_FACTOR = "total_market_cap "
+CORE_FACTOR = "total_market_cap"
 STYLE_FACTOR_NAMES = [
     "pe_ttm",
     "pb",
