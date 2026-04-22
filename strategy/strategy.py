@@ -19,7 +19,7 @@ CAPITAL_BASE = 1000000
 
 # 动态 IC 权重配置 (micro-cap 风格驱动, 放弃固定权重, 改为每日跟随当期风格)
 IC_WINDOW_DAYS = 25  # 滑窗 IC 天数 (约一个月交易日); expanding 冷启动 (min_periods=1)
-FLOAT_CAP_WEIGHT = 0.99  # 主因子 float_market_cap 固定权重, 小市值偏好作为策略底色
+CORE_WEIGHT = 0.99  # CORE_FACTOR 固定权重, 作为策略底色
 TOP_K_STYLE = 3  # 每日从风格因子中挑选 signed IC 正值的前 K 个, 不够用几个算几个
 CORE_FACTOR = "total_market_cap"
 STYLE_FACTOR_NAMES = [
@@ -48,10 +48,10 @@ ALL_FACTOR_NAMES = [CORE_FACTOR] + STYLE_FACTOR_NAMES
   - 每日重算
 - **排序因子 (动态 IC 权重)**
   - 市值尾部 `UNIVERSE_SIZE` 风格驱动, 固定权重组合无法稳定排序超额, 改为每日跟随
-  - `float_market_cap` 固定主因子, 权重 `FLOAT_CAP_WEIGHT` (默认 0.4), 提供小市值底色
+  - `CORE_FACTOR` 固定主因子, 权重 `CORE_WEIGHT` (默认 0.4), 提供策略底色
   - 对 `STYLE_FACTOR_NAMES` 中每个风格因子, 单日 IC = Pearson(当日 pct rank, T+1 日收益)
   - 每日用最近 `IC_WINDOW_DAYS` (默认 25, expanding 冷启动) 的滑窗均值 IC, 取 signed IC>0 的前 `TOP_K_STYLE` (默认 3) 个风格因子
-  - 入选风格因子平分剩余权重 `1 - FLOAT_CAP_WEIGHT`; 若无正 IC 风格因子则 `float_market_cap` 独扛 (永远满仓)
+  - 入选风格因子平分剩余权重 `1 - CORE_WEIGHT`; 若无正 IC 风格因子则 `CORE_FACTOR` 独扛 (永远满仓)
   - Point-in-time 严格无未来: D 日用 `[D-N, D-1]` 的滑窗, 实盘天然按日增量更新
   - factor_score = sum_f (w_{D,f} * pct_rank_{D,f}); 每日重算
 - **持仓/交易**
@@ -160,8 +160,8 @@ def compute_dynamic_factor_score(
            实现 expanding 冷启动 + 严格滞后 (D 日只能看见 IC 截至 D-1)
         5. 每日权重:
            - pos IC 因子数 k = min(# signed IC > 0, TOP_K_STYLE)
-           - k > 0: float_cap = FLOAT_CAP_WEIGHT, top-k 风格各 (1 - FLOAT_CAP_WEIGHT) / k
-           - k == 0: float_cap = 1.0 (冷启动 / 全负 IC, 纯小市值, 仍满仓)
+           - k > 0: core = CORE_WEIGHT, top-k 风格各 (1 - CORE_WEIGHT) / k
+           - k == 0: core = 1.0 (冷启动 / 全负 IC, 纯 CORE_FACTOR, 仍满仓)
         6. factor_score = Σ_f w_{d,f} * rank_{d,f}
     """
     valid = factor_df[["date", "instrument"] + ALL_FACTOR_NAMES].dropna().copy()
@@ -235,8 +235,8 @@ def compute_dynamic_factor_score(
         order = np.argsort(-pos_values)[:TOP_K_STYLE]
         chosen = pos_positions[order]
         k = len(chosen)
-        style_w = (1.0 - FLOAT_CAP_WEIGHT) / k
-        weights_arr[d, core_idx] = FLOAT_CAP_WEIGHT
+        style_w = (1.0 - CORE_WEIGHT) / k
+        weights_arr[d, core_idx] = CORE_WEIGHT
         for j in chosen:
             weights_arr[d, style_positions[j]] = style_w
         pick_counts[chosen] += 1
@@ -260,7 +260,7 @@ def compute_dynamic_factor_score(
         else 0.0
     )
     print(
-        f"动态 IC 权重: {n_dates} 个交易日, 其中 {n_no_style} 天无正 IC 风格因子 (纯 float_cap)"
+        f"动态 IC 权重: {n_dates} 个交易日, 其中 {n_no_style} 天无正 IC 风格因子 (纯 {CORE_FACTOR})"
     )
     print(f"  有风格日平均入选个数: {avg_k:.2f} / 上限 {TOP_K_STYLE}")
     print(f"  风格因子入选频次 (/{n_dates} 日):")
