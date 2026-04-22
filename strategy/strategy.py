@@ -14,22 +14,28 @@ STRATEGY_DIR = Path.cwd()
 BACKTEST_START_DATE = "2017-01-01"
 BACKTEST_END_DATE = "2026-04-07"
 HOLD_N = 40
-EXIT_RATIO = 1.2
+EXIT_RATIO = 1.0
 CAPITAL_BASE = 1000000
 
 # 动态 IC 权重配置 (micro-cap 风格驱动, 放弃固定权重, 改为每日跟随当期风格)
-IC_WINDOW_DAYS = 25           # 滑窗 IC 天数 (约一个月交易日); expanding 冷启动 (min_periods=1)
-FLOAT_CAP_WEIGHT = 0.4        # 主因子 float_market_cap 固定权重, 小市值偏好作为策略底色
-TOP_K_STYLE = 3               # 每日从风格因子中挑选 signed IC 正值的前 K 个, 不够用几个算几个
-CORE_FACTOR = "float_market_cap"
+IC_WINDOW_DAYS = 25  # 滑窗 IC 天数 (约一个月交易日); expanding 冷启动 (min_periods=1)
+FLOAT_CAP_WEIGHT = 0.99  # 主因子 float_market_cap 固定权重, 小市值偏好作为策略底色
+TOP_K_STYLE = 3  # 每日从风格因子中挑选 signed IC 正值的前 K 个, 不够用几个算几个
+CORE_FACTOR = "total_market_cap "
 STYLE_FACTOR_NAMES = [
-    "pe_ttm", "pb", "ps_ttm", "pcf_ttm",
-    "roe_ttm", "roa_ttm", "dividend_yield",
-    "total_market_cap", "close",
+    "pe_ttm",
+    "pb",
+    "ps_ttm",
+    "pcf_ttm",
+    "roe_ttm",
+    "roa_ttm",
+    "dividend_yield",
+    "float_market_cap",
+    "close",
 ]
 ALL_FACTOR_NAMES = [CORE_FACTOR] + STYLE_FACTOR_NAMES
 
-'''
+"""
 ## 策略配置
 - **股票池** (`cn_stock_basic_selector` + `cn_stock_prefactors`)
   - 基础过滤: 上交所/深交所, 主板/创业板/科创板, 排除ST, 排除停牌
@@ -136,12 +142,12 @@ ALL_FACTOR_NAMES = [CORE_FACTOR] + STYLE_FACTOR_NAMES
 2026:   0.124    3017    31.24
 累计净值: 3.3倍
 
-'''
+"""
 
 
-
-
-def compute_dynamic_factor_score(factor_df: pd.DataFrame, universe_df: pd.DataFrame) -> pd.DataFrame:
+def compute_dynamic_factor_score(
+    factor_df: pd.DataFrame, universe_df: pd.DataFrame
+) -> pd.DataFrame:
     """
     动态 IC 权重合成 factor_score, 严格 point-in-time 无未来数据.
 
@@ -162,7 +168,11 @@ def compute_dynamic_factor_score(factor_df: pd.DataFrame, universe_df: pd.DataFr
     assert not valid.empty, "动态 IC: 因子数据全为空"
     ranked = rank_pool_factors(valid, ALL_FACTOR_NAMES)
 
-    u = universe_df[["date", "instrument", "close"]].sort_values(["instrument", "date"]).copy()
+    u = (
+        universe_df[["date", "instrument", "close"]]
+        .sort_values(["instrument", "date"])
+        .copy()
+    )
     dates_sorted = sorted(universe_df["date"].unique())
     date_to_idx = {d: i for i, d in enumerate(dates_sorted)}
     u["cur_idx"] = u["date"].map(date_to_idx)
@@ -171,7 +181,9 @@ def compute_dynamic_factor_score(factor_df: pd.DataFrame, universe_df: pd.DataFr
     u.loc[u["next_idx"] != u["cur_idx"] + 1, "next_close"] = np.nan
     u["fwd_ret"] = (u["next_close"] - u["close"]) / u["close"]
 
-    merged = ranked.merge(u[["date", "instrument", "fwd_ret"]], on=["date", "instrument"], how="left")
+    merged = ranked.merge(
+        u[["date", "instrument", "fwd_ret"]], on=["date", "instrument"], how="left"
+    )
 
     ic_dates: list = []
     ic_matrix: list[list[float]] = []
@@ -196,7 +208,9 @@ def compute_dynamic_factor_score(factor_df: pd.DataFrame, universe_df: pd.DataFr
     ic_df.insert(0, "date", ic_dates)
     ic_df = ic_df.sort_values("date").reset_index(drop=True)
 
-    ic_mean = ic_df[STYLE_FACTOR_NAMES].rolling(IC_WINDOW_DAYS, min_periods=1).mean().shift(1)
+    ic_mean = (
+        ic_df[STYLE_FACTOR_NAMES].rolling(IC_WINDOW_DAYS, min_periods=1).mean().shift(1)
+    )
     ic_mean_arr = ic_mean.values  # (D, n_style)
 
     n_dates = len(ic_df)
@@ -240,8 +254,14 @@ def compute_dynamic_factor_score(factor_df: pd.DataFrame, universe_df: pd.DataFr
     score_df = ranked_w[["date", "instrument", "factor_score"]]
 
     n_no_style = int((picked_per_day == 0).sum())
-    avg_k = float(picked_per_day[picked_per_day > 0].mean()) if (picked_per_day > 0).any() else 0.0
-    print(f"动态 IC 权重: {n_dates} 个交易日, 其中 {n_no_style} 天无正 IC 风格因子 (纯 float_cap)")
+    avg_k = (
+        float(picked_per_day[picked_per_day > 0].mean())
+        if (picked_per_day > 0).any()
+        else 0.0
+    )
+    print(
+        f"动态 IC 权重: {n_dates} 个交易日, 其中 {n_no_style} 天无正 IC 风格因子 (纯 float_cap)"
+    )
     print(f"  有风格日平均入选个数: {avg_k:.2f} / 上限 {TOP_K_STYLE}")
     print(f"  风格因子入选频次 (/{n_dates} 日):")
     for f, c in sorted(zip(STYLE_FACTOR_NAMES, pick_counts), key=lambda x: -x[1]):
@@ -275,9 +295,11 @@ def build_target_on_day(instruments, ranking_scores):
 
 
 def bt_init(context):
-    from bigtrader.finance.commission import PerOrder  # pyright: ignore[reportMissingImports]
-    context.set_commission(
-        PerOrder(buy_cost=0.0003, sell_cost=0.0013, min_cost=5))
+    from bigtrader.finance.commission import ( # pyright: ignore
+        PerOrder,
+    )
+
+    context.set_commission(PerOrder(buy_cost=0.0003, sell_cost=0.0013, min_cost=5))
     context.data["date"] = context.data["date"].dt.strftime("%Y-%m-%d")
 
     # 预处理 universe: (instruments, ranking_scores) 元组，避免 DataFrame 操作
@@ -301,16 +323,22 @@ def bt_init(context):
             for inst, close, upper, lower in zip(insts, closes, uppers, lowers)
         }
 
-    assert len(
-        context.universe_by_date) > 0, "bigquant universe is empty in backtest range"
+    assert (
+        len(context.universe_by_date) > 0
+    ), "bigquant universe is empty in backtest range"
     universe_dates = sorted(context.universe_by_date.keys())
-    assert universe_dates[0] <= BACKTEST_END_DATE, "bigquant coverage starts after backtest end"
-    assert universe_dates[-1] >= BACKTEST_START_DATE, "bigquant coverage ends before backtest start"
+    assert (
+        universe_dates[0] <= BACKTEST_END_DATE
+    ), "bigquant coverage starts after backtest end"
+    assert (
+        universe_dates[-1] >= BACKTEST_START_DATE
+    ), "bigquant coverage ends before backtest start"
 
     context.progress_total_days = len(context.universe_by_date)
     context.progress_done_days = 0
     context.progress_bar = tqdm(
-        total=context.progress_total_days, desc="backtest", unit="day")
+        total=context.progress_total_days, desc="backtest", unit="day"
+    )
 
     # 交易诊断初始化
     context.trade_diag = {
@@ -349,7 +377,8 @@ def decide_trades_on_day(
         to_buy: list, 需要买入的标的
     """
     to_sell = [
-        inst for inst in holding_instruments
+        inst
+        for inst in holding_instruments
         if inst not in top_exit_instruments and is_tradable(inst)
     ]
     remaining_holding = holding_instruments - set(to_sell)
@@ -388,11 +417,17 @@ def bt_bar(context, data):
         return close < upper and close > lower
 
     top_n_instruments, top_exit_instruments, rank_map = build_target_on_day(
-        instruments, ranking_scores)
+        instruments, ranking_scores
+    )
     holding_instruments = set(context.get_account_positions().keys())
 
     to_sell, to_buy = decide_trades_on_day(
-        holding_instruments, top_n_instruments, top_exit_instruments, rank_map, is_tradable)
+        holding_instruments,
+        top_n_instruments,
+        top_exit_instruments,
+        rank_map,
+        is_tradable,
+    )
 
     for inst in to_sell:
         context.order_target_percent(inst, 0)
@@ -429,7 +464,9 @@ def bt_trade(context, trade):
         open_date_str = open_rec["open_date"]
         open_date_str = f"{open_date_str[:4]}-{open_date_str[4:6]}-{open_date_str[6:8]}"
         close_date_str = str(trade.trade_date)
-        close_date_str = f"{close_date_str[:4]}-{close_date_str[4:6]}-{close_date_str[6:8]}"
+        close_date_str = (
+            f"{close_date_str[:4]}-{close_date_str[4:6]}-{close_date_str[6:8]}"
+        )
         open_price = open_rec["open_price"]
         close_price = trade.filled_price
 
@@ -454,16 +491,18 @@ def bt_trade(context, trade):
         daily_benchmark = benchmark_cum / holding_days
         daily_excess = daily_return - daily_benchmark
 
-        diag["closed_trades"].append({
-            "instrument": inst,
-            "open_date": open_date_str,
-            "close_date": close_date_str,
-            "holding_days": holding_days,
-            "total_return": total_return,
-            "daily_return": daily_return,
-            "daily_benchmark": daily_benchmark,
-            "daily_excess": daily_excess,
-        })
+        diag["closed_trades"].append(
+            {
+                "instrument": inst,
+                "open_date": open_date_str,
+                "close_date": close_date_str,
+                "holding_days": holding_days,
+                "total_return": total_return,
+                "daily_return": daily_return,
+                "daily_benchmark": daily_benchmark,
+                "daily_excess": daily_excess,
+            }
+        )
 
 
 def bt_order(context, order):
@@ -481,10 +520,14 @@ def bt_post(context, data):
     filtered_trades = [t for t in closed_trades if t["total_return"] <= -0.10]
     sorted_trades = sorted(filtered_trades, key=lambda x: x["daily_excess"])
     print(f"\n========== 交易诊断: 总跌幅>10%中超额最差的 30 笔交易 ==========")
-    print(f"{'标的':<12} {'开仓日期':<12} {'平仓日期':<12} {'持仓天数':>8} {'总收益%':>10} {'日均收益%':>10} {'日均基准%':>10} {'日均超额%':>10}")
+    print(
+        f"{'标的':<12} {'开仓日期':<12} {'平仓日期':<12} {'持仓天数':>8} {'总收益%':>10} {'日均收益%':>10} {'日均基准%':>10} {'日均超额%':>10}"
+    )
     print("-" * 100)
     for t in sorted_trades[:30]:
-        print(f"{t['instrument']:<12} {t['open_date']:<12} {t['close_date']:<12} {t['holding_days']:>8} {t['total_return']*100:>10.2f} {t['daily_return']*100:>10.4f} {t['daily_benchmark']*100:>10.4f} {t['daily_excess']*100:>10.4f}")
+        print(
+            f"{t['instrument']:<12} {t['open_date']:<12} {t['close_date']:<12} {t['holding_days']:>8} {t['total_return']*100:>10.2f} {t['daily_return']*100:>10.4f} {t['daily_benchmark']*100:>10.4f} {t['daily_excess']*100:>10.4f}"
+        )
     print(f"========== 交易诊断结束，共 {len(closed_trades)} 笔已平仓交易 ==========")
 
 
@@ -496,8 +539,14 @@ universe_df = get_universe_pool(
     universe_size=UNIVERSE_SIZE,
     extra_fields=["upper_limit", "lower_limit"],
 )
-assert {"date", "instrument", "total_market_cap", "close",
-        "upper_limit", "lower_limit"}.issubset(universe_df.columns)
+assert {
+    "date",
+    "instrument",
+    "total_market_cap",
+    "close",
+    "upper_limit",
+    "lower_limit",
+}.issubset(universe_df.columns)
 
 factor_df = compute_pool_factors(
     pool_name=f"smallcap{UNIVERSE_SIZE}",
@@ -529,10 +578,12 @@ _diag_df["prev_date_str"] = _diag_df.groupby("instrument")["date_str"].shift(1)
 # 只有连续两个交易日都在 universe 中才计算收益率 (避免调出后再调入导致的跨日计算错误)
 _diag_df["cur_idx"] = _diag_df["date_str"].map(_diag_date_to_idx)
 _diag_df["prev_idx"] = _diag_df["prev_date_str"].map(_diag_date_to_idx)
-_diag_df["is_consecutive"] = (_diag_df["cur_idx"] == _diag_df["prev_idx"] + 1)
+_diag_df["is_consecutive"] = _diag_df["cur_idx"] == _diag_df["prev_idx"] + 1
 _diag_df.loc[~_diag_df["is_consecutive"], "prev_close"] = float("nan")
 
-_diag_df["daily_return"] = (_diag_df["close"] - _diag_df["prev_close"]) / _diag_df["prev_close"]
+_diag_df["daily_return"] = (_diag_df["close"] - _diag_df["prev_close"]) / _diag_df[
+    "prev_close"
+]
 _diag_benchmark_daily = _diag_df.groupby("date_str")["daily_return"].mean().to_dict()
 del _diag_df, _diag_date_to_idx
 print(f"交易诊断: benchmark 日收益率已计算，共 {len(_diag_benchmark_daily)} 个交易日")
@@ -564,5 +615,5 @@ m5 = M.bigtrader.v30(
     plot_charts=True,
     debug=False,
     backtest_only=False,
-    m_name="m5"
+    m_name="m5",
 )

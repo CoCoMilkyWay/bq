@@ -280,7 +280,7 @@ def get_universe_pool(
     返回:
         DataFrame[date, instrument, total_market_cap, close, ...]
     """
-    import dai
+    import dai # pyright: ignore
 
     basic_pool_sql = get_basic_pool_sql(sw2021_industries)
     
