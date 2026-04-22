@@ -19,8 +19,8 @@ CAPITAL_BASE = 1000000
 PRICE_LIMIT_EPS = 1e-4  # close vs upper/lower_limit 的浮点容差
 
 # 动态 IC 权重配置 (micro-cap 风格驱动, 放弃固定权重, 改为每日跟随当期风格)
-IC_WINDOW_DAYS = 25  # 滑窗 IC 天数 (约一年交易日); expanding 冷启动 (min_periods=1)
-CORE_WEIGHT = 0.99  # CORE_FACTOR 固定权重, 作为策略底色
+IC_WINDOW_DAYS = 120  # 滑窗 IC 天数; expanding 冷启动 (min_periods=1)
+CORE_WEIGHT = 0.4  # CORE_FACTOR 固定权重, 作为策略底色
 TOP_K_STYLE = 3  # 每日从风格因子中挑选 signed IC 正值的前 K 个, 不够用几个算几个
 CORE_FACTOR = "total_market_cap"
 STYLE_FACTOR_NAMES = [
@@ -132,20 +132,6 @@ ALL_FACTOR_NAMES = [CORE_FACTOR] + STYLE_FACTOR_NAMES
 代码编写原则:
 1. 回测和实盘统一使用incremental实现, 尽量共享代码和逻辑
 2. 每个因子的实现应该尽量独立定义在代码最前, 不要和后面的框架耦合
-
-========== 股票池等权 benchmark (close自算) ==========
-      日均%   交易日   年化%
-2017:   0.688   17428   173.36
-2018:  -0.156   16804   -39.32
-2019:   0.056   16719    14.23
-2020:  -0.021   16853    -5.25
-2021:   0.034   17717     8.45
-2022:  -0.044   17288   -11.11
-2023:   0.099   16372    24.92
-2024:  -0.082   16833   -20.67
-2025:   0.129   16219    32.49
-2026:   0.124    3017    31.24
-累计净值: 3.3倍
 
 """
 
