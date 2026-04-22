@@ -19,7 +19,7 @@ CAPITAL_BASE = 1000000
 PRICE_LIMIT_EPS = 1e-4  # close vs upper/lower_limit 的浮点容差
 
 # 动态 IC 权重配置 (micro-cap 风格驱动, 放弃固定权重, 改为每日跟随当期风格)
-IC_WINDOW_DAYS = 250  # 滑窗 IC 天数 (约一年交易日); expanding 冷启动 (min_periods=1)
+IC_WINDOW_DAYS = 25  # 滑窗 IC 天数 (约一年交易日); expanding 冷启动 (min_periods=1)
 CORE_WEIGHT = 0.99  # CORE_FACTOR 固定权重, 作为策略底色
 TOP_K_STYLE = 3  # 每日从风格因子中挑选 signed IC 正值的前 K 个, 不够用几个算几个
 CORE_FACTOR = "total_market_cap"
