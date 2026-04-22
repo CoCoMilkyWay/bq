@@ -158,17 +158,40 @@ def load_all_filter_intervals(start_date: str, end_date: str) -> dict:
 
 def apply_filter_intervals(df: pd.DataFrame, intervals_by_inst: dict) -> pd.DataFrame:
     """向量化应用过滤区间"""
+    from tqdm import tqdm
+
     df = df.copy()
     df["date_int"] = df["date"].dt.strftime("%Y%m%d").astype(int)
     df["filtered"] = False
 
-    for inst, intervals in intervals_by_inst.items():
+    total_intervals = sum(len(v) for v in intervals_by_inst.values())
+    hit_inst = 0
+    hit_intervals = 0
+    filtered_rows = 0
+    pbar = tqdm(
+        intervals_by_inst.items(),
+        total=len(intervals_by_inst),
+        desc="apply_filter_intervals",
+        unit="inst",
+    )
+    for inst, intervals in pbar:
         inst_mask = df["instrument"] == inst
         if not inst_mask.any():
             continue
+        hit_inst += 1
         for s, e in intervals:
             interval_mask = inst_mask & (df["date_int"] >= s) & (df["date_int"] <= e)
-            df.loc[interval_mask, "filtered"] = True
+            n = int(interval_mask.sum())
+            if n:
+                df.loc[interval_mask, "filtered"] = True
+                filtered_rows += n
+            hit_intervals += 1
+        pbar.set_postfix(
+            hit_inst=hit_inst,
+            hit_intv=f"{hit_intervals}/{total_intervals}",
+            filtered=filtered_rows,
+        )
+    pbar.close()
 
     result = df[~df["filtered"]].drop(columns=["date_int", "filtered"])
     return result
