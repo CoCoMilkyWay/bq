@@ -14,11 +14,12 @@ STRATEGY_DIR = Path.cwd()
 BACKTEST_START_DATE = "2017-01-01"
 BACKTEST_END_DATE = "2026-04-07"
 HOLD_N = 40
-EXIT_RATIO = 1.0
+EXIT_RATIO = 1.2
 CAPITAL_BASE = 1000000
+PRICE_LIMIT_EPS = 1e-4  # close vs upper/lower_limit 的浮点容差
 
 # 动态 IC 权重配置 (micro-cap 风格驱动, 放弃固定权重, 改为每日跟随当期风格)
-IC_WINDOW_DAYS = 25  # 滑窗 IC 天数 (约一个月交易日); expanding 冷启动 (min_periods=1)
+IC_WINDOW_DAYS = 250  # 滑窗 IC 天数 (约一年交易日); expanding 冷启动 (min_periods=1)
 CORE_WEIGHT = 0.99  # CORE_FACTOR 固定权重, 作为策略底色
 TOP_K_STYLE = 3  # 每日从风格因子中挑选 signed IC 正值的前 K 个, 不够用几个算几个
 CORE_FACTOR = "total_market_cap"
@@ -40,7 +41,7 @@ ALL_FACTOR_NAMES = [CORE_FACTOR] + STYLE_FACTOR_NAMES
 - **股票池** (`cn_stock_basic_selector` + `cn_stock_prefactors`)
   - 基础过滤: 上交所/深交所, 主板/创业板/科创板, 排除ST, 排除停牌
   - 按 `total_market_cap` 升序取前 `UNIVERSE_SIZE` 只
-  - 字段: `close`, `upper_limit`, `lower_limit` (涨跌停判断)
+  - 字段: `close` (benchmark 收益/PIT 诊断使用)
   - 股票池作为指标benchmark (过滤和排序都作为策略超额)
   - 每日重算
 - **过滤因子**
@@ -48,22 +49,26 @@ ALL_FACTOR_NAMES = [CORE_FACTOR] + STYLE_FACTOR_NAMES
   - 每日重算
 - **排序因子 (动态 IC 权重)**
   - 市值尾部 `UNIVERSE_SIZE` 风格驱动, 固定权重组合无法稳定排序超额, 改为每日跟随
-  - `CORE_FACTOR` 固定主因子, 权重 `CORE_WEIGHT` (默认 0.4), 提供策略底色
-  - 对 `STYLE_FACTOR_NAMES` 中每个风格因子, 单日 IC = Pearson(当日 pct rank, T+1 日收益)
-  - 每日用最近 `IC_WINDOW_DAYS` (默认 25, expanding 冷启动) 的滑窗均值 IC, 取 signed IC>0 的前 `TOP_K_STYLE` (默认 3) 个风格因子
+  - `CORE_FACTOR` 固定主因子, 权重 `CORE_WEIGHT` (默认 0.99), 提供策略底色
+  - 原始因子值先按 (instrument, date) 时间方向 ffill, 保证短暂数据缺失不吃 NaN; 从未有过值(如未上市)保持 NaN
+  - 每日 pool 内各因子独立做 pct rank, NaN 不参与该因子截面排名
+  - 单日 IC = Pearson(pct_rank, T+1 日 daily_return), 每个因子用各自非空子集计算; T+1 收益取自 `cn_stock_prefactors.daily_return` 不限 pool
+  - 每日用最近 `IC_WINDOW_DAYS` 的滑窗均值 IC (shift(1) 严格 PIT, min_periods=1 冷启动), 取 signed IC>0 的前 `TOP_K_STYLE` 个风格因子
   - 入选风格因子平分剩余权重 `1 - CORE_WEIGHT`; 若无正 IC 风格因子则 `CORE_FACTOR` 独扛 (永远满仓)
-  - Point-in-time 严格无未来: D 日用 `[D-N, D-1]` 的滑窗, 实盘天然按日增量更新
-  - factor_score = sum_f (w_{D,f} * pct_rank_{D,f}); 每日重算
+  - factor_score = Σ_f w_{D,f} * rank_{D,f}  /  Σ_f w_{D,f} * 1{rank_{D,f} 存在}
+    (可用因子权重归一化, 避免因子缺失时系统性低估); 所有因子都缺则 NaN 该股不参与当日交易
 - **持仓/交易**
   - 预期持仓标的数: `HOLD_N`
   - 预期仓位: 保持100%
-  - 先卖出: 离开前 `HOLD_N * EXIT_RATIO` 名(同时服从交易限制)
-  - 再买入: 除开仍旧持仓的M只标的, 找出因子排名前 `HOLD_N - M` 只标的(同时服从交易限制), 将剩余资金均分至新买入标的(已持仓标的不调仓)
-- **交易限制**
-  - 涨停时不会买入(做不到)
-  - 跌停时不会卖出(做不到)
-  - 涨停时不会卖出(预期第二天有超额收益)
-  - 跌停时不会买入(预期第二天有超额风险)
+  - 先卖出: 离开前 `HOLD_N * EXIT_RATIO` 名(包含昨日在池今日出池的标的: 无排名⇒必卖)
+  - 再买入: 除开仍旧持仓的M只标的, 找出因子排名前 `HOLD_N - M` 只标的, 将剩余资金均分至新买入标的(已持仓标的不调仓)
+- **交易限制** (策略层自行过滤, 不依赖 BigTrader 引擎: 引擎仅保证一字板撮合失败, 非一字板仍会成交)
+  - 涨停时不会买入 (做不到): 物理约束
+  - 跌停时不会卖出 (做不到): 物理约束
+  - 涨停时不会卖出 (赌 T+1 超额): 策略主动意图
+  - 跌停时不会买入 (避 T+1 风险): 策略主动意图
+  - 判据: T 日 `close >= upper_limit - eps` / `close <= lower_limit + eps` (订单以 close 撮合, 口径自洽);
+    数据源 `cn_stock_prefactors.upper_limit/lower_limit` (板块幅度差异由数据源原生处理)
 
 过滤因子: (统一从 filter/{name}/indicator.json 加载)
 **利润ST** (profit_st):
@@ -146,65 +151,63 @@ ALL_FACTOR_NAMES = [CORE_FACTOR] + STYLE_FACTOR_NAMES
 
 
 def compute_dynamic_factor_score(
-    factor_df: pd.DataFrame, universe_df: pd.DataFrame
+    factor_df: pd.DataFrame,
+    universe_df: pd.DataFrame,
+    daily_return_df: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     动态 IC 权重合成 factor_score, 严格 point-in-time 无未来数据.
 
     流程:
-        1. 仅保留所有因子都有值的行, pool 内 pct rank 到 [0,1] (与挖掘器口径一致)
-        2. T+1 收益: 基于 universe_df.close, 仅当前后两日都在 pool 内才计 (避免跨调出错位)
-        3. 单日 IC: IC_{d,f} = Pearson(rank_{d,f}, ret_{d→d+1})
-           (输入已是 pct rank, Pearson 即等价 Spearman)
-        4. 滑窗均值: ic_mean_d = mean(IC_{d-N..d-1}); 用 rolling(N, min_periods=1).mean().shift(1)
-           实现 expanding 冷启动 + 严格滞后 (D 日只能看见 IC 截至 D-1)
-        5. 每日权重:
+        1. 原始因子值按 (instrument, date) 时间方向 ffill (短暂缺失继承前值, PIT 安全)
+           未上市/从未有值的 NaN 保持 NaN
+        2. pool 内每因子独立 pct rank 到 [0,1], NaN 不参与该因子截面排名
+        3. T+1 收益: 由 daily_return_df 本地 shift(-1) 得到 (D 日在 pool, D+1 不在 pool 也能算 IC)
+        4. 单日 IC_{d,f} = Pearson(rank_{d,f}, ret_{d→d+1}),
+           各因子用各自非空子集计算, 输入已是 pct rank, Pearson ≡ Spearman
+        5. 滑窗均值 shift(1): ic_mean_d = mean(IC_{d-N..d-1}), 严格滞后
+        6. 每日权重:
            - pos IC 因子数 k = min(# signed IC > 0, TOP_K_STYLE)
            - k > 0: core = CORE_WEIGHT, top-k 风格各 (1 - CORE_WEIGHT) / k
            - k == 0: core = 1.0 (冷启动 / 全负 IC, 纯 CORE_FACTOR, 仍满仓)
-        6. factor_score = Σ_f w_{d,f} * rank_{d,f}
+        7. factor_score = Σ_f w_{d,f} * rank_{d,f} / Σ_f w_{d,f} * 1{rank_{d,f} 存在}
+           (可用因子权重归一化; 全因子缺 ⇒ NaN, 不参与当日交易)
     """
-    valid = factor_df[["date", "instrument"] + ALL_FACTOR_NAMES].dropna().copy()
-    assert not valid.empty, "动态 IC: 因子数据全为空"
-    ranked = rank_pool_factors(valid, ALL_FACTOR_NAMES)
+    f = factor_df[["date", "instrument"] + ALL_FACTOR_NAMES].sort_values(
+        ["instrument", "date"]
+    ).copy()
+    f[ALL_FACTOR_NAMES] = f.groupby("instrument")[ALL_FACTOR_NAMES].ffill()
+    ranked = rank_pool_factors(f, ALL_FACTOR_NAMES)
 
-    u = (
-        universe_df[["date", "instrument", "close"]]
-        .sort_values(["instrument", "date"])
-        .copy()
-    )
-    dates_sorted = sorted(universe_df["date"].unique())
-    date_to_idx = {d: i for i, d in enumerate(dates_sorted)}
-    u["cur_idx"] = u["date"].map(date_to_idx)
-    u["next_close"] = u.groupby("instrument")["close"].shift(-1)
-    u["next_idx"] = u.groupby("instrument")["cur_idx"].shift(-1)
-    u.loc[u["next_idx"] != u["cur_idx"] + 1, "next_close"] = np.nan
-    u["fwd_ret"] = (u["next_close"] - u["close"]) / u["close"]
+    # T+1 收益: 在传入的 daily_return_df 上本地 shift(-1)
+    ret_df = daily_return_df.sort_values(["instrument", "date"]).copy()
+    ret_df["fwd_ret"] = ret_df.groupby("instrument")["daily_return"].shift(-1)
+    ret_df = ret_df[ret_df["date"] <= factor_df["date"].max()][
+        ["date", "instrument", "fwd_ret"]
+    ]
 
-    merged = ranked.merge(
-        u[["date", "instrument", "fwd_ret"]], on=["date", "instrument"], how="left"
-    )
+    merged = ranked.merge(ret_df, on=["date", "instrument"], how="left")
 
     ic_dates: list = []
     ic_matrix: list[list[float]] = []
     for date, g in merged.groupby("date", sort=True):
-        g = g.dropna(subset=["fwd_ret"])
-        ic_dates.append(date)
-        if len(g) < 2:
-            ic_matrix.append([np.nan] * len(STYLE_FACTOR_NAMES))
-            continue
         ret = g["fwd_ret"].values
-        ret_std = ret.std()
+        ic_dates.append(date)
         row_ics: list[float] = []
-        for f in STYLE_FACTOR_NAMES:
-            fv = g[f].values
-            if ret_std == 0 or fv.std() == 0:
+        for fn in ALL_FACTOR_NAMES:
+            fv = g[fn].values
+            mask = ~np.isnan(fv) & ~np.isnan(ret)
+            if mask.sum() < 2:
+                row_ics.append(np.nan)
+                continue
+            v, r = fv[mask], ret[mask]
+            if v.std() == 0 or r.std() == 0:
                 row_ics.append(np.nan)
             else:
-                row_ics.append(float(np.corrcoef(fv, ret)[0, 1]))
+                row_ics.append(float(np.corrcoef(v, r)[0, 1]))
         ic_matrix.append(row_ics)
 
-    ic_df = pd.DataFrame(ic_matrix, columns=STYLE_FACTOR_NAMES)
+    ic_df = pd.DataFrame(ic_matrix, columns=ALL_FACTOR_NAMES)
     ic_df.insert(0, "date", ic_dates)
     ic_df = ic_df.sort_values("date").reset_index(drop=True)
 
@@ -217,7 +220,7 @@ def compute_dynamic_factor_score(
     n_factors = len(ALL_FACTOR_NAMES)
     weights_arr = np.zeros((n_dates, n_factors), dtype=np.float64)
     core_idx = ALL_FACTOR_NAMES.index(CORE_FACTOR)
-    style_positions = [ALL_FACTOR_NAMES.index(f) for f in STYLE_FACTOR_NAMES]
+    style_positions = [ALL_FACTOR_NAMES.index(fn) for fn in STYLE_FACTOR_NAMES]
 
     # 统计: 每个风格因子被入选 top-k 的次数 & 平均每日入选个数
     pick_counts = np.zeros(len(STYLE_FACTOR_NAMES), dtype=np.int64)
@@ -242,16 +245,56 @@ def compute_dynamic_factor_score(
         pick_counts[chosen] += 1
         picked_per_day[d] = k
 
-    weights_cols = [f + "__w" for f in ALL_FACTOR_NAMES]
+    weights_cols = [fn + "__w" for fn in ALL_FACTOR_NAMES]
     weights_df = pd.DataFrame(weights_arr, columns=weights_cols)
     weights_df.insert(0, "date", ic_df["date"].values)
 
     ranked_w = ranked.merge(weights_df, on="date", how="left")
-    score = np.zeros(len(ranked_w), dtype=np.float64)
-    for f in ALL_FACTOR_NAMES:
-        score += ranked_w[f].values * ranked_w[f + "__w"].values
+    score_num = np.zeros(len(ranked_w), dtype=np.float64)
+    score_den = np.zeros(len(ranked_w), dtype=np.float64)
+    for fn in ALL_FACTOR_NAMES:
+        val = ranked_w[fn].values
+        w = ranked_w[fn + "__w"].values
+        avail = ~np.isnan(val)
+        score_num += np.where(avail, val * w, 0.0)
+        score_den += np.where(avail, w, 0.0)
+    score = np.where(score_den > 0, score_num / score_den, np.nan)
     ranked_w["factor_score"] = score
     score_df = ranked_w[["date", "instrument", "factor_score"]]
+
+    # 组合因子每日 rank-IC: pct_rank(factor_score) vs fwd_ret
+    score_with_ret = score_df.merge(
+        ret_df, on=["date", "instrument"], how="left"
+    )
+    combined_dates: list = []
+    combined_ic: list[float] = []
+    for date, g in score_with_ret.groupby("date", sort=True):
+        g = g.dropna(subset=["fwd_ret", "factor_score"])
+        combined_dates.append(date)
+        if len(g) < 2:
+            combined_ic.append(np.nan)
+            continue
+        score_rank = g["factor_score"].rank(pct=True).values
+        ret = g["fwd_ret"].values
+        if ret.std() == 0 or score_rank.std() == 0:
+            combined_ic.append(np.nan)
+        else:
+            combined_ic.append(float(np.corrcoef(score_rank, ret)[0, 1]))
+    combined_df = pd.DataFrame({"date": combined_dates, "combined": combined_ic})
+
+    # 全量滚动 IC (无 shift, 用于可视化); 列顺序: 所有单因子 + combined
+    full_ic_raw = (
+        ic_df.merge(combined_df, on="date", how="outer")
+        .sort_values("date")
+        .reset_index(drop=True)
+    )
+    roll_cols = ALL_FACTOR_NAMES + ["combined"]
+    full_ic_roll = (
+        full_ic_raw[roll_cols].rolling(IC_WINDOW_DAYS, min_periods=1).mean()
+    )
+    full_ic_roll.insert(0, "date", full_ic_raw["date"].values)
+    global _diag_rolling_ic_df
+    _diag_rolling_ic_df = full_ic_roll
 
     n_no_style = int((picked_per_day == 0).sum())
     avg_k = (
@@ -264,11 +307,29 @@ def compute_dynamic_factor_score(
     )
     print(f"  有风格日平均入选个数: {avg_k:.2f} / 上限 {TOP_K_STYLE}")
     print(f"  风格因子入选频次 (/{n_dates} 日):")
-    for f, c in sorted(zip(STYLE_FACTOR_NAMES, pick_counts), key=lambda x: -x[1]):
-        print(f"    {f:20s}: {c:5d} ({100.0 * c / n_dates:5.1f}%)")
+    for fn, c in sorted(zip(STYLE_FACTOR_NAMES, pick_counts), key=lambda x: -x[1]):
+        print(f"    {fn:20s}: {c:5d} ({100.0 * c / n_dates:5.1f}%)")
 
     result = universe_df.merge(score_df, on=["date", "instrument"], how="left")
     return result
+
+
+def compute_limit_flags(
+    instruments: np.ndarray,
+    closes: np.ndarray,
+    upper_limits: np.ndarray,
+    lower_limits: np.ndarray,
+) -> tuple[set, set]:
+    """
+    计算 T 日涨停/跌停标的集合 (close 与 upper/lower_limit 比较, eps 容差)
+    tradable 股票的 upper/lower_limit 必须非空 (停牌/未上市不应进入 tradable pool)
+    """
+    assert not np.isnan(closes).any(), "close has NaN in tradable pool"
+    assert not np.isnan(upper_limits).any(), "upper_limit has NaN in tradable pool"
+    assert not np.isnan(lower_limits).any(), "lower_limit has NaN in tradable pool"
+    up_hit = closes >= upper_limits - PRICE_LIMIT_EPS
+    down_hit = closes <= lower_limits + PRICE_LIMIT_EPS
+    return set(instruments[up_hit]), set(instruments[down_hit])
 
 
 def build_target_on_day(instruments, ranking_scores):
@@ -303,25 +364,22 @@ def bt_init(context):
     context.data["date"] = context.data["date"].dt.strftime("%Y-%m-%d")
 
     # 预处理 universe: (instruments, ranking_scores) 元组，避免 DataFrame 操作
+    # 同时预处理当日涨停/跌停集合, 用于买入/卖出过滤
     context.universe_by_date = {}
+    context.limit_flags_by_date = {}
     for date, day_df in context.data.groupby("date", sort=False):
         valid_day_df = day_df.loc[day_df["factor_score"].notna()]
+        instruments_arr = valid_day_df["instrument"].values
         context.universe_by_date[date] = (
-            valid_day_df["instrument"].values,
+            instruments_arr,
             valid_day_df["factor_score"].values,
         )
-
-    # 预处理 price_limit: 向量化构建，避免 iterrows
-    context.price_limit_by_date = {}
-    for date, day_df in context.data.groupby("date", sort=False):
-        insts = day_df["instrument"].values
-        closes = day_df["close"].values
-        uppers = day_df["upper_limit"].values
-        lowers = day_df["lower_limit"].values
-        context.price_limit_by_date[date] = {
-            inst: (close, upper, lower)
-            for inst, close, upper, lower in zip(insts, closes, uppers, lowers)
-        }
+        context.limit_flags_by_date[date] = compute_limit_flags(
+            instruments_arr,
+            valid_day_df["close"].values,
+            valid_day_df["upper_limit"].values,
+            valid_day_df["lower_limit"].values,
+        )
 
     assert (
         len(context.universe_by_date) > 0
@@ -344,6 +402,7 @@ def bt_init(context):
     context.trade_diag = {
         "benchmark_daily_return": _diag_benchmark_daily,
         "trading_dates": _diag_trading_dates,
+        "rolling_ic_df": _diag_rolling_ic_df,
         "open_records": {},
         "closed_trades": [],
     }
@@ -362,31 +421,40 @@ def decide_trades_on_day(
     top_n_instruments,
     top_exit_instruments,
     rank_map,
-    is_tradable,
+    up_limit_set,
+    down_limit_set,
 ):
     """
     Per-day 交易决策，回测与实盘共享
+    涨跌停过滤在策略层完成 (引擎仅保证一字板, 非一字板仍会成交):
+        卖出侧: 排除涨停(不想卖, 赌 T+1 超额) + 跌停(卖不出去, 物理)
+        买入侧: 排除涨停(买不到, 物理)     + 跌停(不想买, 避 T+1 风险)
+    未能卖出的持仓继续占着仓位, 买入空位相应减少; 买入过滤不足则留现金(不扩大 candidate 池).
     参数:
         holding_instruments: set, 当前持仓标的
         top_n_instruments: set, 排名前 HOLD_N 的标的
-        top_exit_instruments: set, 排名前 HOLD_N * EXIT_RATIO 的标的
+        top_exit_instruments: set, 排名前 HOLD_N * EXIT_RATIO 的标的 (无排名⇒必卖)
         rank_map: {instrument: rank}, 排名越小越优
-        is_tradable: Callable(inst) -> bool, 判断是否可交易（非涨跌停）
+        up_limit_set: set, 当日涨停集合
+        down_limit_set: set, 当日跌停集合
     返回:
         to_sell: list, 需要卖出的标的
         to_buy: list, 需要买入的标的
     """
     to_sell = [
-        inst
-        for inst in holding_instruments
-        if inst not in top_exit_instruments and is_tradable(inst)
+        inst for inst in holding_instruments
+        if inst not in top_exit_instruments
+        and inst not in up_limit_set
+        and inst not in down_limit_set
     ]
     remaining_holding = holding_instruments - set(to_sell)
     slots_available = HOLD_N - len(remaining_holding)
     if slots_available > 0:
-        candidates = top_n_instruments - remaining_holding
-        candidates = [inst for inst in candidates if is_tradable(inst)]
-        candidates.sort(key=lambda inst: rank_map[inst])
+        candidates = sorted(
+            (inst for inst in (top_n_instruments - remaining_holding)
+             if inst not in up_limit_set and inst not in down_limit_set),
+            key=lambda inst: rank_map[inst],
+        )
         to_buy = candidates[:slots_available]
     else:
         to_buy = []
@@ -407,14 +475,9 @@ def bt_bar(context, data):
     universe_today = context.universe_by_date.get(trade_date)
     assert universe_today is not None, f"no universe for {trade_date}"
     instruments, ranking_scores = universe_today
-    price_limit_today = context.price_limit_by_date.get(trade_date, {})
-
-    def is_tradable(inst):
-        info = price_limit_today.get(inst)
-        if info is None:
-            return True  # 不在 universe 中（如已持仓标的被调出），允许交易
-        close, upper, lower = info
-        return close < upper and close > lower
+    limit_flags_today = context.limit_flags_by_date.get(trade_date)
+    assert limit_flags_today is not None, f"no limit flags for {trade_date}"
+    up_limit_set, down_limit_set = limit_flags_today
 
     top_n_instruments, top_exit_instruments, rank_map = build_target_on_day(
         instruments, ranking_scores
@@ -426,7 +489,8 @@ def bt_bar(context, data):
         top_n_instruments,
         top_exit_instruments,
         rank_map,
-        is_tradable,
+        up_limit_set,
+        down_limit_set,
     )
 
     for inst in to_sell:
@@ -456,6 +520,8 @@ def bt_trade(context, trade):
         diag["open_records"][inst] = {
             "open_date": str(trade.trade_date),
             "open_price": trade.filled_price,
+            "buy_value": float(trade.filled_money),
+            "portfolio_value_at_open": float(context.portfolio.portfolio_value),
         }
     elif direction == "2":  # SELL
         open_rec = diag["open_records"].pop(inst, None)
@@ -491,6 +557,10 @@ def bt_trade(context, trade):
         daily_benchmark = benchmark_cum / holding_days
         daily_excess = daily_return - daily_benchmark
 
+        buy_value = open_rec["buy_value"]
+        pv_at_open = open_rec["portfolio_value_at_open"]
+        position_pct = buy_value / pv_at_open if pv_at_open > 0 else 0.0
+
         diag["closed_trades"].append(
             {
                 "instrument": inst,
@@ -501,6 +571,9 @@ def bt_trade(context, trade):
                 "daily_return": daily_return,
                 "daily_benchmark": daily_benchmark,
                 "daily_excess": daily_excess,
+                "buy_value": buy_value,
+                "portfolio_value_at_open": pv_at_open,
+                "position_pct": position_pct,
             }
         )
 
@@ -530,6 +603,93 @@ def bt_post(context, data):
         )
     print(f"========== 交易诊断结束，共 {len(closed_trades)} 笔已平仓交易 ==========")
 
+    # ========== 收益率分布图 (plotly) ==========
+    import plotly.graph_objects as go
+    from scipy.stats import gaussian_kde
+
+    returns_pct = np.array([t["total_return"] for t in closed_trades], dtype=np.float64) * 100
+    n = len(returns_pct)
+    lo_pct, hi_pct = np.percentile(returns_pct, [0.5, 99.5])
+    clipped_pct = returns_pct[(returns_pct >= lo_pct) & (returns_pct <= hi_pct)]
+    kde = gaussian_kde(clipped_pct, bw_method="scott")
+    xs_pct = np.linspace(lo_pct, hi_pct, 512)
+    ys = kde(xs_pct)
+
+    mean_r = float(returns_pct.mean())
+    median_r = float(np.median(returns_pct))
+
+    dist_fig = go.Figure()
+    dist_fig.add_trace(
+        go.Histogram(
+            x=clipped_pct,
+            histnorm="probability density",
+            nbinsx=80,
+            marker=dict(color="steelblue", line=dict(color="white", width=0.5)),
+            opacity=0.45,
+            name=f"histogram (n={n})",
+        )
+    )
+    dist_fig.add_trace(
+        go.Scatter(
+            x=xs_pct, y=ys, mode="lines",
+            line=dict(color="crimson", width=2.5),
+            name="KDE (gaussian, scott)",
+        )
+    )
+    dist_fig.add_vline(x=0, line=dict(color="black", width=1, dash="dash"), opacity=0.6)
+    dist_fig.add_vline(
+        x=mean_r, line=dict(color="darkorange", width=1.5, dash="dashdot"),
+        annotation_text=f"mean {mean_r:.2f}%", annotation_position="top",
+    )
+    dist_fig.add_vline(
+        x=median_r, line=dict(color="darkgreen", width=1.5, dash="dot"),
+        annotation_text=f"median {median_r:.2f}%", annotation_position="bottom",
+    )
+    dist_fig.update_layout(
+        title=f"Per-trade return distribution (n={n}, clipped to [P0.5, P99.5])",
+        xaxis_title="per-trade total return (%)",
+        yaxis_title="density",
+        barmode="overlay",
+        template="plotly_white",
+        height=520,
+        legend=dict(x=0.99, y=0.99, xanchor="right", yanchor="top"),
+    )
+    dist_fig.show()
+
+    # ========== 滚动 IC 图 (plotly): 各单因子 + 组合因子 ==========
+    ic_roll = diag["rolling_ic_df"]
+    assert ic_roll is not None and not ic_roll.empty, "rolling_ic_df 未准备好"
+
+    ic_fig = go.Figure()
+    for f in ALL_FACTOR_NAMES:
+        ic_fig.add_trace(
+            go.Scatter(
+                x=ic_roll["date"], y=ic_roll[f], mode="lines",
+                line=dict(width=1.2),
+                opacity=0.85,
+                name=f,
+            )
+        )
+    ic_fig.add_trace(
+        go.Scatter(
+            x=ic_roll["date"], y=ic_roll["combined"], mode="lines",
+            line=dict(color="black", width=2.8),
+            name="combined (factor_score rank-IC)",
+        )
+    )
+    ic_fig.add_hline(y=0, line=dict(color="gray", width=1, dash="dash"), opacity=0.6)
+    ic_fig.update_layout(
+        title=f"Rolling IC ({IC_WINDOW_DAYS}-day, unshifted) — single factors + combined",
+        xaxis_title="date",
+        yaxis_title="rolling IC",
+        yaxis=dict(range=[-0.1, 0.1]),
+        template="plotly_white",
+        height=560,
+        hovermode="x unified",
+        legend=dict(orientation="v", x=1.02, y=1, xanchor="left", yanchor="top"),
+    )
+    ic_fig.show()
+
 
 # ==================== 模块链 ====================
 # 1. 获取股票池（不应用过滤因子，过滤在回测时动态应用）
@@ -539,14 +699,7 @@ universe_df = get_universe_pool(
     universe_size=UNIVERSE_SIZE,
     extra_fields=["upper_limit", "lower_limit"],
 )
-assert {
-    "date",
-    "instrument",
-    "total_market_cap",
-    "close",
-    "upper_limit",
-    "lower_limit",
-}.issubset(universe_df.columns)
+assert {"date", "instrument", "total_market_cap", "close", "upper_limit", "lower_limit"}.issubset(universe_df.columns)
 
 factor_df = compute_pool_factors(
     pool_name=f"smallcap{UNIVERSE_SIZE}",
@@ -556,7 +709,18 @@ factor_df = compute_pool_factors(
     factor_names=ALL_FACTOR_NAMES,
     factor_weights=None,
 )
-universe_df = compute_dynamic_factor_score(factor_df, universe_df)
+
+# 拉 daily_return: 回测期 + 末尾多15天 (给 fwd_ret shift(-1) 留数据); 不限 pool
+_ret_query_end = (
+    pd.to_datetime(BACKTEST_END_DATE) + pd.Timedelta(days=15)
+).strftime("%Y-%m-%d")
+daily_return_df = dai.query(
+    "SELECT date, instrument, daily_return FROM cn_stock_prefactors ORDER BY instrument, date",
+    filters={"date": [BACKTEST_START_DATE, _ret_query_end]},
+).df()
+daily_return_df["date"] = pd.to_datetime(daily_return_df["date"]).dt.normalize()
+
+universe_df = compute_dynamic_factor_score(factor_df, universe_df, daily_return_df)
 score_coverage = universe_df["factor_score"].notna().mean()
 print(f"因子分数覆盖率：{score_coverage:.2%}")
 assert score_coverage > 0, "factor_score coverage is zero"
@@ -564,28 +728,16 @@ assert score_coverage > 0, "factor_score coverage is zero"
 stock_data_ds = dai.DataSource.write_bdb(universe_df)
 
 # ==================== 交易诊断 (独立模块，未来可删除) ====================
-# 计算 universe 每日平均收益率作为 benchmark
-# 注意: 调出股票的当日收益未计入(需额外数据), 这会导致 benchmark 略微偏低, 超额略微偏高
-_diag_df = universe_df.copy()
-_diag_df["date_str"] = _diag_df["date"].dt.strftime("%Y-%m-%d")
-_diag_trading_dates = sorted(_diag_df["date_str"].unique().tolist())
-_diag_date_to_idx = {d: i for i, d in enumerate(_diag_trading_dates)}
-
-_diag_df = _diag_df.sort_values(["instrument", "date_str"])
-_diag_df["prev_close"] = _diag_df.groupby("instrument")["close"].shift(1)
-_diag_df["prev_date_str"] = _diag_df.groupby("instrument")["date_str"].shift(1)
-
-# 只有连续两个交易日都在 universe 中才计算收益率 (避免调出后再调入导致的跨日计算错误)
-_diag_df["cur_idx"] = _diag_df["date_str"].map(_diag_date_to_idx)
-_diag_df["prev_idx"] = _diag_df["prev_date_str"].map(_diag_date_to_idx)
-_diag_df["is_consecutive"] = _diag_df["cur_idx"] == _diag_df["prev_idx"] + 1
-_diag_df.loc[~_diag_df["is_consecutive"], "prev_close"] = float("nan")
-
-_diag_df["daily_return"] = (_diag_df["close"] - _diag_df["prev_close"]) / _diag_df[
-    "prev_close"
-]
-_diag_benchmark_daily = _diag_df.groupby("date_str")["daily_return"].mean().to_dict()
-del _diag_df, _diag_date_to_idx
+# benchmark = D 日 pool 内等权复权日收益, 与 compute_dynamic_factor_score 的 fwd_ret 同源
+_diag_pool_ret = universe_df[["date", "instrument"]].merge(
+    daily_return_df, on=["date", "instrument"], how="left"
+)
+_diag_pool_ret["date_str"] = _diag_pool_ret["date"].dt.strftime("%Y-%m-%d")
+_diag_trading_dates = sorted(_diag_pool_ret["date_str"].unique().tolist())
+_diag_benchmark_daily = (
+    _diag_pool_ret.groupby("date_str")["daily_return"].mean().to_dict()
+)
+del _diag_pool_ret
 print(f"交易诊断: benchmark 日收益率已计算，共 {len(_diag_benchmark_daily)} 个交易日")
 
 # ========== 回测 ==========
