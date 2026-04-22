@@ -413,11 +413,16 @@ def rank_pool_factors(factor_df: pd.DataFrame, factor_names: list[str]) -> pd.Da
     返回新 DataFrame, factor_names 列被替换为 rank, 其余列保持不变
     """
     assert {"date", "instrument"}.issubset(factor_df.columns)
+    assert len(factor_names) == len(set(factor_names)), "rank_pool_factors: factor_names 有重复"
+    assert factor_df.columns.is_unique, "rank_pool_factors: factor_df 有重复列名"
     for c in factor_names:
         assert c in factor_df.columns, f"rank_pool_factors: 缺列 {c}"
     out = factor_df.copy()
-    out[factor_names] = factor_df.groupby("date")[factor_names].rank(
-        method="average", pct=True)
+    g = factor_df.groupby("date", sort=False)
+    for c in factor_names:
+        out[c] = g[c].transform(
+            lambda s: s.rank(method="average", pct=True)
+        )
     return out
 
 
