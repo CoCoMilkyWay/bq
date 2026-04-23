@@ -21,15 +21,15 @@ PRICE_LIMIT_EPS = 1e-4  # close vs upper/lower_limit 的浮点容差
 # 固定权重因子组合 (可配置)
 FACTOR_WEIGHTS: dict[str, float] = {
     "pe_ttm": 0.0,
-    "pb": 0.27,
-    "ps_ttm": 0.13,
-    "pcf_ttm": 0.0,
+    "pb": 0.0,
+    "ps_ttm": 0.0,
+    "pcf_ttm": 0.1,
     "roe_ttm": 0.0,
     "roa_ttm": 0.0,
-    "dividend_yield": 0.13,
-    "float_market_cap": 0.13,
-    "total_market_cap": 0.33,
-    "close": 0.0,
+    "dividend_yield": 0.0,
+    "float_market_cap": 0.3,
+    "total_market_cap": 0.2,
+    "close": 0.4,
 }
 ALL_FACTOR_NAMES = list(FACTOR_WEIGHTS.keys())
 
