@@ -17,6 +17,7 @@ HOLD_N = 40
 EXIT_RATIO = 1.2
 CAPITAL_BASE = 1000000
 PRICE_LIMIT_EPS = 1e-4  # close vs upper/lower_limit 的浮点容差
+EMPTY_POSITION_MONTHS: set[int] = {1, 4, 12}  # 这些月份强制空仓 (清仓, 不买入); 空集=禁用
 
 # 固定权重因子组合 (可配置)
 FACTOR_WEIGHTS: dict[str, float] = {
@@ -332,9 +333,12 @@ def bt_bar(context, data):
     assert limit_flags_today is not None, f"no limit flags for {trade_date}"
     up_limit_set, down_limit_set = limit_flags_today
 
-    top_n_instruments, top_exit_instruments, rank_map = build_target_on_day(
-        instruments, ranking_scores
-    )
+    if data.current_dt.month in EMPTY_POSITION_MONTHS:
+        top_n_instruments, top_exit_instruments, rank_map = set(), set(), {}
+    else:
+        top_n_instruments, top_exit_instruments, rank_map = build_target_on_day(
+            instruments, ranking_scores
+        )
     holding_instruments = set(context.get_account_positions().keys())
 
     to_sell, to_buy = decide_trades_on_day(
