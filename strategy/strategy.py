@@ -21,15 +21,15 @@ PRICE_LIMIT_EPS = 1e-4  # close vs upper/lower_limit 的浮点容差
 # 固定权重因子组合 (可配置); IC 窗口仅用于诊断图, 不参与打分
 IC_WINDOW_DAYS = 120
 FACTOR_WEIGHTS: dict[str, float] = {
-    "total_market_cap": 0.0,
     "pe_ttm": 0.0,
-    "pb": 0.0,
-    "ps_ttm": 0.0,
+    "pb": 0.27,
+    "ps_ttm": 0.13,
     "pcf_ttm": 0.0,
     "roe_ttm": 0.0,
     "roa_ttm": 0.0,
-    "dividend_yield": 0.0,
-    "float_market_cap": 1.0,
+    "dividend_yield": 0.13,
+    "float_market_cap": 0.13,
+    "total_market_cap": 0.33,
     "close": 0.0,
 }
 ALL_FACTOR_NAMES = list(FACTOR_WEIGHTS.keys())

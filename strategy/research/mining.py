@@ -10,7 +10,7 @@ Simplex lattice 因子权重挖掘
           n=5, M=20 -> P = 10626
     kernel: evaluate_monotonicity_csr  (parallel=True, prange over pop)
     每权重开销: 每日 (F 点积 + argsort(cnt) + G 档区间累加)
-               年末 G x G 朴素排名 + Spearman + (rho+1)/2
+               月末 G x G 朴素排名 + Spearman + (rho+1)/2
     ≈ 全部运行时间的 99%
 
 [阶段 2] Top-N 后评估 (三件套, 合计 ~0.1% 耗时, 基本可忽略, N=TOP_N):
@@ -33,17 +33,19 @@ Simplex lattice 因子权重挖掘
          单点与主 kernel 同量级, 规模差 10626x
 
 ============================================================
-Fitness 定义 (阶段 1): 年度分层单调度的跨年均值 Y ∈ [0, 1]
+Fitness 定义 (阶段 1): 周期内分层单调度的跨周期均值 Y ∈ [0, 1]
 ============================================================
+    累计周期由 FITNESS_PERIOD 控制: "year" | "month" | "week" | "day"
     每日: 按 scores = ranks @ w 升序切 G 档, 档 g 当日等权收益
-          累加到 year_group[year(d), g]
-    每年: 对 G 个档的年内累计收益做 Spearman 秩相关 rho,
-          单调度 = (rho + 1) / 2 ∈ [0,1]
-    fitness = 跨自然年算术平均
-    (追求每年都分层单调, 而不是某几年暴力拉开)
+          累加到 period_group[period(d), g]
+    每周期: 对 G 个档的周期内累计收益做 Spearman 秩相关 rho,
+            单调度 = (rho + 1) / 2 ∈ [0,1]
+            有效过滤: 该周期活跃日 >= MIN_PERIOD_DAYS[FITNESS_PERIOD]
+    fitness = 跨周期算术平均
+    (周期越短, 惩罚短期单调性崩坏越敏感; 越长越平滑)
 
-    注: "每日切档" 不是复杂化, 而是年度档位收益的标准日频实现
-        (截面每天都变, 不能用年度级一次性分档)
+    注: "每日切档" 不是复杂化, 而是周期档位收益的标准日频实现
+        (截面每天都变, 不能用周期级一次性分档)
 
 ============================================================
 因子处理 (口径对齐)
@@ -112,11 +114,18 @@ if str(STRATEGY_DIR) not in sys.path:
     sys.path.insert(0, str(STRATEGY_DIR))
 
 DATA_FILE = Path(__file__).parent / "mining_data.npz"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 START_DATE = "2017-01-01"
 END_DATE = "2026-04-07"
 GROUP_NUM = 5  # 分档数
+FITNESS_PERIOD = "month"  # 阶段 1 fitness Y 的累计周期: "year" | "month" | "week" | "day"
+MIN_PERIOD_DAYS = {       # 各周期内活跃日数下限, 活跃日数 < 下限的周期不计入 fitness
+    "year": 120,
+    "month": 10,
+    "week": 3,
+    "day": 1,
+}
 COST_ROUND_TRIP = 0.002  # 一次换手综合成本 (买 0.0005 + 卖 0.0015)
 LATTICE_M = 15  # simplex lattice 阶数: w_i = k_i / M, sum k_i = M, k_i >= 0
                 # 点数 = C(n_search + M - 1, n_search - 1); 5 因子 M=20 -> 10626
@@ -160,6 +169,9 @@ for _n in SEARCH_FACTOR_NAMES:
 
 for _m in SKIP_MONTHS:
     assert isinstance(_m, int) and 1 <= _m <= 12, f"SKIP_MONTHS 含非法月份 {_m}, 必须是 1..12 整数"
+
+assert FITNESS_PERIOD in MIN_PERIOD_DAYS, \
+    f"FITNESS_PERIOD={FITNESS_PERIOD} 无效, 必须是 {list(MIN_PERIOD_DAYS.keys())} 之一"
 
 
 # ==================== 数据导出/加载 ====================
@@ -285,7 +297,12 @@ def export_data(output_path: Path = DATA_FILE) -> None:
     year_idx = np.array([year_remap[int(y)] for y in year_of_day], dtype=np.int32)
     # 月份 (1..12), 保存到 npz, load 时按 SKIP_MONTHS 动态构建 active_day
     month_of_day = np.array([pd.Timestamp(d).month for d in dates], dtype=np.int8)
-    print(f"  日数: {D}, 标的数: {S}, 因子数: {F}, 年数: {len(unique_years)} ({unique_years[0]}..{unique_years[-1]})")
+    # ISO (year, week) 紧凑编号, 用于 FITNESS_PERIOD="week"
+    iso = pd.DatetimeIndex(dates).isocalendar()
+    iso_key = iso["year"].values.astype(np.int64) * 100 + iso["week"].values.astype(np.int64)
+    _, week_idx = np.unique(iso_key, return_inverse=True)
+    week_idx = week_idx.astype(np.int32)
+    print(f"  日数: {D}, 标的数: {S}, 因子数: {F}, 年数: {len(unique_years)} ({unique_years[0]}..{unique_years[-1]}), 周数: {int(week_idx.max()) + 1}")
 
     factor_ranks = np.full((D, S, F), np.nan, dtype=np.float32)
     returns = np.full((D, S), np.nan, dtype=np.float32)
@@ -319,6 +336,7 @@ def export_data(output_path: Path = DATA_FILE) -> None:
         off=flat_off,
         year_idx=year_idx,
         month_of_day=month_of_day,
+        week_idx=week_idx,
         years=unique_years,
         factor_names=np.array(FACTOR_NAMES_TO_USE),
         n_stocks=np.int32(S),
@@ -337,27 +355,50 @@ def load_data_from_file(input_path: Path = DATA_FILE):
         f"schema 版本不匹配 (需要 v{SCHEMA_VERSION}), 请删除 {input_path} 重新导出"
     off = np.ascontiguousarray(d["off"], dtype=np.int32)
     month_of_day = np.ascontiguousarray(d["month_of_day"], dtype=np.int8)
+    year_idx = np.ascontiguousarray(d["year_idx"], dtype=np.int32)
+    week_idx_raw = np.ascontiguousarray(d["week_idx"], dtype=np.int32)
     # active_day: 1 = 参与挖掘; 0 = 命中 SKIP_MONTHS, kernel 跳过该日
     skip_arr = np.array(sorted(SKIP_MONTHS), dtype=np.int8) if len(SKIP_MONTHS) > 0 else np.empty(0, dtype=np.int8)
     active_day = (~np.isin(month_of_day, skip_arr)).astype(np.uint8)
+    D = len(off) - 1
+    # 按 FITNESS_PERIOD 构造 period_idx (D,) int32 + n_periods
+    # 注: SKIP_MONTHS 命中日由 active_day=0 在 kernel 内 continue 掉, period_idx 值不会被访问
+    if FITNESS_PERIOD == "year":
+        period_idx = year_idx.copy()
+        n_periods = len(d["years"])
+    elif FITNESS_PERIOD == "month":
+        ym_key = year_idx.astype(np.int64) * 13 + month_of_day.astype(np.int64)
+        _, period_idx = np.unique(ym_key, return_inverse=True)
+        period_idx = period_idx.astype(np.int32)
+        n_periods = int(period_idx.max()) + 1
+    elif FITNESS_PERIOD == "week":
+        period_idx = week_idx_raw
+        n_periods = int(period_idx.max()) + 1
+    elif FITNESS_PERIOD == "day":
+        period_idx = np.arange(D, dtype=np.int32)
+        n_periods = D
+    else:
+        assert False, f"unreachable FITNESS_PERIOD={FITNESS_PERIOD}"
     data = {
         "ranks": np.ascontiguousarray(d["ranks"], dtype=np.float32),
         "rets": np.ascontiguousarray(d["rets"], dtype=np.float32),
         "insts": np.ascontiguousarray(d["insts"], dtype=np.int32),
         "status": np.ascontiguousarray(d["status"], dtype=np.int8),
         "off": off,
-        "year_idx": np.ascontiguousarray(d["year_idx"], dtype=np.int32),
+        "year_idx": year_idx,
         "month_of_day": month_of_day,
+        "period_idx": period_idx,
+        "n_periods": n_periods,
+        "min_period_days": MIN_PERIOD_DAYS[FITNESS_PERIOD],
         "active_day": active_day,
         "years": d["years"].tolist(),
         "factor_names": d["factor_names"].tolist(),
         "n_stocks": int(d["n_stocks"]),
         "max_cnt": int(max(1, np.diff(off).max())),  # kernel 内共享, 避免重复扫描
     }
-    D = len(data["off"]) - 1
     n_active = int(active_day.sum())
     skip_disp = sorted(SKIP_MONTHS) if SKIP_MONTHS else "无"
-    print(f"  日数: {D}, 全标的数: {data['n_stocks']}, 因子数: {len(data['factor_names'])}, 年数: {len(data['years'])} ({data['years'][0]}..{data['years'][-1]})")
+    print(f"  日数: {D}, 全标的数: {data['n_stocks']}, 因子数: {len(data['factor_names'])}, 年数: {len(data['years'])} ({data['years'][0]}..{data['years'][-1]}), 周期=\"{FITNESS_PERIOD}\" 桶数: {n_periods}")
     print(f"  样本: {len(data['rets'])}, 日均 {len(data['rets']) / D:.1f}")
     print(f"  SKIP_MONTHS={skip_disp}, 活跃日数: {n_active}/{D} ({100.0 * n_active / D:.1f}%)")
     return data
@@ -651,16 +692,17 @@ def evaluate_monotonicity_csr(
     ranks,         # (N, F) float32 C-order
     rets,          # (N,) float32
     off,           # (D+1,) int32
-    year_idx,      # (D,) int32, 0..n_years-1
+    period_idx,    # (D,) int32, 0..n_periods-1 (紧凑周期索引, 粒度由 FITNESS_PERIOD 决定)
     active_day,    # (D,) uint8
-    n_years,       # int
+    n_periods,     # int
     group_num,     # int
+    min_days,      # int, 周期内活跃日数下限, < 此值的周期不计入
     max_cnt,       # int, 预计算的最大日样本数
 ):
     """
-    年度分层单调度 fitness. 调 _accum_year_group 拿到 year_group 后,
-    每年做一次无并列 Spearman: rho = 1 - 6Σd²/(G(G²-1)), score_y = (rho+1)/2.
-    fitness = 有效年份均值 ∈ [0,1].
+    周期分层单调度 fitness. 调 _accum_year_group (bucket 通用 primitive) 拿到
+    period_group 后, 每周期做一次无并列 Spearman: rho = 1 - 6Σd²/(G(G²-1)),
+    score_p = (rho+1)/2. fitness = 有效周期 (周期活跃日 >= min_days) 均值 ∈ [0,1].
     """
     n_pop = pop.shape[0]
     G = group_num
@@ -669,23 +711,23 @@ def evaluate_monotonicity_csr(
 
     for p in numba.prange(n_pop):
         scores = np.empty(max_cnt, dtype=np.float32)
-        year_group = np.zeros((n_years, G), dtype=np.float64)
-        year_days = np.zeros(n_years, dtype=np.int32)
-        _accum_year_group(pop[p], ranks, rets, off, year_idx, active_day, G,
-                          scores, year_group, year_days)
+        period_group = np.zeros((n_periods, G), dtype=np.float64)
+        period_days = np.zeros(n_periods, dtype=np.int32)
+        _accum_year_group(pop[p], ranks, rets, off, period_idx, active_day, G,
+                          scores, period_group, period_days)
 
         total = 0.0
         n_valid = 0
-        for y in range(n_years):
-            if year_days[y] < G:
+        for m in range(n_periods):
+            if period_days[m] < min_days:
                 continue
             ssq = 0.0
             for g in range(G):
                 r = 1
                 for h in range(G):
-                    if year_group[y, h] < year_group[y, g]:
+                    if period_group[m, h] < period_group[m, g]:
                         r += 1
-                    elif year_group[y, h] == year_group[y, g] and h < g:
+                    elif period_group[m, h] == period_group[m, g] and h < g:
                         r += 1
                 diff = float(r - (g + 1))
                 ssq += diff * diff
@@ -702,13 +744,13 @@ def evaluate_monotonicity_csr(
 
 
 def evaluate_monotonicity(pop: np.ndarray, data: dict) -> np.ndarray:
-    """年度分层单调度 fitness ∈ [0,1]. 返回 (n_pop,)."""
+    """周期分层单调度 fitness ∈ [0,1]. 返回 (n_pop,)."""
     pop = np.ascontiguousarray(pop, dtype=np.float32)
     return evaluate_monotonicity_csr(
         pop,
         data["ranks"], data["rets"], data["off"],
-        data["year_idx"], data["active_day"],
-        len(data["years"]), GROUP_NUM, data["max_cnt"],
+        data["period_idx"], data["active_day"],
+        data["n_periods"], GROUP_NUM, data["min_period_days"], data["max_cnt"],
     )
 
 
@@ -818,7 +860,7 @@ def iter_eval_slices(total_points: int):
 def run_grid_search(data: dict, top_n: int | None = None) -> tuple[np.ndarray, float, list[str]]:
     """
     两阶段评估:
-      1) 全量 lattice 扫 fitness Y = 年均分层单调度 ∈ [0,1]
+      1) 全量 lattice 扫 fitness Y = 月均分层单调度 ∈ [0,1]
       2) Top-K 权重额外算:
          - 邻居平均 Y (L1=2, 参数平原 / 过拟合敏感度)
          - 粘性+扣费口径的全期多头 NAV 和多空 NAV
@@ -841,7 +883,7 @@ def run_grid_search(data: dict, top_n: int | None = None) -> tuple[np.ndarray, f
     print(f"Simplex lattice M={LATTICE_M}, 点数={len(w_grid)}, 步长=1/{LATTICE_M}={1.0 / LATTICE_M:.4f}")
 
     fitness = np.empty(len(w_grid), dtype=np.float64)
-    pbar = tqdm(total=len(w_grid), desc="单调度搜索", unit="point")
+    pbar = tqdm(total=len(w_grid), desc=f"{FITNESS_PERIOD} 单调度搜索", unit="point")
     for st, ed in iter_eval_slices(len(w_grid)):
         fitness[st:ed] = evaluate_monotonicity(w_grid[st:ed], sub_data)
         pbar.update(ed - st)
@@ -888,7 +930,7 @@ def run_grid_search(data: dict, top_n: int | None = None) -> tuple[np.ndarray, f
     print(f"\nTop {top_k} 结果 (搜索因子顺序: {selected_names}, SKIP_MONTHS={skip_disp}):")
     print("列含义:")
     print("  #        : 在 lattice 内按 Y 降序的名次")
-    print("  Y        : 年均分层分档单调度 fitness ∈ [0,1] (1.0 = 每年 Q1..QG 都完美单调)")
+    print(f"  Y        : {FITNESS_PERIOD}均分层分档单调度 fitness ∈ [0,1] (1.0 = 每{FITNESS_PERIOD} Q1..QG 都完美单调, 周期活跃日>={MIN_PERIOD_DAYS[FITNESS_PERIOD]} 方计入)")
     print(f"  NbrY     : [1,{NEIGHBOR_DISTANCE_MAX}] 跳内全部邻居权重的 Y 均值 (扰动稳定性)")
     print("  衰减     : Y - NbrY, 越接近 0 越抗过拟合 (山尖 vs 平原)")
     print(f"  星       : 衰减在 top-N 内升序 {STAR_LEVELS} 分位 ({STAR_LEVELS}★=衰减最低 {pct_per_bin:.1f}% 最平原, 1★=最高 {pct_per_bin:.1f}% 最山尖)")
@@ -954,7 +996,7 @@ def main():
     skip_disp = sorted(SKIP_MONTHS) if SKIP_MONTHS else "无"
     print("=" * 60)
     print("Simplex lattice 因子权重搜索")
-    print(f"目标: 年均分档单调度 Y ∈ [0,1] (Q1..Q{GROUP_NUM}, Spearman (rho+1)/2)")
+    print(f"目标: {FITNESS_PERIOD}均分档单调度 Y ∈ [0,1] (Q1..Q{GROUP_NUM}, Spearman (rho+1)/2; 周期活跃日>={MIN_PERIOD_DAYS[FITNESS_PERIOD]} 才计入)")
     print(f"Top{TOP_N} 复评: 粘性+扣费 多头/多空 NAV, cost_rt={COST_ROUND_TRIP}; 邻居 L1=2 敏感度")
     print(f"SKIP_MONTHS={skip_disp} (命中日 fitness 与 NAV 均跳过, 持仓冻结)")
     print("=" * 60)
@@ -977,7 +1019,7 @@ def main():
     print("\n" + "=" * 60)
     print("最终结果")
     print("=" * 60)
-    print(f"最优年均分层单调度 Y: {best_fitness:.4f}")
+    print(f"最优月均分层单调度 Y: {best_fitness:.4f}")
     print(f"\n最优权重 (sum=1):")
     for name, w in zip(data["factor_names"], best_weights):
         if w > 0:
