@@ -118,7 +118,7 @@ SCHEMA_VERSION = 1
 
 START_DATE = "2017-01-01"
 END_DATE = "2026-04-07"
-GROUP_NUM = 10  # 分档数
+GROUP_NUM = 5  # 分档数
 FITNESS_PERIOD = "month"  # 阶段 1 fitness Y 的累计周期: "year" | "month" | "week" | "day"
 MIN_PERIOD_DAYS = {       # 各周期内活跃日数下限, 活跃日数 < 下限的周期不计入 fitness
     "year": 120,
@@ -860,10 +860,11 @@ def iter_eval_slices(total_points: int):
 def run_grid_search(data: dict, top_n: int | None = None) -> tuple[np.ndarray, float, list[str]]:
     """
     两阶段评估:
-      1) 全量 lattice 扫 fitness Y = 月均分层单调度 ∈ [0,1]
+      1) 全量 lattice 扫 fitness Y = 粘性+扣费 多头累计 NAV (全期, 对齐 strategy.py 口径)
       2) Top-K 权重额外算:
          - 邻居平均 Y (L1=2, 参数平原 / 过拟合敏感度)
-         - 粘性+扣费口径的全期多头 NAV 和多空 NAV
+         - 粘性+扣费口径的全期多空 NAV, 年均多头/多空 NAV
+         - 年度分档累计收益表 (干净等权, 用于诊断)
     返回: (最优权重(全因子维度, 已归一化), 最优 Y, 搜索因子名列表)
     """
     all_names = data["factor_names"]
@@ -883,9 +884,9 @@ def run_grid_search(data: dict, top_n: int | None = None) -> tuple[np.ndarray, f
     print(f"Simplex lattice M={LATTICE_M}, 点数={len(w_grid)}, 步长=1/{LATTICE_M}={1.0 / LATTICE_M:.4f}")
 
     fitness = np.empty(len(w_grid), dtype=np.float64)
-    pbar = tqdm(total=len(w_grid), desc=f"{FITNESS_PERIOD} 单调度搜索", unit="point")
+    pbar = tqdm(total=len(w_grid), desc="多头累计 NAV 搜索", unit="point")
     for st, ed in iter_eval_slices(len(w_grid)):
-        fitness[st:ed] = evaluate_monotonicity(w_grid[st:ed], sub_data)
+        fitness[st:ed] = evaluate_batch(w_grid[st:ed], sub_data)[:, 1]
         pbar.update(ed - st)
     pbar.close()
 
@@ -930,17 +931,16 @@ def run_grid_search(data: dict, top_n: int | None = None) -> tuple[np.ndarray, f
     print(f"\nTop {top_k} 结果 (搜索因子顺序: {selected_names}, SKIP_MONTHS={skip_disp}):")
     print("列含义:")
     print("  #        : 在 lattice 内按 Y 降序的名次")
-    print(f"  Y        : {FITNESS_PERIOD}均分层分档单调度 fitness ∈ [0,1] (1.0 = 每{FITNESS_PERIOD} Q1..QG 都完美单调, 周期活跃日>={MIN_PERIOD_DAYS[FITNESS_PERIOD]} 方计入)")
+    print(f"  Y        : 粘性+扣费 多头累计 NAV (cost_rt={COST_ROUND_TRIP}, 全期起点 1.0, 对齐 strategy.py 实盘口径)")
     print(f"  NbrY     : [1,{NEIGHBOR_DISTANCE_MAX}] 跳内全部邻居权重的 Y 均值 (扰动稳定性)")
     print("  衰减     : Y - NbrY, 越接近 0 越抗过拟合 (山尖 vs 平原)")
     print(f"  星       : 衰减在 top-N 内升序 {STAR_LEVELS} 分位 ({STAR_LEVELS}★=衰减最低 {pct_per_bin:.1f}% 最平原, 1★=最高 {pct_per_bin:.1f}% 最山尖)")
     print(f"  N        : [1,{NEIGHBOR_DISTANCE_MAX}] 跳内邻居总个数 (边界点会减少)")
-    print(f"  多头累计 : 粘性+扣费 (cost_rt={COST_ROUND_TRIP}) 下 top bucket 全期多头 NAV (起点 1.0)")
     print(f"  多头年均 : 逐年重置 NAV, 各年年末 NAV 算术平均 (1.0 = 当年持平)")
     print(f"  多空累计 : 粘性+扣费 下 top-bottom 多空 NAV (起点 1.0)")
     print(f"  多空年均 : 逐年重置多空 NAV, 各年年末算术平均")
     print(f"  权重     : 搜索因子维度上的权重 (顺序同上, 已归一化 sum=1)")
-    header = f"{'#':<3} {'Y':>7} {'NbrY':>7} {'衰减':>7} {'星':<{star_w}} {'N':>{nbr_col_w}} {'多头累计':>8} {'多头年均':>8} {'多空累计':>8} {'多空年均':>8}  权重"
+    header = f"{'#':<3} {'Y':>8} {'NbrY':>8} {'衰减':>8} {'星':<{star_w}} {'N':>{nbr_col_w}} {'多头年均':>8} {'多空累计':>8} {'多空年均':>8}  权重"
     print(header)
     print("-" * len(header))
     for rank, gi in enumerate(top_idx, 1):
@@ -948,13 +948,12 @@ def run_grid_search(data: dict, top_n: int | None = None) -> tuple[np.ndarray, f
         w_str = ", ".join(f"{v:.2f}" for v in w_grid[gi])
         stars = "*" * int(star_counts[i])
         nav_ls_cum = float(top_nav[i, 0])
-        nav_l_cum = float(top_nav[i, 1])
         nav_ls_avg = float(top_nav[i, 2])
         nav_l_avg = float(top_nav[i, 3])
         print(
-            f"{rank:<3} {fitness[gi]:7.4f} {nbr_means[i]:7.4f} {decays[i]:+7.4f} "
+            f"{rank:<3} {fitness[gi]:8.3f} {nbr_means[i]:8.3f} {decays[i]:+8.3f} "
             f"{stars:<{star_w}} {int(nbr_counts[i]):{nbr_col_w}d} "
-            f"{nav_l_cum:8.3f} {nav_l_avg:8.3f} {nav_ls_cum:8.3f} {nav_ls_avg:8.3f}  [{w_str}]"
+            f"{nav_l_avg:8.3f} {nav_ls_cum:8.3f} {nav_ls_avg:8.3f}  [{w_str}]"
         )
 
     # 最优权重的年度各档累计收益表 (干净等权, 算术累加)
@@ -996,8 +995,8 @@ def main():
     skip_disp = sorted(SKIP_MONTHS) if SKIP_MONTHS else "无"
     print("=" * 60)
     print("Simplex lattice 因子权重搜索")
-    print(f"目标: {FITNESS_PERIOD}均分档单调度 Y ∈ [0,1] (Q1..Q{GROUP_NUM}, Spearman (rho+1)/2; 周期活跃日>={MIN_PERIOD_DAYS[FITNESS_PERIOD]} 才计入)")
-    print(f"Top{TOP_N} 复评: 粘性+扣费 多头/多空 NAV, cost_rt={COST_ROUND_TRIP}; 邻居 L1=2 敏感度")
+    print(f"目标: 粘性+扣费 多头累计 NAV (cost_rt={COST_ROUND_TRIP}, 累计周期 = 数据全量)")
+    print(f"Top{TOP_N} 复评: 邻居 L1=2 敏感度 + 年度分档表")
     print(f"SKIP_MONTHS={skip_disp} (命中日 fitness 与 NAV 均跳过, 持仓冻结)")
     print("=" * 60)
 
@@ -1019,7 +1018,7 @@ def main():
     print("\n" + "=" * 60)
     print("最终结果")
     print("=" * 60)
-    print(f"最优月均分层单调度 Y: {best_fitness:.4f}")
+    print(f"最优多头累计 NAV: {best_fitness:.4f}")
     print(f"\n最优权重 (sum=1):")
     for name, w in zip(data["factor_names"], best_weights):
         if w > 0:

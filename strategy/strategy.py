@@ -18,8 +18,7 @@ EXIT_RATIO = 1.2
 CAPITAL_BASE = 1000000
 PRICE_LIMIT_EPS = 1e-4  # close vs upper/lower_limit 的浮点容差
 
-# 固定权重因子组合 (可配置); IC 窗口仅用于诊断图, 不参与打分
-IC_WINDOW_DAYS = 120
+# 固定权重因子组合 (可配置)
 FACTOR_WEIGHTS: dict[str, float] = {
     "pe_ttm": 0.0,
     "pb": 0.27,
@@ -51,7 +50,6 @@ ALL_FACTOR_NAMES = list(FACTOR_WEIGHTS.keys())
   - 每日 pool 内各因子独立做 pct rank, NaN 不参与该因子截面排名
   - factor_score = Σ_f w_f * rank_{D,f}  /  Σ_f w_f * 1{rank_{D,f} 存在}
     (可用因子权重归一化, 避免因子缺失时系统性低估); 所有因子都缺则 NaN 该股不参与当日交易
-  - 诊断: 保留 `IC_WINDOW_DAYS` 窗口的单因子 + 组合因子滚动 IC 可视化
 - **持仓/交易**
   - 预期持仓标的数: `HOLD_N`
   - 预期仓位: 保持100%
@@ -131,52 +129,9 @@ ALL_FACTOR_NAMES = list(FACTOR_WEIGHTS.keys())
 """
 
 
-def _per_date_pearson_ic(
-    merged: pd.DataFrame,
-    factor_cols: list[str],
-    ret_col: str = "fwd_ret",
-) -> pd.DataFrame:
-    """
-    向量化 per-date Pearson IC: 对每个因子 col, 按 date 分组算 corr(col, ret_col),
-    每因子用各自非空子集 (NaN 不参与). 通过一次 groupby.sum 获取六元组 (n, Σx, Σy, Σxy, Σx², Σy²)
-    再代入闭式公式, 避免 Python 层按日迭代.
-    返回: DataFrame, index=date, columns=factor_cols (值为 IC, 有效样本<2 或 std=0 ⇒ NaN)
-    """
-    rv = merged[ret_col].to_numpy(dtype=np.float64)
-    date_arr = merged["date"].to_numpy()
-    series_list: list[pd.Series] = []
-    for col in factor_cols:
-        fv = merged[col].to_numpy(dtype=np.float64)
-        valid = ~np.isnan(fv) & ~np.isnan(rv)
-        x = np.where(valid, fv, 0.0)
-        y = np.where(valid, rv, 0.0)
-        tmp = pd.DataFrame({
-            "date": date_arr,
-            "n": valid.astype(np.float64),
-            "sx": x,
-            "sy": y,
-            "sxy": x * y,
-            "sx2": x * x,
-            "sy2": y * y,
-        })
-        agg = tmp.groupby("date", sort=True).sum()
-        n = agg["n"].to_numpy()
-        sx, sy = agg["sx"].to_numpy(), agg["sy"].to_numpy()
-        sxy = agg["sxy"].to_numpy()
-        sx2, sy2 = agg["sx2"].to_numpy(), agg["sy2"].to_numpy()
-        num = n * sxy - sx * sy
-        denx = np.maximum(n * sx2 - sx * sx, 0.0)
-        deny = np.maximum(n * sy2 - sy * sy, 0.0)
-        den = np.sqrt(denx * deny)
-        ic = np.where((n >= 2) & (den > 0), num / den, np.nan)
-        series_list.append(pd.Series(ic, index=agg.index, name=col))
-    return pd.concat(series_list, axis=1)
-
-
 def compute_fixed_weight_factor_score(
     factor_df: pd.DataFrame,
     universe_df: pd.DataFrame,
-    daily_return_df: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     固定权重合成 factor_score.
@@ -187,7 +142,6 @@ def compute_fixed_weight_factor_score(
         2. pool 内每因子独立 pct rank 到 [0,1], NaN 不参与该因子截面排名
         3. factor_score = Σ_f w_f * rank_{D,f} / Σ_f w_f * 1{rank_{D,f} 存在}
            (可用因子权重归一化; 全因子缺 ⇒ NaN, 不参与当日交易)
-        4. 诊断 (不参与打分): 每日单因子 IC + 组合因子 rank-IC, 再做 IC_WINDOW_DAYS 滑窗均值用于可视化
     """
     f = factor_df[["date", "instrument"] + ALL_FACTOR_NAMES].sort_values(
         ["instrument", "date"]
@@ -205,31 +159,6 @@ def compute_fixed_weight_factor_score(
     score = np.where(score_den > 0, score_num / score_den, np.nan)
     ranked["factor_score"] = score
     score_df = ranked[["date", "instrument", "factor_score"]]
-
-    # ============ 诊断: 单因子 + 组合因子滚动 IC (仅用于可视化, 不参与打分) ============
-    ret_df = daily_return_df.sort_values(["instrument", "date"]).copy()
-    ret_df["fwd_ret"] = ret_df.groupby("instrument")["daily_return"].shift(-1)
-    ret_df = ret_df[ret_df["date"] <= factor_df["date"].max()][
-        ["date", "instrument", "fwd_ret"]
-    ]
-
-    merged = ranked.merge(ret_df, on=["date", "instrument"], how="left")
-    merged["_score_rank"] = merged.groupby("date", sort=False)["factor_score"].transform(
-        lambda s: s.rank(method="average", pct=True)
-    )
-    ic_wide = _per_date_pearson_ic(merged, ALL_FACTOR_NAMES + ["_score_rank"])
-    ic_df = (
-        ic_wide.rename(columns={"_score_rank": "combined"})
-        .reset_index()
-        .sort_values("date")
-        .reset_index(drop=True)
-    )
-
-    roll_cols = ALL_FACTOR_NAMES + ["combined"]
-    full_ic_roll = ic_df[roll_cols].rolling(IC_WINDOW_DAYS, min_periods=1).mean()
-    full_ic_roll.insert(0, "date", ic_df["date"].values)
-    global _diag_rolling_ic_df
-    _diag_rolling_ic_df = full_ic_roll
 
     print(f"固定权重因子组合: {len(ALL_FACTOR_NAMES)} 个因子, 权重和 = {sum(FACTOR_WEIGHTS.values()):.3f}")
     for fn, w in FACTOR_WEIGHTS.items():
@@ -327,7 +256,6 @@ def bt_init(context):
     context.trade_diag = {
         "benchmark_daily_return": _diag_benchmark_daily,
         "trading_dates": _diag_trading_dates,
-        "rolling_ic_df": _diag_rolling_ic_df,
         "open_records": {},
         "closed_trades": [],
     }
@@ -581,40 +509,6 @@ def bt_post(context, data):
     )
     dist_fig.show()
 
-    # ========== 滚动 IC 图 (plotly): 各单因子 + 组合因子 ==========
-    ic_roll = diag["rolling_ic_df"]
-    assert ic_roll is not None and not ic_roll.empty, "rolling_ic_df 未准备好"
-
-    ic_fig = go.Figure()
-    for f in ALL_FACTOR_NAMES:
-        ic_fig.add_trace(
-            go.Scatter(
-                x=ic_roll["date"], y=ic_roll[f], mode="lines",
-                line=dict(width=1.2),
-                opacity=0.85,
-                name=f,
-            )
-        )
-    ic_fig.add_trace(
-        go.Scatter(
-            x=ic_roll["date"], y=ic_roll["combined"], mode="lines",
-            line=dict(color="black", width=2.8),
-            name="combined (factor_score rank-IC)",
-        )
-    )
-    ic_fig.add_hline(y=0, line=dict(color="gray", width=1, dash="dash"), opacity=0.6)
-    ic_fig.update_layout(
-        title=f"Rolling IC ({IC_WINDOW_DAYS}-day, unshifted) — single factors + combined",
-        xaxis_title="date",
-        yaxis_title="rolling IC",
-        yaxis=dict(range=[-0.1, 0.1]),
-        template="plotly_white",
-        height=560,
-        hovermode="x unified",
-        legend=dict(orientation="v", x=1.02, y=1, xanchor="left", yanchor="top"),
-    )
-    ic_fig.show()
-
 
 # ==================== 模块链 ====================
 # 1. 获取股票池（不应用过滤因子，过滤在回测时动态应用）
@@ -635,17 +529,14 @@ factor_df = compute_pool_factors(
     factor_weights=None,
 )
 
-# 拉 daily_return: 回测期 + 末尾多15天 (给 fwd_ret shift(-1) 留数据); 不限 pool
-_ret_query_end = (
-    pd.to_datetime(BACKTEST_END_DATE) + pd.Timedelta(days=15)
-).strftime("%Y-%m-%d")
+# 拉 daily_return: 回测期内, 仅用于 benchmark 计算; 不限 pool
 daily_return_df = dai.query(
     "SELECT date, instrument, daily_return FROM cn_stock_prefactors ORDER BY instrument, date",
-    filters={"date": [BACKTEST_START_DATE, _ret_query_end]},
+    filters={"date": [BACKTEST_START_DATE, BACKTEST_END_DATE]},
 ).df()
 daily_return_df["date"] = pd.to_datetime(daily_return_df["date"]).dt.normalize()
 
-universe_df = compute_fixed_weight_factor_score(factor_df, universe_df, daily_return_df)
+universe_df = compute_fixed_weight_factor_score(factor_df, universe_df)
 score_coverage = universe_df["factor_score"].notna().mean()
 print(f"因子分数覆盖率：{score_coverage:.2%}")
 assert score_coverage > 0, "factor_score coverage is zero"
@@ -653,7 +544,7 @@ assert score_coverage > 0, "factor_score coverage is zero"
 stock_data_ds = dai.DataSource.write_bdb(universe_df)
 
 # ==================== 交易诊断 (独立模块，未来可删除) ====================
-# benchmark = D 日 pool 内等权复权日收益, 与 compute_dynamic_factor_score 的 fwd_ret 同源
+# benchmark = D 日 pool 内等权复权日收益
 _diag_pool_ret = universe_df[["date", "instrument"]].merge(
     daily_return_df, on=["date", "instrument"], how="left"
 )
