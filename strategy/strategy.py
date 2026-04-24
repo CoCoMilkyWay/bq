@@ -19,12 +19,12 @@ CAPITAL_BASE = 1000000
 PRICE_LIMIT_EPS = 1e-4  # close vs upper/lower_limit 的浮点容差
 EMPTY_POSITION_MONTHS: set[int] = {1, 4, 12}  # 这些月份强制空仓 (清仓, 不买入); 空集=禁用
 
-# 518880: 黄金ETF华安
-# 513100: 纳指ETF国泰
-# 159915: 创业板ETF易方达
-# 510300: 沪深300ETF华泰柏瑞
+# 518880.SH: 黄金ETF华安
+# 513100.SH: 纳指ETF国泰
+# 159915.SZ: 创业板ETF易方达
+# 510300.SH: 沪深300ETF华泰柏瑞
 
-FALLBACK_ETFS: list[str] = ["518880.SH", "513100.SH", "159915.SZ"]  # 空仓月份 (EMPTY_POSITION_MONTHS) 等权持仓, 达成全年满仓
+FALLBACK_ETFS: list[str] = ["518880.SH"]  # 空仓月份 (EMPTY_POSITION_MONTHS) 等权持仓, 达成全年满仓
 
 # 固定权重因子组合 (可配置)
 FACTOR_WEIGHTS: dict[str, float] = {
