@@ -13,23 +13,30 @@ STRATEGY_DIR = Path.cwd()
 
 BACKTEST_START_DATE = "2017-01-01"
 BACKTEST_END_DATE = "2026-04-23"
-HOLD_N = 40
-EXIT_RATIO = 1.2
+HOLD_N = 10
+EXIT_RATIO = 1.0
 CAPITAL_BASE = 1000000
 PRICE_LIMIT_EPS = 1e-4  # close vs upper/lower_limit 的浮点容差
 EMPTY_POSITION_MONTHS: set[int] = {1, 4, 12}  # 这些月份强制空仓 (清仓, 不买入); 空集=禁用
+
+# 518880: 黄金ETF华安
+# 513100: 纳指ETF国泰
+# 159915: 创业板ETF易方达
+# 510300: 沪深300ETF华泰柏瑞
+
+FALLBACK_ETFS: list[str] = ["518880.SH", "513100.SH", "159915.SZ"]  # 空仓月份 (EMPTY_POSITION_MONTHS) 等权持仓, 达成全年满仓
 
 # 固定权重因子组合 (可配置)
 FACTOR_WEIGHTS: dict[str, float] = {
     "pe_ttm": 0.0,
     "pb": 0.0,
     "ps_ttm": 0.0,
-    "pcf_ttm": 0.1,
+    "pcf_ttm": 0.0,
     "roe_ttm": 0.0,
     "roa_ttm": 0.0,
     "dividend_yield": 0.0,
-    "float_market_cap": 0.3,
-    "total_market_cap": 0.2,
+    "float_market_cap": 0.0,
+    "total_market_cap": 0.6,
     "close": 0.4,
 }
 ALL_FACTOR_NAMES = list(FACTOR_WEIGHTS.keys())
@@ -333,13 +340,21 @@ def bt_bar(context, data):
     assert limit_flags_today is not None, f"no limit flags for {trade_date}"
     up_limit_set, down_limit_set = limit_flags_today
 
-    if data.current_dt.month in EMPTY_POSITION_MONTHS:
-        top_n_instruments, top_exit_instruments, rank_map = set(), set(), {}
-    else:
-        top_n_instruments, top_exit_instruments, rank_map = build_target_on_day(
-            instruments, ranking_scores
-        )
     holding_instruments = set(context.get_account_positions().keys())
+
+    if data.current_dt.month in EMPTY_POSITION_MONTHS:
+        # 股票空仓月: 卖掉所有非 ETF 持仓, 等权满仓 FALLBACK_ETFS
+        to_sell = sorted(inst for inst in holding_instruments if inst not in FALLBACK_ETFS)
+        for inst in to_sell:
+            context.order_target_percent(inst, 0)
+        target_pct = 1.0 / len(FALLBACK_ETFS)
+        for etf in FALLBACK_ETFS:
+            context.order_target_percent(etf, target_pct)
+        return
+
+    top_n_instruments, top_exit_instruments, rank_map = build_target_on_day(
+        instruments, ranking_scores
+    )
 
     to_sell, to_buy = decide_trades_on_day(
         holding_instruments,
@@ -545,10 +560,8 @@ score_coverage = universe_df["factor_score"].notna().mean()
 print(f"因子分数覆盖率：{score_coverage:.2%}")
 assert score_coverage > 0, "factor_score coverage is zero"
 
-stock_data_ds = dai.DataSource.write_bdb(universe_df)
-
 # ==================== 交易诊断 (独立模块，未来可删除) ====================
-# benchmark = D 日 pool 内等权复权日收益
+# benchmark = D 日 pool 内等权复权日收益 (基于纯股票池, 不含 ETF)
 _diag_pool_ret = universe_df[["date", "instrument"]].merge(
     daily_return_df, on=["date", "instrument"], how="left"
 )
@@ -559,6 +572,27 @@ _diag_benchmark_daily = (
 )
 del _diag_pool_ret
 print(f"交易诊断: benchmark 日收益率已计算，共 {len(_diag_benchmark_daily)} 个交易日")
+
+# ==================== 附加 FALLBACK_ETFS 行情数据 ====================
+# ETF 行 factor_score=NaN, 不进入 bt_init 的 valid_day_df/compute_limit_flags,
+# 但 bigtrader 会订阅这些 instrument 使 order_target_percent 可撮合.
+_etf_codes_str = ", ".join(f"'{c}'" for c in FALLBACK_ETFS)
+etf_df = dai.query(
+    f"SELECT date, instrument, close FROM cn_fund_bar1d "
+    f"WHERE instrument IN ({_etf_codes_str}) "
+    f"ORDER BY date, instrument",
+    filters={"date": [BACKTEST_START_DATE, BACKTEST_END_DATE]},
+).df()
+etf_df["date"] = pd.to_datetime(etf_df["date"]).dt.normalize()
+assert not etf_df.empty, f"未拉到 ETF 行情: {FALLBACK_ETFS}"
+assert set(etf_df["instrument"].unique()) == set(FALLBACK_ETFS), \
+    f"ETF 行情缺失: got={set(etf_df['instrument'].unique())}, want={set(FALLBACK_ETFS)}"
+for _col in ["total_market_cap", "upper_limit", "lower_limit", "factor_score"]:
+    etf_df[_col] = np.nan
+universe_df = pd.concat([universe_df, etf_df], ignore_index=True, sort=False)
+print(f"附加 ETF 行情: {len(etf_df)} 行, ETF={FALLBACK_ETFS}")
+
+stock_data_ds = dai.DataSource.write_bdb(universe_df)
 
 # ========== 回测 ==========
 m5 = M.bigtrader.v30(
