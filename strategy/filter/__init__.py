@@ -226,7 +226,7 @@ def get_basic_pool_sql(sw2021_industries: list = None) -> str:
 
     m1 = M.cn_stock_basic_selector.v7(
         exchanges=["上交所", "深交所"],
-        list_sectors=["主板", "创业板", "科创板"],
+        list_sectors=["主板"], # , "科创板", "创业板"
         indexes=[],
         st_statuses=["正常"],
         margin_tradings=["两融标的", "非两融标的"],

@@ -117,9 +117,9 @@ DATA_FILE = Path(__file__).parent / "mining_data.npz"
 SCHEMA_VERSION = 1
 
 START_DATE = "2017-01-01"
-END_DATE = "2026-04-07"
+END_DATE = "2026-04-23"
 GROUP_NUM = 10  # 分档数
-FITNESS_PERIOD = "month"  # 阶段 1 fitness Y 的累计周期: "year" | "month" | "week" | "day"
+FITNESS_PERIOD = "week"  # 阶段 1 fitness Y 的累计周期: "year" | "month" | "week" | "day"
 MIN_PERIOD_DAYS = {       # 各周期内活跃日数下限, 活跃日数 < 下限的周期不计入 fitness
     "year": 120,
     "month": 10,
@@ -127,16 +127,16 @@ MIN_PERIOD_DAYS = {       # 各周期内活跃日数下限, 活跃日数 < 下�
     "day": 1,
 }
 COST_ROUND_TRIP = 0.002  # 一次换手综合成本 (买 0.0005 + 卖 0.0015)
-LATTICE_M = 15  # simplex lattice 阶数: w_i = k_i / M, sum k_i = M, k_i >= 0
+LATTICE_M = 10  # simplex lattice 阶数: w_i = k_i / M, sum k_i = M, k_i >= 0
                 # 点数 = C(n_search + M - 1, n_search - 1); 5 因子 M=20 -> 10626
 TOP_N = 200  # 阶段2：按 fitness 取前 N 条做 NAV 复评、邻居表与打印 (可改)
-NEIGHBOR_DISTANCE_MAX = 3  # 阶段 2b 邻居敏感度: 统计 [1, N] 跳内全部 lattice 点的 Y 均值
+NEIGHBOR_DISTANCE_MAX = 5  # 阶段 2b 邻居敏感度: 统计 [1, N] 跳内全部 lattice 点的 Y 均值
                            # 一跳 = 某因子 -1, 另一因子 +1 (L1=2); N=3 -> BFS 最多 3 层
 STAR_LEVELS = 10  # 衰减星级分档数: 衰减升序排名分 STAR_LEVELS 档, 最低档 = STAR_LEVELS 星 (最平原)
 
 # 不持仓月份 (1..12). 命中月份的交易日, fitness kernel 跳过 (不进 year_group, 不累加 year_days),
 # NAV kernel 跳过 (持仓状态冻结, nav 不变, 无交易成本). 改此值无需重新导出数据.
-SKIP_MONTHS = frozenset({1, 4, 12})
+SKIP_MONTHS = frozenset({1})
 
 FACTOR_NAMES_TO_USE = [
     "pe_ttm",
@@ -188,6 +188,7 @@ def _load_returns_and_limits(pool_df):
     pool_end = pool_df["date"].max().strftime("%Y-%m-%d")
     query_end = (pool_df["date"].max() + pd.Timedelta(days=10)).strftime("%Y-%m-%d")
 
+    instruments = pool_df["instrument"].unique().tolist()
     sql = """
     SELECT
         date,
@@ -197,7 +198,7 @@ def _load_returns_and_limits(pool_df):
     FROM cn_stock_prefactors
     ORDER BY instrument, date
     """
-    df = dai.query(sql, filters={"date": [start, query_end]}).df()
+    df = dai.query(sql, filters={"date": [start, query_end], "instrument": instruments}).df()
     df["date"] = pd.to_datetime(df["date"]).dt.normalize()
     df = df.loc[df["date"] <= pd.to_datetime(pool_end)]
 
