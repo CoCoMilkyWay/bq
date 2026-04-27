@@ -9,9 +9,9 @@ YEAR_REPORT = '20251231'  # 去年年报
 Q1_REPORT = '20260331'    # 今年一季报
 
 POOLS = {
-    '融资': ['600379', '600470', '001324', '600293', '603335', '301163', '301272', '301006', '001373', '301512'],
-    '低估值': ['301167', '300886', '300670', '300417', '300823', '001211', '603729', '301139', '600476', '600561'],
-    '低价': ['002486', '600689', '002495', '002809', '603022', '600778', '603335', '002652', '603137', '600202'],
+    '融资': ['301139', '301126', '600448', '001387', '301037', '001373', '000056', '300923', '301512', '002909', '001277', '301006', '301353', '301390', '301131'],
+    '低估值': ['600697', '301139', '603729', '600476', '301037', '300417', '600561', '300670', '600448', '300823', '301126', '605567', '300621', '002524', '603214'],
+    '低价': ['600303', '002513', '600778', '002591', '603022', '600561', '002486', '002809', '002247', '600493', '002551', '600287', '002495', '603329', '600802'],
 }
 
 def to_ts_code(code: str) -> str:
@@ -120,7 +120,13 @@ def analyze_stock(ts_code: str, period: str, prev_period: str) -> dict:
         'prev_income': prev_income,
     }
 
-def print_stock_info(code: str, name: str, period_label: str, info: dict):
+def pad(s: str, width: int) -> str:
+    """按显示宽度左对齐填充（中文按2宽度）"""
+    actual = sum(2 if ord(c) > 127 else 1 for c in s)
+    return s + ' ' * max(1, width - actual)
+
+def fmt_section(info: dict) -> tuple[str, str, str]:
+    """返回 (披露状态, 源, 利润对比) 一段紧凑展示"""
     disc = info['disclosure']
     forecast = info['forecast']
     express = info['express']
@@ -128,73 +134,59 @@ def print_stock_info(code: str, name: str, period_label: str, info: dict):
     prev_income = info['prev_income']
     
     pending = calc_pending_days(disc['pre_date'], disc['actual_date'])
-    pre_date = disc['pre_date'] or '-'
-    actual_date = disc['actual_date'] or '-'
-    
-    # 净利润对比 - 优先级: 正式报告 > 业绩快报 > 业绩预告
-    cur_profit = None
     prev_profit = prev_income['n_income_attr_p'] if prev_income else None
-    source = ''
     
     if income:
-        cur_profit = income['n_income_attr_p']
-        source = '正式报告'
-        profit_str = f'{fmt_profit(cur_profit)} vs {fmt_profit(prev_profit)} ({fmt_change(cur_profit, prev_profit)})'
-    elif express:
-        cur_profit = express['n_income']
-        prev_from_express = express.get('np_last_year')
-        source = '业绩快报'
-        # 优先用express自带的去年同期
-        if prev_from_express:
-            profit_str = f'{fmt_profit(cur_profit)} vs {fmt_profit(prev_from_express)} ({fmt_change(cur_profit, prev_from_express)})'
-        else:
-            profit_str = f'{fmt_profit(cur_profit)} vs {fmt_profit(prev_profit)} ({fmt_change(cur_profit, prev_profit)})'
-    elif forecast:
-        # 用预告的平均值 (单位是万元)
+        cur = income['n_income_attr_p']
+        return pending, '报告', f'{fmt_profit(cur)} vs {fmt_profit(prev_profit)} ({fmt_change(cur, prev_profit)})'
+    if express:
+        cur = express['n_income']
+        prev_e = express.get('np_last_year') or prev_profit
+        return pending, '快报', f'{fmt_profit(cur)} vs {fmt_profit(prev_e)} ({fmt_change(cur, prev_e)})'
+    if forecast:
         if forecast['net_profit_min'] is not None and forecast['net_profit_max'] is not None:
-            cur_profit_wan = (forecast['net_profit_min'] + forecast['net_profit_max']) / 2
+            cur_wan = (forecast['net_profit_min'] + forecast['net_profit_max']) / 2
         else:
-            cur_profit_wan = forecast.get('net_profit_min') or forecast.get('net_profit_max')
-        last_wan = forecast.get('last_parent_net')  # 上年同期(万元)
-        source = f"业绩预告({forecast['type']})"
-        profit_str = f'{fmt_profit_wan(cur_profit_wan)} vs {fmt_profit_wan(last_wan)}'
+            cur_wan = forecast.get('net_profit_min') or forecast.get('net_profit_max')
+        last_wan = forecast.get('last_parent_net')
+        s = f'{fmt_profit_wan(cur_wan)} vs {fmt_profit_wan(last_wan)}'
         if forecast.get('p_change_min') is not None and forecast.get('p_change_max') is not None:
-            chg_min, chg_max = forecast['p_change_min'], forecast['p_change_max']
-            profit_str += f' ({chg_min:+.1f}%~{chg_max:+.1f}%)'
-    else:
-        source = '未披露'
-        profit_str = '-'
-    
-    print(f'  预计{pre_date} 实际{actual_date} | {pending} | {source}: {profit_str}')
+            s += f' ({forecast["p_change_min"]:+.0f}%~{forecast["p_change_max"]:+.0f}%)'
+        return pending, forecast['type'] or '预告', s
+    return pending, '-', '-'
+
+# 列宽: code, name, 年报状态, 年报源, 年报利润, Q1状态, Q1源, Q1利润
+COLS = (8, 14, 12, 6, 36, 12, 6, 36)
+
+def fmt_row(cells: tuple) -> str:
+    return (
+        f'{pad(cells[0], COLS[0])}{pad(cells[1], COLS[1])}'
+        f'│ {pad(cells[2], COLS[2])}{pad(cells[3], COLS[3])}{pad(cells[4], COLS[4])}'
+        f'│ {pad(cells[5], COLS[5])}{pad(cells[6], COLS[6])}{pad(cells[7], COLS[7])}'
+    )
 
 def main():
-    print(f'今日: {TODAY}')
-    print(f'查询: 2025年报({YEAR_REPORT}) + 2026Q1({Q1_REPORT})\n')
+    print(f'今日: {TODAY}  查询: 年报={YEAR_REPORT}  Q1={Q1_REPORT}')
     
-    # 收集所有股票代码并获取名称
-    all_codes = []
-    for codes in POOLS.values():
-        all_codes.extend(codes)
+    all_codes = [c for codes in POOLS.values() for c in codes]
     all_ts_codes = [to_ts_code(c) for c in all_codes]
     names = get_stock_names(all_ts_codes)
     
+    header = fmt_row(('代码', '名称', '年报披露', '源', '利润对比', 'Q1披露', '源', '利润对比'))
+    sep = '─' * (sum(COLS) + 4)
+    
     for pool_name, codes in POOLS.items():
-        print(f'=== {pool_name} ===')
+        print(f'\n═══ {pool_name} ═══')
+        print(header, flush=True)
+        print(sep, flush=True)
         for code in codes:
             ts_code = to_ts_code(code)
             name = names.get(ts_code, '?')
-            
-            # 2025年报 vs 2024年报
             info_ar = analyze_stock(ts_code, YEAR_REPORT, '20241231')
-            print(f'{code} {name} 2025年报:')
-            print_stock_info(code, name, '2025年报', info_ar)
-            
-            # 2026Q1 vs 2025Q1
             info_q1 = analyze_stock(ts_code, Q1_REPORT, '20250331')
-            print(f'{code} {name} 2026Q1:')
-            print_stock_info(code, name, '2026Q1', info_q1)
-            print()
-        print()
+            ar = fmt_section(info_ar)
+            q1 = fmt_section(info_q1)
+            print(fmt_row((code, name, ar[0], ar[1], ar[2], q1[0], q1[1], q1[2])), flush=True)
 
 if __name__ == '__main__':
     main()
